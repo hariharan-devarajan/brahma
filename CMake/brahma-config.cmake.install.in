@@ -17,7 +17,7 @@ find_package(gotcha REQUIRED)
 set(BRAHMA_INCLUDE_MPI @BUILD_WITH_MPI@)
 if (BRAHMA_INCLUDE_MPI)
 find_package(MPI COMPONENTS CXX REQUIRED)
-add_definitions(-DCOMPILE_MPI)
+add_definitions(-DBRAHMA_ENABLE_MPI)
 endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(brahma
