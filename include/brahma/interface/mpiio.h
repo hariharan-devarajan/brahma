@@ -6,6 +6,7 @@
 #define BRAHMA_MPIIO_H
 #ifdef BRAHMA_ENABLE_MPI
 #include <mpi.h>
+#include <stdexcept>
 #include "interface.h"
 #include "brahma/interceptor.h"
 

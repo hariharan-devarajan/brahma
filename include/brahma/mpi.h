@@ -6,6 +6,7 @@
 #define BRAHMA_MPI_H
 #ifdef BRAHMA_ENABLE_MPI
 #include <mpi.h>
+#include <stdexcept>
 #include <brahma/interface/interface.h>
 #include "brahma/interceptor.h"
 namespace brahma {
