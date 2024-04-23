@@ -6,17 +6,20 @@
 #define BRAHMA_MPIIO_H
 #ifdef BRAHMA_ENABLE_MPI
 #include <mpi.h>
+
 #include <stdexcept>
-#include "interface.h"
+
 #include "brahma/interceptor.h"
+#include "interface.h"
 
 namespace brahma {
-class MPIIO :public brahma::Interface{
+class MPIIO : public brahma::Interface {
  private:
   static std::shared_ptr<MPIIO> my_instance;
 
  public:
-  MPIIO():Interface(){}
+  MPIIO() : Interface() {}
+  virtual ~MPIIO(){};
   static std::shared_ptr<MPIIO> get_instance() {
     if (my_instance == nullptr) {
       BRAHMA_LOGINFO("MPIIO class not intercepted but used", "");
@@ -40,98 +43,96 @@ class MPIIO :public brahma::Interface{
   virtual int MPI_File_set_size(MPI_File fh, MPI_Offset size);
 
   virtual int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
-                                 int count, MPI_Datatype datatype,
-                                 MPI_Request *request);
+                                int count, MPI_Datatype datatype,
+                                MPI_Request *request);
 
   virtual int MPI_File_iread(MPI_File fh, void *buf, int count,
-                              MPI_Datatype datatype, MPI_Request *request);
+                             MPI_Datatype datatype, MPI_Request *request);
 
   virtual int MPI_File_iread_shared(MPI_File fh, void *buf, int count,
+                                    MPI_Datatype datatype,
+                                    MPI_Request *request);
+
+  virtual int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset,
+                                 const void *buf, int count,
+                                 MPI_Datatype datatype, MPI_Request *request);
+
+  virtual int MPI_File_iwrite(MPI_File fh, const void *buf, int count,
+                              MPI_Datatype datatype, MPI_Request *request);
+
+  virtual int MPI_File_iwrite_shared(MPI_File fh, const void *buf, int count,
                                      MPI_Datatype datatype,
                                      MPI_Request *request);
 
-  virtual int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset,
-                                  const void *buf, int count,
-                                  MPI_Datatype datatype, MPI_Request *request);
-
-  virtual int MPI_File_iwrite(MPI_File fh, const void *buf, int count,
-                               MPI_Datatype datatype, MPI_Request *request);
-
-  virtual int MPI_File_iwrite_shared(MPI_File fh, const void *buf, int count,
-                                      MPI_Datatype datatype,
-                                      MPI_Request *request);
-
   virtual int MPI_File_open(MPI_Comm comm, const char *filename, int amode,
-                             MPI_Info info, MPI_File *fh);
+                            MPI_Info info, MPI_File *fh);
 
   virtual int MPI_File_read_all_begin(MPI_File fh, void *buf, int count,
-                                       MPI_Datatype datatype);
+                                      MPI_Datatype datatype);
 
   virtual int MPI_File_read_all(MPI_File fh, void *buf, int count,
-                                 MPI_Datatype datatype, MPI_Status *status);
+                                MPI_Datatype datatype, MPI_Status *status);
 
   virtual int MPI_File_read_at_all(MPI_File fh, MPI_Offset offset, void *buf,
-                                    int count, MPI_Datatype datatype,
-                                    MPI_Status *status);
+                                   int count, MPI_Datatype datatype,
+                                   MPI_Status *status);
 
   virtual int MPI_File_read_at_all_begin(MPI_File fh, MPI_Offset offset,
-                                          void *buf, int count,
-                                          MPI_Datatype datatype);
+                                         void *buf, int count,
+                                         MPI_Datatype datatype);
 
   virtual int MPI_File_read_at(MPI_File fh, MPI_Offset offset, void *buf,
-                                int count, MPI_Datatype datatype,
-                                MPI_Status *status);
+                               int count, MPI_Datatype datatype,
+                               MPI_Status *status);
 
   virtual int MPI_File_read(MPI_File fh, void *buf, int count,
-                             MPI_Datatype datatype, MPI_Status *status);
+                            MPI_Datatype datatype, MPI_Status *status);
 
   virtual int MPI_File_read_ordered_begin(MPI_File fh, void *buf, int count,
-                                           MPI_Datatype datatype);
+                                          MPI_Datatype datatype);
 
   virtual int MPI_File_read_ordered(MPI_File fh, void *buf, int count,
-                                     MPI_Datatype datatype, MPI_Status *status);
+                                    MPI_Datatype datatype, MPI_Status *status);
 
   virtual int MPI_File_read_shared(MPI_File fh, void *buf, int count,
-                                    MPI_Datatype datatype, MPI_Status *status);
+                                   MPI_Datatype datatype, MPI_Status *status);
 
   virtual int MPI_File_sync(MPI_File fh);
 
   virtual int MPI_File_write_all_begin(MPI_File fh, const void *buf, int count,
-                                        MPI_Datatype datatype);
+                                       MPI_Datatype datatype);
 
   virtual int MPI_File_write_all(MPI_File fh, const void *buf, int count,
-                                  MPI_Datatype datatype, MPI_Status *status);
-
-  virtual int MPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset,
-                                           const void *buf, int count,
-                                           MPI_Datatype datatype);
-
-  virtual int MPI_File_write_at_all(MPI_File fh, MPI_Offset offset,
-                                     const void *buf, int count,
-                                     MPI_Datatype datatype, MPI_Status *status);
-
-  virtual int MPI_File_write_at(MPI_File fh, MPI_Offset offset,
-                                 const void *buf, int count,
                                  MPI_Datatype datatype, MPI_Status *status);
 
+  virtual int MPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset,
+                                          const void *buf, int count,
+                                          MPI_Datatype datatype);
+
+  virtual int MPI_File_write_at_all(MPI_File fh, MPI_Offset offset,
+                                    const void *buf, int count,
+                                    MPI_Datatype datatype, MPI_Status *status);
+
+  virtual int MPI_File_write_at(MPI_File fh, MPI_Offset offset, const void *buf,
+                                int count, MPI_Datatype datatype,
+                                MPI_Status *status);
+
   virtual int MPI_File_write(MPI_File fh, const void *buf, int count,
-                              MPI_Datatype datatype, MPI_Status *status);
+                             MPI_Datatype datatype, MPI_Status *status);
 
   virtual int MPI_File_write_ordered_begin(MPI_File fh, const void *buf,
-                                            int count, MPI_Datatype datatype);
+                                           int count, MPI_Datatype datatype);
 
   virtual int MPI_File_write_ordered(MPI_File fh, const void *buf, int count,
-                                      MPI_Datatype datatype,
-                                      MPI_Status *status);
+                                     MPI_Datatype datatype, MPI_Status *status);
 
   virtual int MPI_File_write_shared(MPI_File fh, const void *buf, int count,
-                                     MPI_Datatype datatype, MPI_Status *status);
+                                    MPI_Datatype datatype, MPI_Status *status);
 };
 
 }  // namespace brahma
 
-GOTCHA_MACRO_TYPEDEF(MPI_File_close, int, (MPI_File * fh), (fh),
-                     brahma::MPIIO);
+GOTCHA_MACRO_TYPEDEF(MPI_File_close, int, (MPI_File * fh), (fh), brahma::MPIIO);
 
 GOTCHA_MACRO_TYPEDEF(MPI_File_set_size, int, (MPI_File fh, MPI_Offset size),
                      (fh, size), brahma::MPIIO);
@@ -263,5 +264,5 @@ GOTCHA_MACRO_TYPEDEF(MPI_File_write_shared, int,
                       MPI_Datatype datatype, MPI_Status *status),
                      (fh, buf, count, datatype, status), brahma::MPIIO);
 
-#endif // BRAHMA_ENABLE_MPI
+#endif  // BRAHMA_ENABLE_MPI
 #endif  // BRAHMA_MPIIO_H
