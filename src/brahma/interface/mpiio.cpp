@@ -171,7 +171,7 @@ int update_mpiio(gotcha_binding_t *&bindings, size_t &binding_index) {
   GOTCHA_BINDING_MACRO(MPI_File_delete);
   return 0;
 }
-size_t count_mpiio() { return 28; }
+size_t count_mpiio() { return 29; }
 
 namespace brahma {
 std::shared_ptr<MPIIO> MPIIO::my_instance = nullptr;
