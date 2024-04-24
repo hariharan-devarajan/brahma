@@ -128,6 +128,7 @@ class MPIIO : public brahma::Interface {
 
   virtual int MPI_File_write_shared(MPI_File fh, const void *buf, int count,
                                     MPI_Datatype datatype, MPI_Status *status);
+  virtual int MPI_File_delete(const char *filename, MPI_Info info);
 };
 
 }  // namespace brahma
@@ -264,5 +265,8 @@ GOTCHA_MACRO_TYPEDEF(MPI_File_write_shared, int,
                       MPI_Datatype datatype, MPI_Status *status),
                      (fh, buf, count, datatype, status), brahma::MPIIO);
 
+GOTCHA_MACRO_TYPEDEF(MPI_File_delete, int,
+                     (const char *filename, MPI_Info info),
+                     (filename, info), brahma::MPIIO);
 #endif  // BRAHMA_ENABLE_MPI
 #endif  // BRAHMA_MPIIO_H

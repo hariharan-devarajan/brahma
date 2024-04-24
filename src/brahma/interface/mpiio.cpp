@@ -5,8 +5,8 @@
 #ifdef BRAHMA_ENABLE_MPI
 GOTCHA_MACRO(MPI_File_close, int, (MPI_File * fh), (fh), brahma::MPIIO);
 
-GOTCHA_MACRO(MPI_File_set_size, int, (MPI_File fh, MPI_Offset size),
-             (fh, size), brahma::MPIIO);
+GOTCHA_MACRO(MPI_File_set_size, int, (MPI_File fh, MPI_Offset size), (fh, size),
+             brahma::MPIIO);
 
 GOTCHA_MACRO(MPI_File_iread_at, int,
              (MPI_File fh, MPI_Offset offset, void *buf, int count,
@@ -130,8 +130,11 @@ GOTCHA_MACRO(MPI_File_write_shared, int,
              (MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
               MPI_Status *status),
              (fh, buf, count, datatype, status), brahma::MPIIO);
-int update_mpiio(gotcha_binding_t *&bindings, size_t &binding_index) {
 
+GOTCHA_MACRO(MPI_File_delete, int, (const char *filename, MPI_Info info),
+             (filename, info), brahma::MPIIO);
+
+int update_mpiio(gotcha_binding_t *&bindings, size_t &binding_index) {
   GOTCHA_BINDING_MACRO(MPI_File_close);
   GOTCHA_BINDING_MACRO(MPI_File_set_size);
   GOTCHA_BINDING_MACRO(MPI_File_iread_at);
@@ -165,6 +168,7 @@ int update_mpiio(gotcha_binding_t *&bindings, size_t &binding_index) {
   GOTCHA_BINDING_MACRO(MPI_File_write_ordered_begin);
   GOTCHA_BINDING_MACRO(MPI_File_write_ordered);
   GOTCHA_BINDING_MACRO(MPI_File_write_shared);
+  GOTCHA_BINDING_MACRO(MPI_File_delete);
   return 0;
 }
 size_t count_mpiio() { return 28; }
@@ -182,52 +186,51 @@ int MPIIO::MPI_File_set_size(MPI_File fh, MPI_Offset size) {
 }
 
 int MPIIO::MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
-                              int count, MPI_Datatype datatype,
-                              MPI_Request *request) {
+                             int count, MPI_Datatype datatype,
+                             MPI_Request *request) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_iread_at, int,
                         (fh, offset, buf, count, datatype, request));
   return result;
 }
 
 int MPIIO::MPI_File_iread(MPI_File fh, void *buf, int count,
-                           MPI_Datatype datatype, MPI_Request *request) {
+                          MPI_Datatype datatype, MPI_Request *request) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_iread, int,
                         (fh, buf, count, datatype, request));
   return result;
 }
 
 int MPIIO::MPI_File_iread_shared(MPI_File fh, void *buf, int count,
-                                  MPI_Datatype datatype, MPI_Request *request) {
+                                 MPI_Datatype datatype, MPI_Request *request) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_iread_shared, int,
                         (fh, buf, count, datatype, request));
   return result;
 }
 
 int MPIIO::MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, const void *buf,
-                               int count, MPI_Datatype datatype,
-                               MPI_Request *request) {
+                              int count, MPI_Datatype datatype,
+                              MPI_Request *request) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_iwrite_at, int,
                         (fh, offset, buf, count, datatype, request));
   return result;
 }
 
 int MPIIO::MPI_File_iwrite(MPI_File fh, const void *buf, int count,
-                            MPI_Datatype datatype, MPI_Request *request) {
+                           MPI_Datatype datatype, MPI_Request *request) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_iwrite, int,
                         (fh, buf, count, datatype, request));
   return result;
 }
 
 int MPIIO::MPI_File_iwrite_shared(MPI_File fh, const void *buf, int count,
-                                   MPI_Datatype datatype,
-                                   MPI_Request *request) {
+                                  MPI_Datatype datatype, MPI_Request *request) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_iwrite_shared, int,
                         (fh, buf, count, datatype, request));
   return result;
 }
 
 int MPIIO::MPI_File_open(MPI_Comm comm, const char *filename, int amode,
-                          MPI_Info info, MPI_File *fh) {
+                         MPI_Info info, MPI_File *fh) {
   utility->exclude_file(filename, brahma::InterfaceType::INTERFACE_POSIX);
   BRAHMA_UNWRAPPED_FUNC(MPI_File_open, int, (comm, filename, amode, info, fh));
   utility->include_file(filename, brahma::InterfaceType::INTERFACE_POSIX);
@@ -235,66 +238,64 @@ int MPIIO::MPI_File_open(MPI_Comm comm, const char *filename, int amode,
 }
 
 int MPIIO::MPI_File_read_all_begin(MPI_File fh, void *buf, int count,
-                                    MPI_Datatype datatype) {
+                                   MPI_Datatype datatype) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_read_all_begin, int,
                         (fh, buf, count, datatype));
   return result;
 }
 
 int MPIIO::MPI_File_read_all(MPI_File fh, void *buf, int count,
-                              MPI_Datatype datatype, MPI_Status *status) {
+                             MPI_Datatype datatype, MPI_Status *status) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_read_all, int,
                         (fh, buf, count, datatype, status));
   return result;
 }
 
 int MPIIO::MPI_File_read_at_all(MPI_File fh, MPI_Offset offset, void *buf,
-                                 int count, MPI_Datatype datatype,
-                                 MPI_Status *status) {
+                                int count, MPI_Datatype datatype,
+                                MPI_Status *status) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_read_at_all, int,
                         (fh, offset, buf, count, datatype, status));
   return result;
 }
 
-int MPIIO::MPI_File_read_at_all_begin(MPI_File fh, MPI_Offset offset,
-                                       void *buf, int count,
-                                       MPI_Datatype datatype) {
+int MPIIO::MPI_File_read_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf,
+                                      int count, MPI_Datatype datatype) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_read_at_all_begin, int,
                         (fh, offset, buf, count, datatype));
   return result;
 }
 
 int MPIIO::MPI_File_read_at(MPI_File fh, MPI_Offset offset, void *buf,
-                             int count, MPI_Datatype datatype,
-                             MPI_Status *status) {
+                            int count, MPI_Datatype datatype,
+                            MPI_Status *status) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_read_at, int,
                         (fh, offset, buf, count, datatype, status));
   return result;
 }
 
 int MPIIO::MPI_File_read(MPI_File fh, void *buf, int count,
-                          MPI_Datatype datatype, MPI_Status *status) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_File_read, int,
-                        (fh, buf, count, datatype, status));
+                         MPI_Datatype datatype, MPI_Status *status) {
+  BRAHMA_UNWRAPPED_FUNC(MPI_File_read, int, (fh, buf, count, datatype, status));
   return result;
 }
 
 int MPIIO::MPI_File_read_ordered_begin(MPI_File fh, void *buf, int count,
-                                        MPI_Datatype datatype) {
+                                       MPI_Datatype datatype) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_read_ordered_begin, int,
                         (fh, buf, count, datatype));
   return result;
 }
 
 int MPIIO::MPI_File_read_ordered(MPI_File fh, void *buf, int count,
-                                  MPI_Datatype datatype, MPI_Status *status) {
+                                 MPI_Datatype datatype, MPI_Status *status) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_read_ordered, int,
                         (fh, buf, count, datatype, status));
   return result;
 }
 
 int MPIIO::MPI_File_read_shared(MPI_File fh, void *buf, int count,
-                                 MPI_Datatype datatype, MPI_Status *status) {
+                                MPI_Datatype datatype, MPI_Status *status) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_read_shared, int,
                         (fh, buf, count, datatype, status));
   return result;
@@ -306,69 +307,74 @@ int MPIIO::MPI_File_sync(MPI_File fh) {
 }
 
 int MPIIO::MPI_File_write_all_begin(MPI_File fh, const void *buf, int count,
-                                     MPI_Datatype datatype) {
+                                    MPI_Datatype datatype) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_write_all_begin, int,
                         (fh, buf, count, datatype));
   return result;
 }
 
 int MPIIO::MPI_File_write_all(MPI_File fh, const void *buf, int count,
-                               MPI_Datatype datatype, MPI_Status *status) {
+                              MPI_Datatype datatype, MPI_Status *status) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_write_all, int,
                         (fh, buf, count, datatype, status));
   return result;
 }
 
 int MPIIO::MPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset,
-                                        const void *buf, int count,
-                                        MPI_Datatype datatype) {
+                                       const void *buf, int count,
+                                       MPI_Datatype datatype) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_write_at_all_begin, int,
                         (fh, offset, buf, count, datatype));
   return result;
 }
 
 int MPIIO::MPI_File_write_at_all(MPI_File fh, MPI_Offset offset,
-                                  const void *buf, int count,
-                                  MPI_Datatype datatype, MPI_Status *status) {
+                                 const void *buf, int count,
+                                 MPI_Datatype datatype, MPI_Status *status) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_write_at_all, int,
                         (fh, offset, buf, count, datatype, status));
   return result;
 }
 
 int MPIIO::MPI_File_write_at(MPI_File fh, MPI_Offset offset, const void *buf,
-                              int count, MPI_Datatype datatype,
-                              MPI_Status *status) {
+                             int count, MPI_Datatype datatype,
+                             MPI_Status *status) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_write_at, int,
                         (fh, offset, buf, count, datatype, status));
   return result;
 }
 
 int MPIIO::MPI_File_write(MPI_File fh, const void *buf, int count,
-                           MPI_Datatype datatype, MPI_Status *status) {
+                          MPI_Datatype datatype, MPI_Status *status) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_write, int,
                         (fh, buf, count, datatype, status));
   return result;
 }
 
-int MPIIO::MPI_File_write_ordered_begin(MPI_File fh, const void *buf,
-                                         int count, MPI_Datatype datatype) {
+int MPIIO::MPI_File_write_ordered_begin(MPI_File fh, const void *buf, int count,
+                                        MPI_Datatype datatype) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_write_ordered_begin, int,
                         (fh, buf, count, datatype));
   return result;
 }
 
 int MPIIO::MPI_File_write_ordered(MPI_File fh, const void *buf, int count,
-                                   MPI_Datatype datatype, MPI_Status *status) {
+                                  MPI_Datatype datatype, MPI_Status *status) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_write_ordered, int,
                         (fh, buf, count, datatype, status));
   return result;
 }
 
 int MPIIO::MPI_File_write_shared(MPI_File fh, const void *buf, int count,
-                                  MPI_Datatype datatype, MPI_Status *status) {
+                                 MPI_Datatype datatype, MPI_Status *status) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_write_shared, int,
                         (fh, buf, count, datatype, status));
   return result;
 }
+
+int MPIIO::MPI_File_delete(const char *filename, MPI_Info info) {
+  BRAHMA_UNWRAPPED_FUNC(MPI_File_delete, int, (filename, info));
+  return result;
+}
 }  // namespace brahma
-#endif // BRAHMA_ENABLE_MPI
+#endif  // BRAHMA_ENABLE_MPI
