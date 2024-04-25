@@ -9,9 +9,11 @@ size_t total_apis = 0;
 }  // namespace brahma
 
 extern int brahma_bind_functions() {
+  BRAHMA_LOGGER_INIT();
   if (brahma::bindings == nullptr) {
 #ifdef BRAHMA_ENABLE_MPI
-    brahma::total_apis = count_posix() + count_mpiio() + count_stdio() + count_mpi();
+    brahma::total_apis =
+        count_posix() + count_mpiio() + count_stdio() + count_mpi();
 #else
     brahma::total_apis = count_posix() + count_stdio();
 #endif
@@ -25,7 +27,9 @@ extern int brahma_bind_functions() {
     update_mpi(brahma::bindings, current_index);
 #endif
     if (current_index != brahma::total_apis) {
-      BRAHMA_LOGERROR("brahma_bind_functions failed", "");
+      BRAHMA_LOG_ERROR(
+          "brahma_bind_functions do not match total apis %ld of %ld",
+          current_index, brahma::total_apis);
       return -1;
     }
   }
@@ -41,5 +45,6 @@ extern int brahma_get_binding(gotcha_binding_t*& bindings_i,
 
 extern int free_bindings() {
   free(brahma::bindings);
+  
   return 0;
 }

@@ -1,5 +1,7 @@
 {
     "cmake.configureArgs": [
-        "-DCMAKE_PREFIX_PATH=/mount/shared/install"
+        "-DCMAKE_PREFIX_PATH=/g/g92/haridev/brahma/dependency/.spack-env/view",
+        "-DBRAHMA_BUILD_WITH_MPI=ON",
+        "-DBRAHMA_ENABLE_TESTING=ON"
     ]
 }
