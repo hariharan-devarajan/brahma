@@ -95,3 +95,38 @@ macro(append_str_tf STRING_VAR)
     endif ()
   endforeach()
 endmacro ()
+
+function(install_external_project name url tag)
+    find_package(${name})
+    set(found_var ${name}_FOUND)
+    if (${${found_var}})
+        set(include_var ${name}_INCLUDE_DIRS)
+        set(library_var ${name}_LIBRARY_DIR)
+        include_directories(${${include_var}})
+        link_directories(${${library_var}})
+        message(STATUS "[${PROJECT_NAME}] found dependency already installed ${name} with include ${${include_var}} and library ${${library_var}}")
+    else()
+    set (configure_args ${ARGN})
+    message(STATUS "[${PROJECT_NAME}] Got extra configure arguments for ${name} dependency as ${configure_args}")
+    ExternalProject_Add(
+            ${name}
+            PREFIX ${CMAKE_BINARY_DIR}
+            GIT_REPOSITORY ${url}
+            GIT_TAG ${tag}
+            TIMEOUT 10
+            GIT_SHALLOW 1
+            GIT_SUBMODULES ""
+            UPDATE_COMMAND ""
+            PATCH_COMMAND git submodule update --init
+            CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}" ${configure_args}
+            BUILD_COMMAND make -j
+            INSTALL_COMMAND make install  -j
+            LOG_DOWNLOAD ON
+    )
+    include_directories(${CMAKE_BINARY_DIR}/include)
+    link_directories(${CMAKE_BINARY_DIR}/lib)
+    link_directories(${CMAKE_BINARY_DIR}/lib64)
+    include_directories(${CMAKE_BINARY_DIR}/src/${name}/include)
+    endif()
+endfunction()
+
