@@ -276,6 +276,7 @@ function(brahma_install_headers public_headers current_dir)
         file(COPY ${header}
                 DESTINATION "${CMAKE_INCLUDE_OUTPUT_DIRECTORY}/${header_directory_path}")
     endforeach ()
+    set(INCLUDE_INSTALL_DIRS ${public_headers})
 endfunction()
 
 
@@ -313,7 +314,7 @@ set(BRAHMA_SRC_PRIVATE )
 
 if(BRAHMA_BUILD_WITH_MPI)
   set(BRAHMA_SRC ${BRAHMA_SRC} ${BRAHMA_MPI_SRC})
-  set(BRAHMA_PUBLIC_INCLUDE ${BRAHMA_PUBLIC_INCLUDE} ${BRAHMA_MPI_INCLUDE})
+  set(BRAHMA_PUBLIC_HEADER ${BRAHMA_PUBLIC_HEADER} ${BRAHMA_MPI_INCLUDE})
 endif()
 
 add_library(${PROJECT_NAME} SHARED ${BRAHMA_SRC} ${BRAHMA_PUBLIC_HEADER} ${BRAHMA_PRIVATE_HEADER})
@@ -322,9 +323,17 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     LINKER_LANGUAGE CXX
     VERSION ${BRAHMA_PACKAGE_VERSION}
     SOVERSION 1
-    PUBLIC_HEADER include/brahma.h)
+    PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/brahma.h)
 target_compile_definitions(${PROJECT_NAME} PUBLIC BRAHMA_HAS_CONFIG)
 brahma_install_headers("${BRAHMA_PUBLIC_HEADER};${BRAHMA_SRC_PRIVATE}" ${CMAKE_CURRENT_SOURCE_DIR})
+
+install(
+        TARGETS ${PROJECT_NAME}
+        EXPORT ${BRAHMA_EXPORTED_TARGETS}
+        LIBRARY DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
+        ARCHIVE DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
+        RUNTIME DESTINATION ${BRAHMA_INSTALL_BIN_DIR}
+)
 #-----------------------------------------------------------------------------
 # Testing
 #-----------------------------------------------------------------------------
@@ -340,18 +349,28 @@ endif()
 #-----------------------------------------------------------------------------
 # Configure the config.cmake file for the build directory
 #-----------------------------------------------------------------------------
-configure_file(
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/configure_files/${PROJECT_NAME}-config.cmake.build.in
-        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/${PROJECT_NAME}-config.cmake @ONLY
+        "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+        INSTALL_DESTINATION  ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/${PROJECT_NAME}-config.cmake 
+        PATH_VARS CMAKE_BINARY_DIR
 )
 
-configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/configure_files/${PROJECT_NAME}-config.cmake.install.in
-        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/install/${PROJECT_NAME}-config.cmake @ONLY
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/configure_files/${PROJECT_NAME}-config.cmake.install.in
+        "${CMAKE_BINARY_DIR}/install/${PROJECT_NAME}-config.cmake"
+        INSTALL_DESTINATION  ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/install/${PROJECT_NAME}-config.cmake
+        PATH_VARS CMAKE_BINARY_DIR
 )
+
+# configure_file(
+#         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/configure_files/${PROJECT_NAME}-config.cmake.install.in
+#         ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/install/${PROJECT_NAME}-config.cmake @ONLY
+# )
 install(
         FILES
-        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/install/${PROJECT_NAME}-config.cmake
+        "${CMAKE_BINARY_DIR}/install/${PROJECT_NAME}-config.cmake"
         DESTINATION
         ${BRAHMA_LIBDIR}/cmake/${PROJECT_NAME}
 )
@@ -370,8 +389,8 @@ install(
         ${BRAHMA_LIBDIR}/cmake/${PROJECT_NAME}
 )
 
-# export(EXPORT ${BRAHMA_EXPORTED_TARGETS}
-#         FILE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/${PROJECT_NAME}Targets.cmake")
+export(EXPORT ${BRAHMA_EXPORTED_TARGETS}
+        FILE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/${PROJECT_NAME}Targets.cmake")
 
 # Write the configure file
 configure_file("${CMAKE_SOURCE_DIR}/cmake/configure_files/brahma_config.hpp.in"
@@ -386,7 +405,7 @@ include(CMakePackageConfigHelpers)
 
 # Write the version file. This is independent of build/install tree.
 write_basic_package_version_file(
-  BRAHMAConfigVersion.cmake
+  BrahmaConfigVersion.cmake
   VERSION "${BRAHMA_PACKAGE_VERSION}"
   COMPATIBILITY SameMajorVersion)
 
@@ -395,13 +414,19 @@ install(FILES
         DESTINATION
         ${BRAHMA_INSTALL_INCLUDE_DIR}/brahma)
 
-# install(EXPORT
-#         ${BRAHMA_EXPORTED_TARGETS}
-#         DESTINATION
-#         ${BRAHMA_LIBDIR}/cmake/${PROJECT_NAME}
-#         FILE
-#         ${BRAHMA_EXPORTED_TARGETS}.cmake
-#         )
+install(EXPORT
+        ${BRAHMA_EXPORTED_TARGETS}
+        DESTINATION
+        ${BRAHMA_LIBDIR}/cmake/${PROJECT_NAME}
+        FILE
+        ${BRAHMA_EXPORTED_TARGETS}.cmake
+        )
+
+# Install export
+install(EXPORT ${BRAHMA_EXPORTED_TARGETS}
+        NAMESPACE brahma::
+        FILE BrahmaTargets.cmake
+        DESTINATION "${BRAHMA_LIBDIR}/cmake/brahma")
 
 # Install license and readme
 install(FILES
@@ -410,6 +435,9 @@ install(FILES
         "${PROJECT_SOURCE_DIR}/README.md"
         DESTINATION
         ${BRAHMA_INSTALL_DOCDIR})
+
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/brahma-utils.cmake"
+        DESTINATION "${BRAHMA_LIBDIR}/cmake/brahma")
 
 
 ###############################################################################
