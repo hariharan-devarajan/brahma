@@ -94,6 +94,7 @@ endif (BRAHMA_USE_CLANG_LIBCXX)
 
 # Public
 option(BRAHMA_BUILD_WITH_MPI "Build with mpi and mpiio interception libraries." OFF)
+option(BRAHMA_BUILD_DEPENDENCIES "Build Dependencies for Brahma" OFF)
 
 if(BRAHMA_BUILD_WITH_MPI)
     set(BRAHMA_ENABLE_MPI 1)
@@ -216,10 +217,82 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
             "MinSizeRel" "RelWithDebInfo")
 endif ()
+
+
+function(brahma_install_headers public_headers current_dir)
+    #message("-- [${PROJECT_NAME}] " "installing headers ${public_headers}")
+    foreach (header ${public_headers})
+        file(RELATIVE_PATH header_file_path "${PROJECT_SOURCE_DIR}/src" "${header}")
+        #message("-- [${PROJECT_NAME}] " "installing header ${header_file_path}")
+        get_filename_component(header_directory_path "${header_file_path}" DIRECTORY)
+        install(
+                FILES ${header}
+                DESTINATION "include/${header_directory_path}"
+        )
+        file(COPY ${header}
+                DESTINATION "${CMAKE_INCLUDE_OUTPUT_DIRECTORY}/${header_directory_path}")
+    endforeach ()
+endfunction()
+
+
 #------------------------------------------------------------------------------
 # Dependencies
 #------------------------------------------------------------------------------
 
+# Install Dependencies
+# =============================================================================
+if (BRAHMA_BUILD_DEPENDENCIES)
+  add_subdirectory(dependency)
+
+else()
+
+
+#-----------------------------------------------------------------------------
+# Source for BRAHMA
+#-----------------------------------------------------------------------------
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+include_directories(${CMAKE_SOURCE_DIR}/include)  # public header
+include_directories(${CMAKE_SOURCE_DIR}/src)  # private header
+include_directories(${CMAKE_BINARY_DIR}/include)  # build header
+
+set(BRAHMA_MPI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/mpiio.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/mpi.cpp)
+set(BRAHMA_MPI_INCLUDE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/mpiio.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/mpi.h)
+
+set(BRAHMA_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/brahma.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/posix.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/stdio.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interceptor.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/interface.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/interface_utility.cpp)
+set(BRAHMA_PRIVATE_HEADER  )
+set(BRAHMA_PUBLIC_HEADER        ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/logging.h
+                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interceptor.h
+                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/brahma.h
+                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/interface.h
+                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/interface_utility.h
+                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/enumeration.h
+                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/singleton.h
+                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/posix.h
+                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/stdio.h)
+set(BRAHMA_SRC_PRIVATE )
+
+if(BRAHMA_BUILD_WITH_MPI)
+  set(BRAHMA_SRC ${BRAHMA_SRC} ${BRAHMA_MPI_SRC})
+  set(BRAHMA_PUBLIC_INCLUDE ${BRAHMA_PUBLIC_INCLUDE} ${BRAHMA_MPI_INCLUDE})
+endif()
+
+add_library(${PROJECT_NAME} SHARED ${BRAHMA_SRC} ${BRAHMA_PUBLIC_HEADER} ${BRAHMA_PRIVATE_HEADER})
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    LINKER_LANGUAGE CXX
+    VERSION ${BRAHMA_PACKAGE_VERSION}
+    SOVERSION 1
+    PUBLIC_HEADER include/brahma.h)
+target_compile_definitions(${PROJECT_NAME} PUBLIC BRAHMA_HAS_CONFIG)
+brahma_install_headers("${BRAHMA_PUBLIC_HEADER};${BRAHMA_SRC_PRIVATE}" ${CMAKE_CURRENT_SOURCE_DIR})
 # Required Dependencies
 # =============================================================================
 set(DEPENDENCY_LIB )
@@ -262,69 +335,8 @@ if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
     endif ()
 endif()
 
-
-function(brahma_install_headers public_headers current_dir)
-    #message("-- [${PROJECT_NAME}] " "installing headers ${public_headers}")
-    foreach (header ${public_headers})
-        file(RELATIVE_PATH header_file_path "${PROJECT_SOURCE_DIR}/src" "${header}")
-        #message("-- [${PROJECT_NAME}] " "installing header ${header_file_path}")
-        get_filename_component(header_directory_path "${header_file_path}" DIRECTORY)
-        install(
-                FILES ${header}
-                DESTINATION "include/${header_directory_path}"
-        )
-        file(COPY ${header}
-                DESTINATION "${CMAKE_INCLUDE_OUTPUT_DIRECTORY}/${header_directory_path}")
-    endforeach ()
-endfunction()
-
-
-#-----------------------------------------------------------------------------
-# Source for BRAHMA
-#-----------------------------------------------------------------------------
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-include_directories(${CMAKE_SOURCE_DIR}/include)  # public header
-include_directories(${CMAKE_SOURCE_DIR}/src)  # private header
-include_directories(${CMAKE_BINARY_DIR}/include)  # build header
-
-set(BRAHMA_MPI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/mpiio.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/mpi.cpp)
-set(BRAHMA_MPI_INCLUDE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/mpiio.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/mpi.h)
-
-set(BRAHMA_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/brahma.cpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/posix.cpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/stdio.cpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interceptor.cpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/interface.cpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/interface_utility.cpp)
-set(BRAHMA_PRIVATE_HEADER  )
-set(BRAHMA_PUBLIC_HEADER        ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/logging.h
-                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interceptor.h
-                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/brahma.h
-                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/interface.h
-                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/interface_utility.h
-                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/enumeration.h
-                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/singleton.h
-                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/posix.h
-                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/stdio.h)
-set(BRAHMA_SRC_PRIVATE )
-
-if(BRAHMA_BUILD_WITH_MPI)
-  set(BRAHMA_SRC ${BRAHMA_SRC} ${BRAHMA_MPI_SRC})
-  set(BRAHMA_PUBLIC_INCLUDE ${BRAHMA_PUBLIC_INCLUDE} ${BRAHMA_MPI_INCLUDE})
-endif()
-
-add_library(${PROJECT_NAME} SHARED ${BRAHMA_SRC} ${BRAHMA_PUBLIC_HEADER} ${BRAHMA_PRIVATE_HEADER})
 target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB})
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    LINKER_LANGUAGE CXX
-    VERSION ${BRAHMA_PACKAGE_VERSION}
-    SOVERSION 1
-    PUBLIC_HEADER include/brahma.h)
-target_compile_definitions(${PROJECT_NAME} PUBLIC BRAHMA_HAS_CONFIG)
-brahma_install_headers("${BRAHMA_PUBLIC_HEADER};${BRAHMA_SRC_PRIVATE}" ${CMAKE_CURRENT_SOURCE_DIR})
+
 #-----------------------------------------------------------------------------
 # Testing
 #-----------------------------------------------------------------------------
@@ -516,3 +528,4 @@ install(FILES "${CMAKE_BINARY_DIR}/brahma_module.lua.install"
   RENAME "${BRAHMA_MODULEFILE_NAME}"
   DESTINATION
   "${BRAHMA_INSTALL_SYSCONFDIR}")
+endif()
