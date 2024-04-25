@@ -9,6 +9,7 @@ size_t total_apis = 0;
 }  // namespace brahma
 
 extern int brahma_bind_functions() {
+  BRAHMA_LOGGER_INIT();
   if (brahma::bindings == nullptr) {
 #ifdef BRAHMA_ENABLE_MPI
     brahma::total_apis =
@@ -44,5 +45,6 @@ extern int brahma_get_binding(gotcha_binding_t*& bindings_i,
 
 extern int free_bindings() {
   free(brahma::bindings);
+  
   return 0;
 }
