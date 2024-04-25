@@ -73,7 +73,6 @@ jobs:
           make -j
       - name: Build
         run: |
-          mkdir build
           cd build
           cmake -DBRAHMA_BUILD_WITH_MPI=${MPI} -DBRAHMA_ENABLE_TESTING=ON -DBRAHMA_BUILD_DEPENDENCIES=OFF ..
           make -j
