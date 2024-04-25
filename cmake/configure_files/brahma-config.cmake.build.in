@@ -2,7 +2,7 @@
 # brahma::<exe-name>-bin (e.g., brahma::brahma-bin) and the library will
 # be brahma::brahma.
 
-include("${CMAKE_CURRENT_LIST_DIR}/BRAHMAConfigVersion.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/brahma-config-version.cmake")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/modules")
@@ -10,7 +10,7 @@ list(APPEND CMAKE_MODULE_PATH "@EXTRA_CMAKE_MODULE_DIR@")
 
 #include(GNUInstallDirs)
 include(ExternalProject)
-include(BRAHMACMakeUtilities)
+include(brahma-utils)
 include(CMakePackageConfigHelpers)
 
 
@@ -53,7 +53,7 @@ foreach (_DIR ${_TMP_LIBRARY_DIRS})
 endforeach (_DIR ${_TMP_LIBRARY_DIRS})
 
 if (NOT TARGET brahma::brahma)
-  include(${CMAKE_CURRENT_LIST_DIR}/BRAHMATargets.cmake)
+  include(${CMAKE_CURRENT_LIST_DIR}/brahma-targets.cmake)
 endif (NOT TARGET brahma::brahma)
 
 find_package(gotcha 2.1.2 REQUIRED)
@@ -62,6 +62,6 @@ if (BRAHMA_INCLUDE_MPI)
   find_package(MPI COMPONENTS CXX REQUIRED)
 endif()
 
-check_required_components(BRAHMA)
+check_required_components(brahma)
 
-set(BRAHMA_LIBRARIES brahma::brahma)
+set(BRAHMA_LIBRARIES brahma)
