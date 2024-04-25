@@ -36,3 +36,5 @@
 /dependency/.spack-env/
 /build/
 *.lock
+.cache
+*.core

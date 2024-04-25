@@ -5,89 +5,122 @@
 #include <fcntl.h>
 
 GOTCHA_MACRO(open, int, (const char *pathname, int flags, mode_t mode),
-             (pathname, flags, mode), brahma::POSIX);
+             (pathname, flags, mode), brahma::POSIX)
 
 GOTCHA_MACRO(creat64, int, (const char *path, mode_t mode), (path, mode),
-             brahma::POSIX);
+             brahma::POSIX)
 
 GOTCHA_MACRO(open64, int, (const char *path, int flags, mode_t mode),
-             (path, flags, mode), brahma::POSIX);
+             (path, flags, mode), brahma::POSIX)
 
-GOTCHA_MACRO(close, int, (int fd), (fd), brahma::POSIX);
+GOTCHA_MACRO(close, int, (int fd), (fd), brahma::POSIX)
 
 GOTCHA_MACRO(write, ssize_t, (int fd, const void *buf, size_t count),
-             (fd, buf, count), brahma::POSIX);
+             (fd, buf, count), brahma::POSIX)
 
 GOTCHA_MACRO(read, ssize_t, (int fd, void *buf, size_t count), (fd, buf, count),
-             brahma::POSIX);
+             brahma::POSIX)
 
 GOTCHA_MACRO(lseek, off_t, (int fd, off_t offset, int whence),
-             (fd, offset, whence), brahma::POSIX);
+             (fd, offset, whence), brahma::POSIX)
 
 GOTCHA_MACRO(lseek64, off64_t, (int fd, off64_t offset, int whence),
-             (fd, offset, whence), brahma::POSIX);
+             (fd, offset, whence), brahma::POSIX)
 
 GOTCHA_MACRO(pread, ssize_t, (int fd, void *buf, size_t count, off_t offset),
-             (fd, buf, count, offset), brahma::POSIX);
+             (fd, buf, count, offset), brahma::POSIX)
 
 GOTCHA_MACRO(pread64, ssize_t,
              (int fd, void *buf, size_t count, off64_t offset),
-             (fd, buf, count, offset), brahma::POSIX);
+             (fd, buf, count, offset), brahma::POSIX)
 
 GOTCHA_MACRO(pwrite, ssize_t,
              (int fd, const void *buf, size_t count, off_t offset),
-             (fd, buf, count, offset), brahma::POSIX);
+             (fd, buf, count, offset), brahma::POSIX)
 
 GOTCHA_MACRO(pwrite64, ssize_t,
              (int fd, const void *buf, size_t count, off64_t offset),
-             (fd, buf, count, offset), brahma::POSIX);
+             (fd, buf, count, offset), brahma::POSIX)
 
-GOTCHA_MACRO(fsync, int, (int fd), (fd), brahma::POSIX);
+GOTCHA_MACRO(fsync, int, (int fd), (fd), brahma::POSIX)
 
-GOTCHA_MACRO(fdatasync, int, (int fd), (fd), brahma::POSIX);
+GOTCHA_MACRO(fdatasync, int, (int fd), (fd), brahma::POSIX)
 
-GOTCHA_MACRO(openat, int, (int dirfd, const char *pathname, int flags, mode_t mode), (dirfd, pathname, flags, mode), brahma::POSIX);
-GOTCHA_MACRO(mmap, void *, (void *addr, size_t length, int prot, int flags, int fd, off_t offset),
-(addr, length, prot, flags, fd, offset), brahma::POSIX);
-GOTCHA_MACRO(mmap64, void *, (void *addr, size_t length, int prot, int flags, int fd, off64_t offset),
-(addr, length, prot, flags, fd, offset), brahma::POSIX);
-GOTCHA_MACRO(__xstat, int, (int vers, const char *path, stat *buf), (vers, path, buf), brahma::POSIX);
-GOTCHA_MACRO(__xstat64, int, (int vers, const char *path, stat64 *buf), (vers, path, buf), brahma::POSIX);
-GOTCHA_MACRO(__lxstat, int, (int vers, const char *path, stat *buf), (vers, path, buf), brahma::POSIX);
-GOTCHA_MACRO(__lxstat64, int, (int vers, const char *path, stat64 *buf), (vers, path, buf), brahma::POSIX);
-GOTCHA_MACRO(__fxstat, int, (int vers, int fd, stat *buf), (vers, path, buf), brahma::POSIX);
-GOTCHA_MACRO(__fxstat64, int, (int vers, int fd, stat64 *buf), (vers, path, buf), brahma::POSIX);
-GOTCHA_MACRO(getcwd, char*, (char *buf, size_t size),(buf, size), brahma::POSIX);
-GOTCHA_MACRO(mkdir, int, (const char *pathname, mode_t mode), (pathname, mode), brahma::POSIX);
-GOTCHA_MACRO(rmdir, int, (const char *pathname), (pathname), brahma::POSIX);
-GOTCHA_MACRO(chdir, int, (const char *path), (path), brahma::POSIX);
-GOTCHA_MACRO(link, int, (const char *oldpath, const char *newpath), (oldpath, newpath), brahma::POSIX);
-GOTCHA_MACRO(linkat, int, (int fd1, const char *path1, int fd2, const char *path2, int flag), (fd1, path1, fd2, path2, flag), brahma::POSIX);
-GOTCHA_MACRO(unlink, int, (const char *pathname), (pathname), brahma::POSIX);
-GOTCHA_MACRO(symlink, int, (const char *path1, const char *path2), (path1, path2), brahma::POSIX);
-GOTCHA_MACRO(symlinkat, int, (const char *path1, int fd, const char *path2), (path1, fd, path2), brahma::POSIX);
-GOTCHA_MACRO(readlink, ssize_t, (const char *path, char *buf, size_t bufsize), (path, buf, bufsize), brahma::POSIX);
-GOTCHA_MACRO(readlinkat, ssize_t, (int fd, const char *path, char *buf, size_t bufsize), (fd, path, buf, bufsize), brahma::POSIX);
-GOTCHA_MACRO(rename, int, (const char *oldpath, const char *newpath), (oldpath, newpath), brahma::POSIX);
-GOTCHA_MACRO(chmod, int, (const char *path, mode_t mode), (path, mode), brahma::POSIX);
-GOTCHA_MACRO(chown, int, (const char *path, uid_t owner, gid_t group), (path, owner, group), brahma::POSIX);
-GOTCHA_MACRO(lchown, int, (const char *path, uid_t owner, gid_t group), (path, owner, group), brahma::POSIX);
-GOTCHA_MACRO(utime, int, (const char *filename, const utimbuf *buf), (filename, buf), brahma::POSIX);
-GOTCHA_MACRO(opendir, DIR*, (const char *name), (name), brahma::POSIX);
-GOTCHA_MACRO(readdir, struct dirent*, (DIR *dir), (dir), brahma::POSIX);
-GOTCHA_MACRO(closedir, int, (DIR *dir), (dir), brahma::POSIX);
-GOTCHA_MACRO(rewinddir, void, (DIR *dir), (dir), brahma::POSIX);
-GOTCHA_MACRO(fcntl, int, (int fd, int cmd, long arg), (fd, cmd, arg), brahma::POSIX);
-GOTCHA_MACRO(dup, int, (int oldfd), (oldfd), brahma::POSIX);
-GOTCHA_MACRO(dup2, int, (int oldfd, int newfd), (oldfd, newfd), brahma::POSIX);
-GOTCHA_MACRO(pipe, int, (int pipefd[2]), (pipefd), brahma::POSIX);
-GOTCHA_MACRO(mkfifo, int, (const char *pathname, mode_t mode), (pathname, mode), brahma::POSIX);
-GOTCHA_MACRO(umask, mode_t, (mode_t mask), (mask), brahma::POSIX);
-GOTCHA_MACRO(access, int, (const char *path, int amode), (path, amode), brahma::POSIX);
-GOTCHA_MACRO(faccessat, int, (int fd, const char *path, int amode, int flag), (fd, path, amode, flag), brahma::POSIX);
-GOTCHA_MACRO(remove, int, (const char *pathname), (pathname), brahma::POSIX);
-GOTCHA_MACRO(truncate, int, (const char *pathname, off_t length), (pathname, length), brahma::POSIX);
-GOTCHA_MACRO(ftruncate, int, (int fd, off_t length), (fd, length), brahma::POSIX);
+GOTCHA_MACRO(openat, int,
+             (int dirfd, const char *pathname, int flags, mode_t mode),
+             (dirfd, pathname, flags, mode), brahma::POSIX)
+GOTCHA_MACRO(mmap, void *,
+             (void *addr, size_t length, int prot, int flags, int fd,
+              off_t offset),
+             (addr, length, prot, flags, fd, offset), brahma::POSIX)
+GOTCHA_MACRO(mmap64, void *,
+             (void *addr, size_t length, int prot, int flags, int fd,
+              off64_t offset),
+             (addr, length, prot, flags, fd, offset), brahma::POSIX)
+GOTCHA_MACRO(__xstat, int, (int vers, const char *path, stat *buf),
+             (vers, path, buf), brahma::POSIX)
+GOTCHA_MACRO(__xstat64, int, (int vers, const char *path, stat64 *buf),
+             (vers, path, buf), brahma::POSIX)
+GOTCHA_MACRO(__lxstat, int, (int vers, const char *path, stat *buf),
+             (vers, path, buf), brahma::POSIX)
+GOTCHA_MACRO(__lxstat64, int, (int vers, const char *path, stat64 *buf),
+             (vers, path, buf), brahma::POSIX)
+GOTCHA_MACRO(__fxstat, int, (int vers, int fd, stat *buf), (vers, path, buf),
+             brahma::POSIX)
+GOTCHA_MACRO(__fxstat64, int, (int vers, int fd, stat64 *buf),
+             (vers, path, buf), brahma::POSIX)
+GOTCHA_MACRO(getcwd, char *, (char *buf, size_t size), (buf, size),
+             brahma::POSIX)
+GOTCHA_MACRO(mkdir, int, (const char *pathname, mode_t mode), (pathname, mode),
+             brahma::POSIX)
+GOTCHA_MACRO(rmdir, int, (const char *pathname), (pathname), brahma::POSIX)
+GOTCHA_MACRO(chdir, int, (const char *path), (path), brahma::POSIX)
+GOTCHA_MACRO(link, int, (const char *oldpath, const char *newpath),
+             (oldpath, newpath), brahma::POSIX)
+GOTCHA_MACRO(linkat, int,
+             (int fd1, const char *path1, int fd2, const char *path2, int flag),
+             (fd1, path1, fd2, path2, flag), brahma::POSIX)
+GOTCHA_MACRO(unlink, int, (const char *pathname), (pathname), brahma::POSIX)
+GOTCHA_MACRO(symlink, int, (const char *path1, const char *path2),
+             (path1, path2), brahma::POSIX)
+GOTCHA_MACRO(symlinkat, int, (const char *path1, int fd, const char *path2),
+             (path1, fd, path2), brahma::POSIX)
+GOTCHA_MACRO(readlink, ssize_t, (const char *path, char *buf, size_t bufsize),
+             (path, buf, bufsize), brahma::POSIX)
+GOTCHA_MACRO(readlinkat, ssize_t,
+             (int fd, const char *path, char *buf, size_t bufsize),
+             (fd, path, buf, bufsize), brahma::POSIX)
+GOTCHA_MACRO(rename, int, (const char *oldpath, const char *newpath),
+             (oldpath, newpath), brahma::POSIX)
+GOTCHA_MACRO(chmod, int, (const char *path, mode_t mode), (path, mode),
+             brahma::POSIX)
+GOTCHA_MACRO(chown, int, (const char *path, uid_t owner, gid_t group),
+             (path, owner, group), brahma::POSIX)
+GOTCHA_MACRO(lchown, int, (const char *path, uid_t owner, gid_t group),
+             (path, owner, group), brahma::POSIX)
+GOTCHA_MACRO(utime, int, (const char *filename, const utimbuf *buf),
+             (filename, buf), brahma::POSIX)
+GOTCHA_MACRO(opendir, DIR *, (const char *name), (name), brahma::POSIX)
+GOTCHA_MACRO(readdir, struct dirent *, (DIR * dir), (dir), brahma::POSIX)
+GOTCHA_MACRO(closedir, int, (DIR * dir), (dir), brahma::POSIX)
+GOTCHA_MACRO(rewinddir, void, (DIR * dir), (dir), brahma::POSIX)
+GOTCHA_MACRO(fcntl, int, (int fd, int cmd, long arg), (fd, cmd, arg),
+             brahma::POSIX)
+GOTCHA_MACRO(dup, int, (int oldfd), (oldfd), brahma::POSIX)
+GOTCHA_MACRO(dup2, int, (int oldfd, int newfd), (oldfd, newfd), brahma::POSIX)
+GOTCHA_MACRO(pipe, int, (int pipefd[2]), (pipefd), brahma::POSIX)
+GOTCHA_MACRO(mkfifo, int, (const char *pathname, mode_t mode), (pathname, mode),
+             brahma::POSIX)
+GOTCHA_MACRO(umask, mode_t, (mode_t mask), (mask), brahma::POSIX)
+GOTCHA_MACRO(access, int, (const char *path, int amode), (path, amode),
+             brahma::POSIX)
+GOTCHA_MACRO(faccessat, int, (int fd, const char *path, int amode, int flag),
+             (fd, path, amode, flag), brahma::POSIX)
+GOTCHA_MACRO(remove, int, (const char *pathname), (pathname), brahma::POSIX)
+GOTCHA_MACRO(truncate, int, (const char *pathname, off_t length),
+             (pathname, length), brahma::POSIX)
+GOTCHA_MACRO(ftruncate, int, (int fd, off_t length), (fd, length),
+             brahma::POSIX)
 int update_posix(gotcha_binding_t *&bindings, size_t &binding_index) {
   GOTCHA_BINDING_MACRO(open);
   GOTCHA_BINDING_MACRO(creat64);
@@ -151,8 +184,25 @@ size_t count_posix() { return 54; }
 
 namespace brahma {
 std::shared_ptr<POSIX> POSIX::my_instance = nullptr;
-int POSIX::open(const char *pathname, int flags, ...) {
 
+std::shared_ptr<POSIX> POSIX::get_instance() {
+  if (my_instance == nullptr) {
+    BRAHMA_LOG_INFO("POSIX class not intercepted but used", "");
+    my_instance = std::make_shared<POSIX>();
+  }
+  return my_instance;
+}
+int POSIX::set_instance(std::shared_ptr<POSIX> instance_i) {
+  if (instance_i != nullptr) {
+    my_instance = instance_i;
+    return 0;
+  } else {
+    BRAHMA_LOG_ERROR("%s instance_i is not set", "POSIX");
+    throw std::runtime_error("instance_i is not set");
+  }
+}
+
+int POSIX::open(const char *pathname, int flags, ...) {
   if (flags & O_CREAT) {
     va_list args;
     va_start(args, flags);
@@ -193,42 +243,42 @@ int POSIX::close(int fd) {
 ssize_t POSIX::write(int fd, const void *buf, size_t count) {
   BRAHMA_UNWRAPPED_FUNC(write, ssize_t, (fd, buf, count));
   return result;
-};
+}
 
 ssize_t POSIX::read(int fd, void *buf, size_t count) {
   BRAHMA_UNWRAPPED_FUNC(read, ssize_t, (fd, buf, count));
   return result;
-};
+}
 
 off_t POSIX::lseek(int fd, off_t offset, int whence) {
   BRAHMA_UNWRAPPED_FUNC(lseek, off_t, (fd, offset, whence));
   return result;
-};
+}
 
 off64_t POSIX::lseek64(int fd, off64_t offset, int whence) {
   BRAHMA_UNWRAPPED_FUNC(lseek, off64_t, (fd, offset, whence));
   return result;
-};
+}
 
 ssize_t POSIX::pread(int fd, void *buf, size_t count, off_t offset) {
   BRAHMA_UNWRAPPED_FUNC(pread, ssize_t, (fd, buf, count, offset));
   return result;
-};
+}
 
 ssize_t POSIX::pread64(int fd, void *buf, size_t count, off64_t offset) {
   BRAHMA_UNWRAPPED_FUNC(pread64, ssize_t, (fd, buf, count, offset));
   return result;
-};
+}
 
 ssize_t POSIX::pwrite(int fd, const void *buf, size_t count, off64_t offset) {
   BRAHMA_UNWRAPPED_FUNC(pwrite, ssize_t, (fd, buf, count, offset));
   return result;
-};
+}
 
 ssize_t POSIX::pwrite64(int fd, const void *buf, size_t count, off64_t offset) {
   BRAHMA_UNWRAPPED_FUNC(pwrite64, ssize_t, (fd, buf, count, offset));
   return result;
-};
+}
 
 int POSIX::fsync(int fd) {
   BRAHMA_UNWRAPPED_FUNC(fsync, int, (fd));
@@ -248,18 +298,21 @@ int POSIX::openat(int dirfd, const char *pathname, int flags, ...) {
     va_end(args);
     BRAHMA_UNWRAPPED_FUNC(openat, int, (dirfd, pathname, flags, mode));
     return result;
-  }else {
+  } else {
     BRAHMA_UNWRAPPED_FUNC(openat, int, (dirfd, pathname, flags));
     return result;
   }
 }
-void* POSIX::mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) {
-  BRAHMA_UNWRAPPED_FUNC(mmap, void*, (addr, length, prot, flags, fd, offset));
+void *POSIX::mmap(void *addr, size_t length, int prot, int flags, int fd,
+                  off_t offset) {
+  BRAHMA_UNWRAPPED_FUNC(mmap, void *, (addr, length, prot, flags, fd, offset));
   return result;
 }
 
-void* POSIX::mmap64(void *addr, size_t length, int prot, int flags, int fd, off64_t offset) {
-  BRAHMA_UNWRAPPED_FUNC(mmap64, void*, (addr, length, prot, flags, fd, offset));
+void *POSIX::mmap64(void *addr, size_t length, int prot, int flags, int fd,
+                    off64_t offset) {
+  BRAHMA_UNWRAPPED_FUNC(mmap64, void *,
+                        (addr, length, prot, flags, fd, offset));
   return result;
 }
 int POSIX::__xstat(int vers, const char *path, struct stat *buf) {
@@ -286,8 +339,8 @@ int POSIX::__fxstat64(int vers, int fd, struct stat64 *buf) {
   BRAHMA_UNWRAPPED_FUNC(__fxstat64, int, (vers, fd, buf));
   return result;
 }
-char* POSIX::getcwd(char *buf, size_t size) {
-  BRAHMA_UNWRAPPED_FUNC(getcwd, char*, (buf, size));
+char *POSIX::getcwd(char *buf, size_t size) {
+  BRAHMA_UNWRAPPED_FUNC(getcwd, char *, (buf, size));
   return result;
 }
 int POSIX::mkdir(const char *pathname, mode_t mode) {
@@ -306,7 +359,8 @@ int POSIX::link(const char *oldpath, const char *newpath) {
   BRAHMA_UNWRAPPED_FUNC(link, int, (oldpath, newpath));
   return result;
 }
-int POSIX::linkat(int fd1, const char *path1, int fd2, const char *path2, int flag) {
+int POSIX::linkat(int fd1, const char *path1, int fd2, const char *path2,
+                  int flag) {
   BRAHMA_UNWRAPPED_FUNC(linkat, int, (fd1, path1, fd2, path2, flag));
   return result;
 }
@@ -350,12 +404,12 @@ int POSIX::utime(const char *filename, const utimbuf *buf) {
   BRAHMA_UNWRAPPED_FUNC(utime, int, (filename, buf));
   return result;
 }
-DIR* POSIX::opendir(const char *name) {
-  BRAHMA_UNWRAPPED_FUNC(opendir, DIR*, (name));
+DIR *POSIX::opendir(const char *name) {
+  BRAHMA_UNWRAPPED_FUNC(opendir, DIR *, (name));
   return result;
 }
-dirent* POSIX::readdir(DIR *dir) {
-  BRAHMA_UNWRAPPED_FUNC(readdir, dirent*, (dir));
+dirent *POSIX::readdir(DIR *dir) {
+  BRAHMA_UNWRAPPED_FUNC(readdir, dirent *, (dir));
   return result;
 }
 int POSIX::closedir(DIR *dir) {
@@ -366,24 +420,26 @@ void POSIX::rewinddir(DIR *dir) {
   BRAHMA_UNWRAPPED_FUNC_VOID(rewinddir, (dir));
 }
 int POSIX::fcntl(int fd, int cmd, ...) {
-  if(cmd==F_DUPFD || cmd==F_DUPFD_CLOEXEC || cmd==F_SETFD || cmd==F_SETFL || cmd==F_SETOWN) {            // arg: int
+  if (cmd == F_DUPFD || cmd == F_DUPFD_CLOEXEC || cmd == F_SETFD ||
+      cmd == F_SETFL || cmd == F_SETOWN) {  // arg: int
     va_list arg;
     va_start(arg, cmd);
     int val = va_arg(arg, int);
     va_end(arg);
     BRAHMA_UNWRAPPED_FUNC(fcntl, int, (fd, cmd, val));
     return result;
-  } else if(cmd==F_GETFD || cmd==F_GETFL || cmd==F_GETOWN) {
+  } else if (cmd == F_GETFD || cmd == F_GETFL || cmd == F_GETOWN) {
     BRAHMA_UNWRAPPED_FUNC(fcntl, int, (fd, cmd));
     return result;
-  } else if(cmd==F_SETLK || cmd==F_SETLKW || cmd==F_GETLK) {
+  } else if (cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK) {
     va_list arg;
     va_start(arg, cmd);
-    struct flock *lk = va_arg(arg, struct flock*);
+    struct flock *lk = va_arg(arg, struct flock *);
     va_end(arg);
     BRAHMA_UNWRAPPED_FUNC(fcntl, int, (fd, cmd, lk));
     return result;
-  } else {                        // assume arg: void, cmd==F_GETOWN_EX || cmd==F_SETOWN_EX ||cmd==F_GETSIG || cmd==F_SETSIG)
+  } else {  // assume arg: void, cmd==F_GETOWN_EX || cmd==F_SETOWN_EX
+            // ||cmd==F_GETSIG || cmd==F_SETSIG)
     BRAHMA_UNWRAPPED_FUNC(fcntl, int, (fd, cmd));
     return result;
   }
@@ -405,8 +461,8 @@ int POSIX::mkfifo(const char *pathname, mode_t mode) {
   return result;
 }
 mode_t POSIX::umask(mode_t mask) {
-    BRAHMA_UNWRAPPED_FUNC(umask, mode_t, (mask));
-    return result;
+  BRAHMA_UNWRAPPED_FUNC(umask, mode_t, (mask));
+  return result;
 }
 
 int POSIX::access(const char *path, int amode) {

@@ -19,12 +19,22 @@ class POSIXTest : public POSIX {
     }
     return instance;
   }
-  int open(const char* pathname, int flags, mode_t mode) override {
+  int open(const char* pathname, int flags, ...) override {
     auto open_wrappee = (open_fptr)gotcha_get_wrappee(get_open_handle());
-    int result = open_wrappee(pathname, flags, mode);
-    fprintf(stderr, "[Test]\topen(%s, %d, %u) = %d\n", pathname, flags,
-            (unsigned int)mode, result);
-    return result;
+    if (flags & O_CREAT) {
+      va_list args;
+      va_start(args, flags);
+      int mode = va_arg(args, int);
+      va_end(args);
+      int result = open_wrappee(pathname, flags, mode);
+      fprintf(stderr, "[Test]\topen(%s, %d, %u) = %d\n", pathname, flags,
+              (unsigned int)mode, result);
+      return result;
+    } else {
+      int result = open_wrappee(pathname, flags);
+      fprintf(stderr, "[Test]\topen(%s, %d) = %d\n", pathname, flags, result);
+      return result;
+    }
   }
 };
 
