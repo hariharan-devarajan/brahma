@@ -328,7 +328,7 @@ if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
                        ${CPP_LOGGER_PATH} ${cpp-logger_PATH}
                        $ENV{CPP_LOGGER_DIR} $ENV{cpp-logger_DIR}
                        $ENV{CPP_LOGGER_PATH} $ENV{cpp-logger_PATH})
-    if (${CPP_LOGGER_FOUND})
+    if (${cpp-logger_FOUND})
         message(STATUS "[${PROJECT_NAME}] found cpp-logger at ${CPP_LOGGER_INCLUDE_DIRS}")
         include_directories(SYSTEM ${CPP_LOGGER_INCLUDE_DIRS})
         set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${CPP_LOGGER_LIBRARIES})
