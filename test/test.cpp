@@ -85,8 +85,13 @@ void __attribute__((constructor)) test_init() {
   brahma_gotcha_wrap("tool", 1);
   brahma::POSIXTest::get_instance();
   brahma::STDIOTest::get_instance();
+#ifdef BRAHMA_ENABLE_MPI
+  brahma::MPIIOTest::get_instance();
+#endif
 }
-void __attribute__((destructor)) test_finalize() {}
+void __attribute__((destructor)) test_finalize() {
+  brahma_free_bindings();
+}
 
 int main(int argc, char* argv[]) {
 #ifdef BRAHMA_ENABLE_MPI

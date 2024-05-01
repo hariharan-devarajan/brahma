@@ -75,6 +75,4 @@ extern int brahma_bind_functions();
 extern int brahma_get_binding(gotcha_binding_t*& bindings,
                               size_t& binding_count);
 
-extern int free_bindings();
-
 #endif  // BRAHMA_INTERCEPTOR_H
