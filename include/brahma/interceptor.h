@@ -5,19 +5,14 @@
 #ifndef BRAHMA_INTERCEPTOR_H
 #define BRAHMA_INTERCEPTOR_H
 
-#include <cpp-logger/logger.h>
+#include <brahma/brahma_config.hpp>
+/* Internal Headers */
+#include <brahma/logging.h>
+/* External Headers */
 #include <gotcha/gotcha.h>
 
+#include <cstdarg>
 #include <memory>
-#define BRAHMA_LOGGER cpplogger::Logger::Instance("BRAHMA")
-#define BRAHMA_LOGINFO(format, ...) \
-  BRAHMA_LOGGER->log(cpplogger::LOG_INFO, format, __VA_ARGS__);
-#define BRAHMA_LOGWARN(format, ...) \
-  BRAHMA_LOGGER->log(cpplogger::LOG_WARN, format, __VA_ARGS__);
-#define BRAHMA_LOGERROR(format, ...) \
-  BRAHMA_LOGGER->log(cpplogger::LOG_ERROR, format, __VA_ARGS__);
-#define BRAHMA_LOGPRINT(format, ...) \
-  BRAHMA_LOGGER->log(cpplogger::LOG_PRINT, format, __VA_ARGS__);
 
 #define GOTCHA_BINDING_MACRO(fname)                                 \
   bindings[binding_index].name = #fname;                            \
@@ -29,18 +24,19 @@
   typedef ret(*name##_fptr) args;                                   \
   inline ret name##_wrapper args {                                  \
     return class_name::get_instance()->name args_val;               \
-  };                                                                \
+  }                                                                 \
   gotcha_wrappee_handle_t get_##name##_handle();
-#define GOTCHA_MACRO_TYPEDEF_OPEN(name, ret, args, args_val, start, class_name) \
+#define GOTCHA_MACRO_TYPEDEF_OPEN(name, ret, args, args_val, start, \
+                                  class_name)                       \
   typedef ret(*name##_fptr) args;                                   \
-  inline ret name##_wrapper args {                                           \
-    va_list _args;                                                           \
-    va_start(_args, start);                                                         \
-    int mode = va_arg(_args, int); \
-    va_end(_args);                                                                                \
-    ret v = class_name::get_instance()->name args_val;                               \
-    return v;                            \
-  };                                                                \
+  inline ret name##_wrapper args {                                  \
+    va_list _args;                                                  \
+    va_start(_args, start);                                         \
+    int mode = va_arg(_args, int);                                  \
+    va_end(_args);                                                  \
+    ret v = class_name::get_instance()->name args_val;              \
+    return v;                                                       \
+  }                                                                 \
   gotcha_wrappee_handle_t get_##name##_handle();
 #define GOTCHA_MACRO(name, ret, args, args_val, class_name) \
   gotcha_wrappee_handle_t name##_handle;                    \
@@ -49,14 +45,14 @@
 #define BRAHMA_WRAPPER(name) name##_wrapper;
 
 #define BRAHMA_UNWRAPPED_FUNC(name, ret, args)                                 \
-  BRAHMA_LOGINFO("[BRAHMA]\tFunction %s() not wrapped. Calling Original.\n",   \
-                 #name);                                                       \
+  BRAHMA_LOG_INFO("[BRAHMA]\tFunction %s() not wrapped. Calling Original.\n",  \
+                  #name);                                                      \
   name##_fptr name##_wrappee = (name##_fptr)gotcha_get_wrappee(name##_handle); \
   ret result = name##_wrappee args;
 
 #define BRAHMA_UNWRAPPED_FUNC_VOID(name, args)                                 \
-  BRAHMA_LOGINFO("[BRAHMA]\tFunction %s() not wrapped. Calling Original.\n",   \
-                 #name);                                                       \
+  BRAHMA_LOG_INFO("[BRAHMA]\tFunction %s() not wrapped. Calling Original.\n",  \
+                  #name);                                                      \
   name##_fptr name##_wrappee = (name##_fptr)gotcha_get_wrappee(name##_handle); \
   name##_wrappee args;
 #define BRAHMA_MAP_OR_FAIL(func_)                               \
@@ -78,7 +74,5 @@ int update_mpi(gotcha_binding_t*& bindings, size_t& binding_index);
 extern int brahma_bind_functions();
 extern int brahma_get_binding(gotcha_binding_t*& bindings,
                               size_t& binding_count);
-
-extern int free_bindings();
 
 #endif  // BRAHMA_INTERCEPTOR_H

@@ -1,5 +1,10 @@
 {
     "cmake.configureArgs": [
-        "-DCMAKE_PREFIX_PATH=/mount/shared/install"
+        "-DBRAHMA_BUILD_WITH_MPI=ON",
+        "-DBRAHMA_ENABLE_TESTING=ON",
+        "-DBRAHMA_BUILD_DEPENDENCIES=OFF",
+        "-DCMAKE_INSTALL_PREFIX=/usr/workspace/haridev/brahma/install",
+        "-DBRAHMA_INSTALL_DEPENDENCIES=ON",
+        "-DBRAHMA_LOGGER=CPP_LOGGER"
     ]
 }
