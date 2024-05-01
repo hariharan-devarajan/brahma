@@ -13,17 +13,19 @@ The interception of MPI-IO calls are optional and the library can be compiled wi
 Users can install the dependency using cmake.
 
 ```bash
+cd <CLONED_REPO>
 mkdir build
-cmake -DBRAHMA_BUILD_DEPENDENCIES=ON -S/usr/workspace/haridev/brahma -B/usr/workspace/haridev/brahma/build -G "Unix Makefiles"
-cmake --build /usr/workspace/haridev/brahma/build --target all -j 50
+cmake -DBRAHMA_BUILD_DEPENDENCIES=ON -S$PWD -B$PWD/build -G "Unix Makefiles"
+cmake --build $PWD/build --target all -j 50
 ```
 
 User can install the library using cmake.
 
 ```bash
+cd <CLONED_REPO>
 mkdir build
-cmake -S/usr/workspace/haridev/brahma -B/usr/workspace/haridev/brahma/build -G "Unix Makefiles"
-cmake --build /usr/workspace/haridev/brahma/build --target all -j 50
+cmake -S$PWD -B$PWD/build -G "Unix Makefiles"
+cmake --build $PWD/build --target all -j 50
 ```
 
 ### Options available in Brahma
