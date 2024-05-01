@@ -24,7 +24,7 @@ User can install the library using cmake.
 ```bash
 cd <CLONED_REPO>
 mkdir build
-cmake -S$PWD -B$PWD/build -G "Unix Makefiles"
+cmake -DBRAHMA_BUILD_DEPENDENCIES=OFF -S$PWD -B$PWD/build -G "Unix Makefiles"
 cmake --build $PWD/build --target all -j 50
 ```
 
