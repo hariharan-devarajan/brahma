@@ -1,4 +1,4 @@
-# Brahma v0.0.3
+# Brahma v0.0.4
 
 A C++ style interception library for application calls. 
 This library uses [GOTCHA](https://github.com/LLNL/GOTCHA) to intercept POSIX, STDIO, and MPI-IO calls. 
@@ -28,12 +28,14 @@ cmake --build /usr/workspace/haridev/brahma/build --target all -j 50
 
 ### Options available in Brahma
 
-| Option                | Description                                      |
-| --------------------- | ------------------------------------------------ |
-| BRAHMA_BUILD_WITH_MPI | Enable MPI and MPI-IO interceptions              |
-| BRAHMA_LOGGER         | Enable Logging for CPP Logger                    |
-| BRAHMA_LOGGER_LEVEL   | Set compile time logging level for CPP Logger    |
-| BRAHMA_ENABLE_TESTING | Enable testing                                   |
+| Option                | Description                                                            |
+| --------------------- | ---------------------------------------------------------------------  |
+| BRAHMA_BUILD_WITH_MPI | Enable MPI and MPI-IO interceptions                                    |
+| BRAHMA_LOGGER         | Enable Logging for CPP Logger (CPP_LOGGER)                             |
+| BRAHMA_LOGGER_LEVEL   | Set compile time logging level (TRACE, DEBUG, INFO, WARN, and ERROR)   |
+| BRAHMA_ENABLE_TESTING | Enable testing                                                         |
+| BRAHMA_BUILD_DEPENDENCIES | Build Brahma dependencies                                          |
+| BRAHMA_INSTALL_DEPENDENCIES | Install Brahma dependencies into CMAKE_INSTALL_PREFIX. If off its kept in build directory                                                       |
 
 
 ## Using Brahma library to intercept calls.
@@ -58,7 +60,7 @@ brahma_gotcha_wrap(UNIQUE_TOOL_NAME, PRIORITY);
 
 The free bindings call release the interception bindings from brahma.
 ```c++
- free_bindings();
+ brahma_free_bindings();
 ```
 
 ### Override I/O Classes

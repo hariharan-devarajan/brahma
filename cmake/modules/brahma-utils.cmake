@@ -96,7 +96,7 @@ macro(append_str_tf STRING_VAR)
   endforeach()
 endmacro ()
 
-function(install_external_project name url tag)
+function(install_external_project name url tag install_dir)
     find_package(${name})
     set(found_var ${name}_FOUND)
     if (${${found_var}})
@@ -118,14 +118,14 @@ function(install_external_project name url tag)
             GIT_SUBMODULES ""
             UPDATE_COMMAND ""
             PATCH_COMMAND git submodule update --init
-            CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}" ${configure_args}
+            CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${install_dir}" ${configure_args}
             BUILD_COMMAND make -j
             INSTALL_COMMAND make install  -j
             LOG_DOWNLOAD ON
     )
-    include_directories(${CMAKE_BINARY_DIR}/include)
-    link_directories(${CMAKE_BINARY_DIR}/lib)
-    link_directories(${CMAKE_BINARY_DIR}/lib64)
+    include_directories(${install_dir}/include)
+    link_directories(${install_dir}/lib)
+    link_directories(${install_dir}/lib64)
     include_directories(${CMAKE_BINARY_DIR}/src/${name}/include)
     endif()
 endfunction()

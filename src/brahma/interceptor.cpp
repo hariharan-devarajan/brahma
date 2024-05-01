@@ -43,8 +43,7 @@ extern int brahma_get_binding(gotcha_binding_t*& bindings_i,
   return 0;
 }
 
-extern int free_bindings() {
+extern int brahma_free_bindings() {
   free(brahma::bindings);
-  
   return 0;
 }
