@@ -38,3 +38,5 @@
 *.lock
 .cache
 *.core
+install
+.vscode
