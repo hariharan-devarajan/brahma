@@ -19,7 +19,7 @@
 
 help(
 [[
-DYnamic and Asynchronous Data streamliner (BRAHMA) version @BRAHMA_VERSION@.
+Brahma (BRAHMA) version @BRAHMA_VERSION@.
 ]])
 
 whatis("Package: BRAHMA")

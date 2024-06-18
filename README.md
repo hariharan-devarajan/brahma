@@ -1,29 +1,31 @@
-# Brahma v0.0.4
+# Brahma v0.0.5
 
 A C++ style interception library for application calls. 
 This library uses [GOTCHA](https://github.com/LLNL/GOTCHA) to intercept POSIX, STDIO, and MPI-IO calls. 
 The interception of MPI-IO calls are optional and the library can be compiled without MPI-IO.
 
 ## Dependencies
-1. GOTCHA v1.0.6
-2. CPP Logger v0.0.3
+1. GOTCHA v1.0.7
+2. CPP Logger v0.0.4
 
 ## Build Brahma with cmake
 
 Users can install the dependency using cmake.
 
 ```bash
+cd <CLONED_REPO>
 mkdir build
-cmake -DBRAHMA_BUILD_DEPENDENCIES=ON -S/usr/workspace/haridev/brahma -B/usr/workspace/haridev/brahma/build -G "Unix Makefiles"
-cmake --build /usr/workspace/haridev/brahma/build --target all -j 50
+cmake -DBRAHMA_BUILD_DEPENDENCIES=ON -S$PWD -B$PWD/build -G "Unix Makefiles"
+cmake --build $PWD/build --target all -j 50
 ```
 
 User can install the library using cmake.
 
 ```bash
+cd <CLONED_REPO>
 mkdir build
-cmake -S/usr/workspace/haridev/brahma -B/usr/workspace/haridev/brahma/build -G "Unix Makefiles"
-cmake --build /usr/workspace/haridev/brahma/build --target all -j 50
+cmake -DBRAHMA_BUILD_DEPENDENCIES=OFF -S$PWD -B$PWD/build -G "Unix Makefiles"
+cmake --build $PWD/build --target all -j 50
 ```
 
 ### Options available in Brahma
@@ -38,6 +40,13 @@ cmake --build /usr/workspace/haridev/brahma/build --target all -j 50
 | BRAHMA_INSTALL_DEPENDENCIES | Install Brahma dependencies into CMAKE_INSTALL_PREFIX. If off its kept in build directory                                                       |
 
 
+## Including brahma in your CMake Project.
+
+```cmake
+find_package(brahma 0.0.5 REQUIRED)
+```
+Exported variables for this package are `brahma_FOUND`, `BRAHMA_INCLUDE_DIRS`, and `BRAHMA_LIBRARIES`.
+
 ## Using Brahma library to intercept calls.
 
 There are three main steps to use brahma
@@ -48,6 +57,8 @@ There are three main steps to use brahma
 
 ### Binding functions
 
+The Binding has to be done before any interception can happen. 
+Some recommended places are library constructor or initialization routines.
 The libraries which use Brahma can initiate binding of system calls using `brahma_gotcha_wrap` function.
 It takes two arguments. `UNIQUE_TOOL_NAME` should be a tool name that is used for stacking different interception tools used by gotcha.
 `PRIORITY` is the prioritization of the tool.
@@ -58,6 +69,8 @@ brahma_gotcha_wrap(UNIQUE_TOOL_NAME, PRIORITY);
 
 ### Disable bindings
 
+This routine should be called to stop the interception. 
+Some recommended choices for this are library destructor or finalization routine. 
 The free bindings call release the interception bindings from brahma.
 ```c++
  brahma_free_bindings();
