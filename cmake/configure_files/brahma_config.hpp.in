@@ -34,6 +34,7 @@
 #cmakedefine BRAHMA_GNU_LINUX 1
 #cmakedefine BRAHMA_HAS_STD_FILESYSTEM 1
 #cmakedefine BRAHMA_HAS_STD_FSTREAM_FD 1
+#cmakedefine BRAHMA_ENABLE_HDF5 1
 #cmakedefine BRAHMA_ENABLE_MPI 1
 // Logger
 #cmakedefine BRAHMA_LOGGER_CPP_LOGGER 1

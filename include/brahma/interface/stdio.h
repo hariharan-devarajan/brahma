@@ -55,8 +55,11 @@ class STDIO : public Interface {
   virtual FILE* fdopen(int fd, const char *mode);
   virtual int fileno(FILE *stream);
   virtual FILE* tmpfile(void);
+  virtual FILE* tmpfile64(void);
   virtual int fseeko(FILE *stream, off_t offset, int whence);
+  virtual int fseeko64(FILE *stream, off64_t offset, int whence);
   virtual off_t ftello(FILE *stream);
+  virtual off64_t ftello64(FILE *stream);
 
   virtual void clearerr(FILE *);
   virtual int feof(FILE *);
@@ -64,12 +67,14 @@ class STDIO : public Interface {
   virtual int fflush(FILE *);
   virtual int fgetc(FILE *);
   virtual int fgetpos(FILE *, fpos_t *);
+  virtual int fgetpos64(FILE *, fpos64_t *);
   virtual char* fgets(char *, int, FILE *);
   virtual void flockfile(FILE *);
   virtual int fputc(int, FILE *);
   virtual int fputs(const char *, FILE *);
   virtual FILE* freopen(const char *, const char *, FILE *);
   virtual int fsetpos(FILE *, const fpos_t *);
+  virtual int fsetpos64(FILE *, const fpos64_t *);
   virtual int ftrylockfile(FILE *);
   virtual void funlockfile(FILE *);
   virtual int getc(FILE *);
@@ -91,8 +96,11 @@ class STDIO : public Interface {
   GOTCHA_MACRO_VAR(fdopen)
   GOTCHA_MACRO_VAR(fileno)
   GOTCHA_MACRO_VAR(tmpfile)
+  GOTCHA_MACRO_VAR(tmpfile64)
   GOTCHA_MACRO_VAR(fseeko)
+  GOTCHA_MACRO_VAR(fseeko64)
   GOTCHA_MACRO_VAR(ftello)
+  GOTCHA_MACRO_VAR(ftello64)
 
   GOTCHA_MACRO_VAR(clearerr)
   GOTCHA_MACRO_VAR(feof)
@@ -100,6 +108,7 @@ class STDIO : public Interface {
   GOTCHA_MACRO_VAR(fflush)
   GOTCHA_MACRO_VAR(fgetc)
   GOTCHA_MACRO_VAR(fgetpos)
+  GOTCHA_MACRO_VAR(fgetpos64)
   GOTCHA_MACRO_VAR(fgets)
   GOTCHA_MACRO_VAR(flockfile)
   GOTCHA_MACRO_VAR(fprintf)
@@ -107,6 +116,7 @@ class STDIO : public Interface {
   GOTCHA_MACRO_VAR(fputs)
   GOTCHA_MACRO_VAR(freopen)
   GOTCHA_MACRO_VAR(fsetpos)
+  GOTCHA_MACRO_VAR(fsetpos64)
   GOTCHA_MACRO_VAR(ftrylockfile)
   GOTCHA_MACRO_VAR(funlockfile)
   GOTCHA_MACRO_VAR(getc)
@@ -152,9 +162,14 @@ GOTCHA_MACRO_TYPEDEF(fdopen, FILE *, (int fd, const char *mode), (fd, mode),
                      brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(fileno, int, (FILE * stream), (stream), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(tmpfile, FILE *, (void), (), brahma::STDIO)
+GOTCHA_MACRO_TYPEDEF(tmpfile64, FILE *, (void), (), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(fseeko, int, (FILE * stream, off_t offset, int whence),
                      (stream, offset, whence), brahma::STDIO)
+GOTCHA_MACRO_TYPEDEF(fseeko64, int, (FILE * stream, off64_t offset, int whence),
+                     (stream, offset, whence), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(ftello, off_t, (FILE * stream), (stream), brahma::STDIO)
+GOTCHA_MACRO_TYPEDEF(ftello64, off64_t, (FILE * stream), (stream),
+                     brahma::STDIO)
 
 GOTCHA_MACRO_TYPEDEF(clearerr, void, (FILE * stream), (stream), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(feof, int, (FILE * stream), (stream), brahma::STDIO)
@@ -163,6 +178,8 @@ GOTCHA_MACRO_TYPEDEF(fflush, int, (FILE * stream), (stream), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(fgetc, int, (FILE * stream), (stream), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(fgetpos, int, (FILE * stream, fpos_t * pos), (stream, pos),
                      brahma::STDIO)
+GOTCHA_MACRO_TYPEDEF(fgetpos64, int, (FILE * stream, fpos64_t * pos),
+                     (stream, pos), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(fgets, char *, (char *s, int size, FILE * stream),
                      (s, size, stream), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(flockfile, void, (FILE * stream), (stream), brahma::STDIO)
@@ -174,6 +191,8 @@ GOTCHA_MACRO_TYPEDEF(freopen, FILE *, (const char *pathname, const char *mode,
                                       FILE * stream),
                      (pathname, mode, stream), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(fsetpos, int, (FILE * stream, const fpos_t * pos),
+                     (stream, pos), brahma::STDIO)
+GOTCHA_MACRO_TYPEDEF(fsetpos64, int, (FILE * stream, const fpos64_t * pos),
                      (stream, pos), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(ftrylockfile, int, (FILE * stream), (stream), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(funlockfile, void, (FILE * stream), (stream), brahma::STDIO)
@@ -199,8 +218,11 @@ size_t brahma::STDIO::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(ftell, STDIO);
   GOTCHA_BINDING_MACRO(fseek, STDIO);
   GOTCHA_BINDING_MACRO(tmpfile, STDIO);
+  GOTCHA_BINDING_MACRO(tmpfile64, STDIO);
   GOTCHA_BINDING_MACRO(fseeko, STDIO);
+  GOTCHA_BINDING_MACRO(fseeko64, STDIO);
   GOTCHA_BINDING_MACRO(ftello, STDIO);
+  GOTCHA_BINDING_MACRO(ftello64, STDIO);
   GOTCHA_BINDING_MACRO(fdopen, STDIO);
   GOTCHA_BINDING_MACRO(fileno, STDIO);
 
@@ -210,12 +232,14 @@ size_t brahma::STDIO::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(fflush, STDIO);
   GOTCHA_BINDING_MACRO(fgetc, STDIO);
   GOTCHA_BINDING_MACRO(fgetpos, STDIO);
+  GOTCHA_BINDING_MACRO(fgetpos64, STDIO);
   GOTCHA_BINDING_MACRO(fgets, STDIO);
   GOTCHA_BINDING_MACRO(flockfile, STDIO);
   GOTCHA_BINDING_MACRO(fputc, STDIO);
   GOTCHA_BINDING_MACRO(fputs, STDIO);
   GOTCHA_BINDING_MACRO(freopen, STDIO);
   GOTCHA_BINDING_MACRO(fsetpos, STDIO);
+  GOTCHA_BINDING_MACRO(fsetpos64, STDIO);
   GOTCHA_BINDING_MACRO(ftrylockfile, STDIO);
   GOTCHA_BINDING_MACRO(funlockfile, STDIO);
   GOTCHA_BINDING_MACRO(getc, STDIO);

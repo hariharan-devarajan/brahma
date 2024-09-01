@@ -51,6 +51,7 @@ else ()
    message(STATUS "BRAHMA_LIBDIR set to ${BRAHMA_LIBDIR}")
 endif ()
 
+
 #------------------------------------------------------------------------------
 # Internal Paths for cmake libraries and Setup install and output Directories
 #------------------------------------------------------------------------------
@@ -60,6 +61,8 @@ set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_BINARY_DIR} ${CMAKE_INSTALL_P
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/${BRAHMA_LIBDIR}/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/share/cmake)
+
+include(brahma-utils)
 
 #------------------------------------------------------------------------------
 if (NOT BRAHMA_EXTERNALLY_CONFIGURED)
@@ -97,9 +100,15 @@ if (BRAHMA_USE_CLANG_LIBCXX)
 endif (BRAHMA_USE_CLANG_LIBCXX)
 
 # Public
+option(BRAHMA_BUILD_WITH_HDF5 "Build with HDF5 interception libraries." OFF)
 option(BRAHMA_BUILD_WITH_MPI "Build with mpi and mpiio interception libraries." OFF)
 option(BRAHMA_BUILD_DEPENDENCIES "Build Dependencies for Brahma" OFF)
+option(BRAHMA_GENERATE_INTERFACES "Generate interfaces for Brahma" OFF)
 option(BRAHMA_INSTALL_DEPENDENCIES "Install dependencies for Brahma" OFF)
+
+if(BRAHMA_BUILD_WITH_HDF5)
+    set(BRAHMA_ENABLE_HDF5 1)
+endif()
 
 if(BRAHMA_BUILD_WITH_MPI)
     set(BRAHMA_ENABLE_MPI 1)
@@ -247,12 +256,11 @@ endfunction()
 
 # Install Dependencies
 # =============================================================================
-if (BRAHMA_BUILD_DEPENDENCIES)
+if(BRAHMA_BUILD_DEPENDENCIES)
   add_subdirectory(dependency)
-
+elseif(BRAHMA_GENERATE_INTERFACES)
+  add_subdirectory(tools)
 else()
-
-
 #-----------------------------------------------------------------------------
 # Source for BRAHMA
 #-----------------------------------------------------------------------------
@@ -260,6 +268,9 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 include_directories(${CMAKE_SOURCE_DIR}/include)  # public header
 include_directories(${CMAKE_SOURCE_DIR}/src)  # private header
 include_directories(${CMAKE_BINARY_DIR}/include)  # build header
+
+set(BRAHMA_HDF5_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/hdf5.cpp)
+set(BRAHMA_HDF5_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/hdf5.h)
 
 set(BRAHMA_MPI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/mpiio.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/mpi.cpp)
@@ -285,6 +296,11 @@ set(BRAHMA_PUBLIC_HEADER        ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/loggi
                                 ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/stdio.h)
 set(BRAHMA_SRC_PRIVATE )
 
+if(BRAHMA_BUILD_WITH_HDF5)
+  set(BRAHMA_SRC ${BRAHMA_SRC} ${BRAHMA_HDF5_SRC})
+  set(BRAHMA_PUBLIC_HEADER ${BRAHMA_PUBLIC_HEADER} ${BRAHMA_HDF5_INCLUDE})
+endif()
+
 if(BRAHMA_BUILD_WITH_MPI)
   set(BRAHMA_SRC ${BRAHMA_SRC} ${BRAHMA_MPI_SRC})
   set(BRAHMA_PUBLIC_HEADER ${BRAHMA_PUBLIC_HEADER} ${BRAHMA_MPI_INCLUDE})
@@ -306,24 +322,38 @@ set(DEPENDENCY_LIB )
 # find Gotcha
 find_package(gotcha 2.1.2 REQUIRED)
 if (${gotcha_FOUND})
-    message(STATUS "[Brahma] found gotcha at ${gotcha_INCLUDE_DIRS}")
+    message(STATUS "[${PROJECT_NAME}] found gotcha at ${gotcha_INCLUDE_DIRS}")
     include_directories(${gotcha_INCLUDE_DIRS})
     set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${gotcha_LIBRARIES})
 else ()
-    message(FATAL_ERROR "-- [Brahma] gotcha is needed for ${PROJECT_NAME} build")
+    message(FATAL_ERROR "-- [${PROJECT_NAME}] gotcha is needed for ${PROJECT_NAME} build")
 endif ()
 
 # Optional Dependencies
 # =============================================================================
+if(BRAHMA_BUILD_WITH_HDF5)
+    # find HDF5
+    find_package(HDF5 REQUIRED)
+    if (HDF5_FOUND)
+        convert_version_to_number("${HDF5_VERSION}" BRAHMA_HDF5_VERSION)
+        message(STATUS "[${PROJECT_NAME}] found hdf5.h at ${HDF5_INCLUDE_DIRS}")
+        message(STATUS "[${PROJECT_NAME}] HDF5 version: ${HDF5_VERSION} (${BRAHMA_HDF5_VERSION})")
+        include_directories(${HDF5_INCLUDE_DIRS})
+        set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${HDF5_LIBRARIES})
+    else ()
+        message(FATAL_ERROR "-- [${PROJECT_NAME}] HDF5 is needed for ${PROJECT_NAME} build")
+    endif ()
+endif()
+
 if(BRAHMA_BUILD_WITH_MPI)
     # find MPI
-    find_package(MPI COMPONENTS CXX REQUIRED)
+    find_package(MPI COMPONENTS C REQUIRED)
     if (MPI_FOUND)
-        message(STATUS "[Brahma] found mpi.h at ${MPI_CXX_INCLUDE_DIRS}")
-        include_directories(${MPI_CXX_INCLUDE_DIRS})
-        set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${MPI_CXX_LIBRARIES})
+      message(STATUS "[${PROJECT_NAME}] found mpi.h at ${MPI_C_INCLUDE_DIRS}")
+      include_directories(${MPI_C_INCLUDE_DIRS})
+      target_link_libraries(${PROJECT_NAME} ${MPI_C_LIBRARIES})
     else ()
-        message(FATAL_ERROR "-- [Brahma] mpi is needed for ${PROJECT_NAME} build")
+        message(FATAL_ERROR "-- [${PROJECT_NAME}] mpi is needed for ${PROJECT_NAME} build")
     endif ()
 endif()
 
@@ -453,14 +483,10 @@ install(FILES
         DESTINATION
         ${BRAHMA_INSTALL_DOCDIR})
 
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/brahma-utils.cmake"
-        DESTINATION "${BRAHMA_LIBDIR}/cmake/brahma")
-
-
 ###############################################################################
 #                      Print out configuration summary
 ###############################################################################
-include(brahma-utils)
+
 if (CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
   set(BRAHMA_GNU_LINUX TRUE)
 endif ()
@@ -503,6 +529,12 @@ string(APPEND _str
 string(APPEND _str
   "  BRAHMA_GIT_VERSION:            ${BRAHMA_GIT_VERSION}\n")
 string(APPEND _str
+  "  BRAHMA_BUILD_WITH_HDF5:         ${BRAHMA_BUILD_WITH_HDF5}\n")
+if(BRAHMA_BUILD_WITH_HDF5)
+  string(APPEND _str
+    "  BRAHMA_HDF5_VERSION:         ${BRAHMA_HDF5_VERSION}\n")
+endif()
+string(APPEND _str
   "  BRAHMA_BUILD_WITH_MPI:          ${BRAHMA_BUILD_WITH_MPI}\n")
 if(BRAHMA_BUILD_WITH_MPI)
   string(APPEND _str
@@ -521,13 +553,14 @@ string(APPEND _str
 
 #Print the true/false variables
 append_str_tf(_str
-  BRAHMA_GNU_LINUX
+  BRAHMA_BUILD_WITH_HDF5
   BRAHMA_BUILD_WITH_MPI
+  BRAHMA_ENABLE_TESTING
+  BRAHMA_GENERATE_INTERFACES  
+  BRAHMA_GNU_LINUX
   BRAHMA_LIBDIR_AS_LIB
   BRAHMA_USE_CLANG_LIBCXX
   BRAHMA_WARNINGS_AS_ERRORS
-  BRAHMA_ENABLE_TESTING
-  
 )
 string(APPEND _str
   "\n== End BRAHMA Configuration Summary ==\n")
