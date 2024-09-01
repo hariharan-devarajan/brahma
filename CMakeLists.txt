@@ -97,9 +97,15 @@ if (BRAHMA_USE_CLANG_LIBCXX)
 endif (BRAHMA_USE_CLANG_LIBCXX)
 
 # Public
+option(BRAHMA_BUILD_WITH_HDF5 "Build with HDF5 interception libraries." OFF)
 option(BRAHMA_BUILD_WITH_MPI "Build with mpi and mpiio interception libraries." OFF)
 option(BRAHMA_BUILD_DEPENDENCIES "Build Dependencies for Brahma" OFF)
+option(BRAHMA_GENERATE_INTERFACES "Generate interfaces for Brahma" OFF)
 option(BRAHMA_INSTALL_DEPENDENCIES "Install dependencies for Brahma" OFF)
+
+if(BRAHMA_BUILD_WITH_HDF5)
+    set(BRAHMA_ENABLE_HDF5 1)
+endif()
 
 if(BRAHMA_BUILD_WITH_MPI)
     set(BRAHMA_ENABLE_MPI 1)
@@ -249,10 +255,7 @@ endfunction()
 # =============================================================================
 if (BRAHMA_BUILD_DEPENDENCIES)
   add_subdirectory(dependency)
-
 else()
-
-
 #-----------------------------------------------------------------------------
 # Source for BRAHMA
 #-----------------------------------------------------------------------------
@@ -260,6 +263,9 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 include_directories(${CMAKE_SOURCE_DIR}/include)  # public header
 include_directories(${CMAKE_SOURCE_DIR}/src)  # private header
 include_directories(${CMAKE_BINARY_DIR}/include)  # build header
+
+set(BRAHMA_HDF5_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/hdf5.cpp)
+set(BRAHMA_HDF5_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/hdf5.h)
 
 set(BRAHMA_MPI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/mpiio.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/mpi.cpp)
@@ -284,6 +290,11 @@ set(BRAHMA_PUBLIC_HEADER        ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/loggi
                                 ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/posix.h
                                 ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/stdio.h)
 set(BRAHMA_SRC_PRIVATE )
+
+if(BRAHMA_BUILD_WITH_HDF5)
+  set(BRAHMA_SRC ${BRAHMA_SRC} ${BRAHMA_HDF5_SRC})
+  set(BRAHMA_PUBLIC_HEADER ${BRAHMA_PUBLIC_HEADER} ${BRAHMA_HDF5_INCLUDE})
+endif()
 
 if(BRAHMA_BUILD_WITH_MPI)
   set(BRAHMA_SRC ${BRAHMA_SRC} ${BRAHMA_MPI_SRC})
@@ -315,6 +326,18 @@ endif ()
 
 # Optional Dependencies
 # =============================================================================
+if(BRAHMA_BUILD_WITH_HDF5)
+    # find HDF5
+    find_package(HDF5 COMPONENTS CXX REQUIRED)
+    if (HDF5_FOUND)
+        message(STATUS "[Brahma] found hdf5.h at ${HDF5_CXX_INCLUDE_DIRS}")
+        include_directories(${HDF5_CXX_INCLUDE_DIRS})
+        set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${HDF5_CXX_LIBRARIES})
+    else ()
+        message(FATAL_ERROR "-- [Brahma] HDF5 is needed for ${PROJECT_NAME} build")
+    endif ()
+endif()
+
 if(BRAHMA_BUILD_WITH_MPI)
     # find MPI
     find_package(MPI COMPONENTS CXX REQUIRED)
@@ -343,6 +366,10 @@ if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
 endif()
 
 target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB})
+
+if (BRAHMA_GENERATE_INTERFACES)
+  add_subdirectory(tools)
+endif()
 
 install(
         TARGETS ${PROJECT_NAME}
@@ -503,6 +530,8 @@ string(APPEND _str
 string(APPEND _str
   "  BRAHMA_GIT_VERSION:            ${BRAHMA_GIT_VERSION}\n")
 string(APPEND _str
+  "  BRAHMA_BUILD_WITH_HDF5:         ${BRAHMA_BUILD_WITH_HDF5}\n")
+string(APPEND _str
   "  BRAHMA_BUILD_WITH_MPI:          ${BRAHMA_BUILD_WITH_MPI}\n")
 if(BRAHMA_BUILD_WITH_MPI)
   string(APPEND _str
@@ -522,12 +551,12 @@ string(APPEND _str
 #Print the true/false variables
 append_str_tf(_str
   BRAHMA_GNU_LINUX
+  BRAHMA_BUILD_WITH_HDF5
   BRAHMA_BUILD_WITH_MPI
   BRAHMA_LIBDIR_AS_LIB
   BRAHMA_USE_CLANG_LIBCXX
   BRAHMA_WARNINGS_AS_ERRORS
   BRAHMA_ENABLE_TESTING
-  
 )
 string(APPEND _str
   "\n== End BRAHMA Configuration Summary ==\n")
