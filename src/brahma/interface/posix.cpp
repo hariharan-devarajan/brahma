@@ -121,6 +121,18 @@ GOTCHA_MACRO(truncate, int, (const char *pathname, off_t length),
              (pathname, length), brahma::POSIX)
 GOTCHA_MACRO(ftruncate, int, (int fd, off_t length), (fd, length),
              brahma::POSIX)
+GOTCHA_MACRO(execl, int, (const char *pathname, const char *arg, char *val),
+             (pathname, arg, val), brahma::POSIX)
+GOTCHA_MACRO(execlp, int, (const char *pathname, const char *arg, char *val),
+             (pathname, arg, val), brahma::POSIX)
+GOTCHA_MACRO(execv, int, (const char *pathname, char *const argv[]),
+             (pathname, argv), brahma::POSIX)
+GOTCHA_MACRO(execvp, int, (const char *pathname, char *const argv[]),
+             (pathname, argv), brahma::POSIX)
+GOTCHA_MACRO(execvpe, int,
+             (const char *pathname, char *const argv[], char *const envp[]),
+             (pathname, argv, envp), brahma::POSIX)
+
 int update_posix(gotcha_binding_t *&bindings, size_t &binding_index) {
   GOTCHA_BINDING_MACRO(open);
   GOTCHA_BINDING_MACRO(creat64);
@@ -177,10 +189,17 @@ int update_posix(gotcha_binding_t *&bindings, size_t &binding_index) {
   GOTCHA_BINDING_MACRO(remove);
   GOTCHA_BINDING_MACRO(truncate);
   GOTCHA_BINDING_MACRO(ftruncate);
+
+  GOTCHA_BINDING_MACRO(execl);
+  GOTCHA_BINDING_MACRO(execlp);
+  GOTCHA_BINDING_MACRO(execv);
+  GOTCHA_BINDING_MACRO(execvp);
+  GOTCHA_BINDING_MACRO(execvpe);
+
   return 0;
 }
 
-size_t count_posix() { return 54; }
+size_t count_posix() { return 59; }
 
 namespace brahma {
 std::shared_ptr<POSIX> POSIX::my_instance = nullptr;
@@ -484,6 +503,33 @@ int POSIX::truncate(const char *pathname, off_t length) {
 }
 int POSIX::ftruncate(int fd, off_t length) {
   BRAHMA_UNWRAPPED_FUNC(ftruncate, int, (fd, length));
+  return result;
+}
+int POSIX::execl(const char *pathname, const char *arg, ...) {
+  va_list args;
+  va_start(args, arg);
+  BRAHMA_UNWRAPPED_FUNC(execl, int, (pathname, arg, args));
+  va_end(args);
+  return result;
+}
+int POSIX::execlp(const char *pathname, const char *arg, ...) {
+  va_list args;
+  va_start(args, arg);
+  BRAHMA_UNWRAPPED_FUNC(execlp, int, (pathname, arg, args));
+  va_end(args);
+  return result;
+}
+int POSIX::execv(const char *pathname, char *const argv[]) {
+  BRAHMA_UNWRAPPED_FUNC(execv, int, (pathname, argv));
+  return result;
+}
+int POSIX::execvp(const char *pathname, char *const argv[]) {
+  BRAHMA_UNWRAPPED_FUNC(execvp, int, (pathname, argv));
+  return result;
+}
+int POSIX::execvpe(const char *pathname, char *const argv[],
+                   char *const envp[]) {
+  BRAHMA_UNWRAPPED_FUNC(execvpe, int, (pathname, argv, envp));
   return result;
 }
 
