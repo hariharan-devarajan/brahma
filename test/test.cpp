@@ -89,9 +89,7 @@ void __attribute__((constructor)) test_init() {
   brahma::MPIIOTest::get_instance();
 #endif
 }
-void __attribute__((destructor)) test_finalize() {
-  brahma_free_bindings();
-}
+void __attribute__((destructor)) test_finalize() { brahma_free_bindings(); }
 
 int main(int argc, char* argv[]) {
 #ifdef BRAHMA_ENABLE_MPI
@@ -155,7 +153,8 @@ int main(int argc, char* argv[]) {
   remove(filename);
   remove(filename_link);
   remove("demofile_link2.txt");
-
+  char* arr[] = {"ls", "-l", "-R", "-a", NULL};
+  execv("/bin/ls", arr);
 #ifdef BRAHMA_ENABLE_MPI
 
   int err, rank, nprocs, cmode, omode;
