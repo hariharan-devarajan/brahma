@@ -144,6 +144,16 @@ class POSIX : public Interface {
   virtual int truncate(const char *pathname, off_t length);
 
   virtual int ftruncate(int fd, off_t length);
+
+  virtual int execl(const char *pathname, const char *arg, ...);
+
+  virtual int execlp(const char *file, const char *arg, ...);
+
+  virtual int execv(const char *pathname, char *const argv[]);
+
+  virtual int execvp(const char *file, char *const argv[]);
+
+  virtual int execvpe(const char *file, char *const argv[], char *const envp[]);
 };
 
 }  // namespace brahma
@@ -304,4 +314,18 @@ GOTCHA_MACRO_TYPEDEF(truncate, int, (const char *pathname, off_t length),
                      (pathname, length), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(ftruncate, int, (int fd, off_t length), (fd, length),
                      brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF_EXECL(execl, int,
+                           (const char *pathname, const char *arg, ...),
+                           (pathname, arg, val), arg, brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF_EXECL(execlp, int,
+                           (const char *pathname, const char *arg, ...),
+                           (pathname, arg, val), arg, brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(execv, int, (const char *pathname, char *const argv[]),
+                     (pathname, argv), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(execvp, int, (const char *pathname, char *const argv[]),
+                     (pathname, argv), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(execvpe, int,
+                     (const char *pathname, char *const argv[],
+                      char *const envp[]),
+                     (pathname, argv, envp), brahma::POSIX)
 #endif  // BRAHMA_POSIX_H
