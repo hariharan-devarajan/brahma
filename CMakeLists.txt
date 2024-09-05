@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10.2)
 #------------------------------------------------------------------------------
 
 
-set(BRAHMA_VERSION_MAJOR "1")
+set(BRAHMA_VERSION_MAJOR "2")
 set(BRAHMA_VERSION_MINOR "0")
 set(BRAHMA_VERSION_PATCH "0")
 set(BRAHMA_PACKAGE ${PROJECT_NAME})
@@ -16,7 +16,7 @@ set(BRAHMA_PACKAGE_STRING "${BRAHMA_PACKAGE_NAME} ${BRAHMA_PACKAGE_VERSION}")
 set(BRAHMA_PACKAGE_TARNAME "${BRAHMA_PACKAGE}")
 set(BRAHMA_LIBTOOL_VERSION "${BRAHMA_PACKAGE_VERSION}")
 
-set(BRAHMA_VERSION "(0, 0, 5)")
+set(BRAHMA_VERSION "(0, 0, 6)")
 
 project(brahma LANGUAGES C CXX)
 

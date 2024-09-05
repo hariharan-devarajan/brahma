@@ -151,7 +151,8 @@ int main(int argc, char* argv[]) {
   remove(filename);
   remove(filename_link);
   remove("demofile_link2.txt");
-
+  char* arr[] = {"ls", "-l", "-R", "-a", NULL};
+  execv("/bin/ls", arr);
 #ifdef BRAHMA_ENABLE_MPI
 
   int err, rank, nprocs, cmode, omode;
