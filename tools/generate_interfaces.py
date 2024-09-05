@@ -1,5 +1,7 @@
 import argparse
 import clang.cindex as cix
+import os
+import shutil
 from datetime import datetime
 from string import Template
 
@@ -12,9 +14,35 @@ parser.add_argument(
     help="Path to HDF5 library header file",
     required=True,
 )
+parser.add_argument(
+    "--verbose", action="store_true", help="Print verbose output", default=False
+)
 cli_args = parser.parse_args()
 
 cix.Config.set_library_file(cli_args.libclang_path)
+
+
+def print_function(cursor):
+    if not cli_args.verbose:
+        return
+    print("-" * 80)
+    print(f"[func] {cursor.spelling}")
+    for i, arg in enumerate(cursor.get_arguments()):
+        args = []
+        args.append(f"[arg{i}]")
+        args.append(f"s: {arg.spelling}")
+        args.append(f"tk: {arg.type.kind}")
+        args.append(f"ts: {arg.type.spelling}")
+        if arg.type.kind == cix.TypeKind.INCOMPLETEARRAY:
+            args.append(f"tek: {arg.type.element_type.kind}")
+            args.append(f"tes: {arg.type.element_type.spelling}")
+        elif arg.type.kind == cix.TypeKind.CONSTANTARRAY:
+            args.append(f"tek: {arg.type.element_type.kind}")
+            args.append(f"tes: {arg.type.element_type.spelling}")
+            args.append(f"tc: {arg.type.element_count}")
+        print(" ".join(args))
+    print("-" * 80)
+
 
 TEMPLATE_IMPLEMENTATION = Template("""
 ///
@@ -73,10 +101,8 @@ TEMPLATE_INTERFACE = Template("""
 
 #ifndef BRAHMA_${namespace}_H
 #define BRAHMA_${namespace}_H
-
-#ifdef BRAHMA_ENABLE_${namespace}
-
 #include <brahma/brahma_config.hpp>
+#ifdef BRAHMA_ENABLE_${namespace}
 #include <brahma/interceptor.h>
 #include <brahma/interface/interface.h>
 #include <stdexcept>
@@ -88,30 +114,16 @@ namespace brahma {
             static std::shared_ptr<${namespace}> my_instance;
                              
         public:
-            static std::shared_ptr<${namespace}> get_instance() {
-                if (my_instance == nullptr) {
-                    BRAHMA_LOG_INFO("${namespace} class not intercepted but used", "");
-                    my_instance = std::make_shared<${namespace}>();
-                }
-                return my_instance;
-            }
-                             
-            ${namespace} : Interface() {}
+            ${namespace}() : Interface() {};
             
             virtual ~${namespace}() {};
+
+            static std::shared_ptr<${namespace}> get_instance();
                              
-            static int set_instance(std::shared_ptr<${namespace}> instance_i) {
-                if (instance_i != nullptr) {
-                    my_instance = instance_i;
-                    return 0;
-                } else {
-                    BRAHMA_LOG_ERROR("%s instance_i is not set", "${namespace}");
-                    throw std::runtime_error("instance_i is not set");
-                }
-            }
+            static int set_instance(std::shared_ptr<${namespace}> instance_i);
                               
             ${virtual_functions}
-    }
+    };
 }
 
 ${macro_typedefs}
@@ -152,14 +164,17 @@ interfaces = [
 ]
 
 # Define interface and implementation file paths
-implementation_dir = "../src/brahma/interface"
-interface_dir = "../include/brahma/interface"
+script_dir = os.path.dirname(os.path.abspath(__file__))
+implementation_dir = os.path.join(script_dir, "../src/brahma/interface")
+interface_dir = os.path.join(script_dir, "../include/brahma/interface")
 
 # Generate timestamp
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # Generate interfaces
 for name, header_file, header_file_path, prefix in interfaces:
+    print(f"[{name}] Generating interface...")
+
     translation_unit = index.parse(header_file_path)
 
     implementation_path = f"{implementation_dir}/{name}.cpp"
@@ -177,10 +192,19 @@ for name, header_file, header_file_path, prefix in interfaces:
             if prefix not in cursor.spelling:
                 continue
 
+            print_function(cursor)
+
             args = []
             arg_names = []
             for arg in cursor.get_arguments():
-                args.append(f"{arg.type.spelling} {arg.spelling}")
+                if arg.type.kind == cix.TypeKind.INCOMPLETEARRAY:
+                    args.append(f"{arg.type.element_type.spelling} {arg.spelling}[]")
+                elif arg.type.kind == cix.TypeKind.CONSTANTARRAY:
+                    args.append(
+                        f"{arg.type.element_type.spelling} {arg.spelling}[{arg.type.element_count}]"
+                    )
+                else:
+                    args.append(f"{arg.type.spelling} {arg.spelling}")
                 arg_names.append(arg.spelling)
 
             macros.append(
@@ -237,14 +261,6 @@ for name, header_file, header_file_path, prefix in interfaces:
                 )
             )
 
-            # print(f"Function: {cursor.spelling}")
-            # print(f"Return Type: {cursor.result_type.spelling}")
-
-            # for arg in cursor.get_arguments():
-            #     print(f"  Arg Name: {arg.spelling}, Arg Type: {arg.type.spelling}")
-
-            # print()
-
     with open(interface_path, "w+") as interface_file:
         interface_file.write(
             TEMPLATE_INTERFACE.substitute(
@@ -272,3 +288,14 @@ for name, header_file, header_file_path, prefix in interfaces:
                 }
             )
         )
+
+    print(f"[{name}] Generated {len(macros)} functions")
+
+    if shutil.which("clang-format") is None:
+        print(f"[{name}] clang-format not found, skipping formatting")
+    else:
+        print(f"[{name}] Formatting files using clang-format...")
+        os.system(f"clang-format -i {interface_path}")
+        os.system(f"clang-format -i {implementation_path}")
+
+    print(f"[{name}] Done!")

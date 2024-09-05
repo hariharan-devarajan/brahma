@@ -60,16 +60,17 @@
       (func_##_fptr)gotcha_get_wrappee(get_##func_##_handle()); \
   assert(__real_##func_ != NULL)
 
+size_t count_hdf5();
+size_t count_mpi();
+size_t count_mpiio();
 size_t count_posix();
 size_t count_stdio();
-size_t count_mpiio();
-size_t count_mpi();
-int update_posix(gotcha_binding_t*& bindings, size_t& binding_index);
 
-int update_stdio(gotcha_binding_t*& bindings, size_t& binding_index);
-
-int update_mpiio(gotcha_binding_t*& bindings, size_t& binding_index);
+int update_hdf5(gotcha_binding_t*& bindings, size_t& binding_index);
 int update_mpi(gotcha_binding_t*& bindings, size_t& binding_index);
+int update_mpiio(gotcha_binding_t*& bindings, size_t& binding_index);
+int update_posix(gotcha_binding_t*& bindings, size_t& binding_index);
+int update_stdio(gotcha_binding_t*& bindings, size_t& binding_index);
 
 extern int brahma_bind_functions();
 extern int brahma_get_binding(gotcha_binding_t*& bindings,

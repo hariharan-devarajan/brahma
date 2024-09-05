@@ -253,8 +253,10 @@ endfunction()
 
 # Install Dependencies
 # =============================================================================
-if (BRAHMA_BUILD_DEPENDENCIES)
+if(BRAHMA_BUILD_DEPENDENCIES)
   add_subdirectory(dependency)
+elseif(BRAHMA_GENERATE_INTERFACES)
+  add_subdirectory(tools)
 else()
 #-----------------------------------------------------------------------------
 # Source for BRAHMA
@@ -317,11 +319,11 @@ set(DEPENDENCY_LIB )
 # find Gotcha
 find_package(gotcha 2.1.2 REQUIRED)
 if (${gotcha_FOUND})
-    message(STATUS "[Brahma] found gotcha at ${gotcha_INCLUDE_DIRS}")
+    message(STATUS "[${PROJECT_NAME}] found gotcha at ${gotcha_INCLUDE_DIRS}")
     include_directories(${gotcha_INCLUDE_DIRS})
     set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${gotcha_LIBRARIES})
 else ()
-    message(FATAL_ERROR "-- [Brahma] gotcha is needed for ${PROJECT_NAME} build")
+    message(FATAL_ERROR "-- [${PROJECT_NAME}] gotcha is needed for ${PROJECT_NAME} build")
 endif ()
 
 # Optional Dependencies
@@ -330,11 +332,11 @@ if(BRAHMA_BUILD_WITH_HDF5)
     # find HDF5
     find_package(HDF5 COMPONENTS CXX REQUIRED)
     if (HDF5_FOUND)
-        message(STATUS "[Brahma] found hdf5.h at ${HDF5_CXX_INCLUDE_DIRS}")
+        message(STATUS "[${PROJECT_NAME}] found hdf5.h at ${HDF5_CXX_INCLUDE_DIRS}")
         include_directories(${HDF5_CXX_INCLUDE_DIRS})
         set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${HDF5_CXX_LIBRARIES})
     else ()
-        message(FATAL_ERROR "-- [Brahma] HDF5 is needed for ${PROJECT_NAME} build")
+        message(FATAL_ERROR "-- [${PROJECT_NAME}] HDF5 is needed for ${PROJECT_NAME} build")
     endif ()
 endif()
 
@@ -342,11 +344,11 @@ if(BRAHMA_BUILD_WITH_MPI)
     # find MPI
     find_package(MPI COMPONENTS CXX REQUIRED)
     if (MPI_FOUND)
-        message(STATUS "[Brahma] found mpi.h at ${MPI_CXX_INCLUDE_DIRS}")
+        message(STATUS "[${PROJECT_NAME}] found mpi.h at ${MPI_CXX_INCLUDE_DIRS}")
         include_directories(${MPI_CXX_INCLUDE_DIRS})
         set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${MPI_CXX_LIBRARIES})
     else ()
-        message(FATAL_ERROR "-- [Brahma] mpi is needed for ${PROJECT_NAME} build")
+        message(FATAL_ERROR "-- [${PROJECT_NAME}] mpi is needed for ${PROJECT_NAME} build")
     endif ()
 endif()
 
@@ -366,10 +368,6 @@ if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
 endif()
 
 target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB})
-
-if (BRAHMA_GENERATE_INTERFACES)
-  add_subdirectory(tools)
-endif()
 
 install(
         TARGETS ${PROJECT_NAME}
