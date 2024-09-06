@@ -132,7 +132,7 @@ GOTCHA_MACRO(execvp, int, (const char *pathname, char *const argv[]),
 GOTCHA_MACRO(execvpe, int,
              (const char *pathname, char *const argv[], char *const envp[]),
              (pathname, argv, envp), brahma::POSIX)
-
+GOTCHA_MACRO(fork, int, (), (), brahma::POSIX)
 int update_posix(gotcha_binding_t *&bindings, size_t &binding_index) {
   GOTCHA_BINDING_MACRO(open);
   GOTCHA_BINDING_MACRO(creat64);
@@ -195,11 +195,12 @@ int update_posix(gotcha_binding_t *&bindings, size_t &binding_index) {
   GOTCHA_BINDING_MACRO(execv);
   GOTCHA_BINDING_MACRO(execvp);
   GOTCHA_BINDING_MACRO(execvpe);
+  GOTCHA_BINDING_MACRO(fork);
 
   return 0;
 }
 
-size_t count_posix() { return 59; }
+size_t count_posix() { return 60; }
 
 namespace brahma {
 std::shared_ptr<POSIX> POSIX::my_instance = nullptr;
@@ -530,6 +531,11 @@ int POSIX::execvp(const char *pathname, char *const argv[]) {
 int POSIX::execvpe(const char *pathname, char *const argv[],
                    char *const envp[]) {
   BRAHMA_UNWRAPPED_FUNC(execvpe, int, (pathname, argv, envp));
+  return result;
+}
+
+int POSIX::fork() {
+  BRAHMA_UNWRAPPED_FUNC(fork, int, ());
   return result;
 }
 

@@ -154,6 +154,8 @@ class POSIX : public Interface {
   virtual int execvp(const char *file, char *const argv[]);
 
   virtual int execvpe(const char *file, char *const argv[], char *const envp[]);
+
+  virtual int fork();
 };
 
 }  // namespace brahma
@@ -328,4 +330,6 @@ GOTCHA_MACRO_TYPEDEF(execvpe, int,
                      (const char *pathname, char *const argv[],
                       char *const envp[]),
                      (pathname, argv, envp), brahma::POSIX)
+
+GOTCHA_MACRO_TYPEDEF(fork, int, (), (), brahma::POSIX)
 #endif  // BRAHMA_POSIX_H
