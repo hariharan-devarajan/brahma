@@ -1,0 +1,77 @@
+name: Build and Test
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+
+env:
+  BUILD_TYPE: Debug
+  LOCAL: local
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        hdf5: ["ON", "OFF"]
+        mpi: ["ON", "OFF"]
+    steps:
+      - name: Push checkout
+        if: github.event_name == 'push'
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: PR checkout
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+              autoconf \
+              automake \
+              clang \
+              cmake \
+              g++ \
+              gcc \
+              gfortran \
+              hwloc \
+              libarchive-dev \
+              libclang-dev \
+              libczmq-dev \
+              libhdf5-dev \
+              liblua5.3-dev \
+              libopenmpi-dev \
+              libtool \
+              libtool-bin \
+              libzmq5 \
+              llvm-dev \
+              lua-posix-dev \
+              lua5.3 \
+              lz4 \
+              ncurses-bin \
+              openmpi-bin \
+              pkgconf \
+              python3 \
+              python3-pip \
+              sqlite
+      - name: Build Dependencies
+        run: |
+          mkdir build
+          cd build
+          cmake -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} -DBRAHMA_BUILD_WITH_MPI=${{ matrix.mpi }} -DBRAHMA_ENABLE_TESTING=ON -DBRAHMA_BUILD_DEPENDENCIES=ON ..
+          make -j
+      - name: Build
+        run: |
+          cd build
+          cmake -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} -DBRAHMA_BUILD_WITH_MPI=${{ matrix.mpi }} -DBRAHMA_ENABLE_TESTING=ON -DBRAHMA_BUILD_DEPENDENCIES=OFF ..
+          make -j
+      - name: Test
+        run: |
+          cd build
+          ctest -VV
