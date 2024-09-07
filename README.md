@@ -57,23 +57,26 @@ There are three main steps to use brahma
 
 ### Binding functions
 
-The Binding has to be done before any interception can happen. 
+The Binding has to be done before any interception can happen.
 Some recommended places are library constructor or initialization routines.
-The libraries which use Brahma can initiate binding of system calls using `brahma_gotcha_wrap` function.
+The libraries which use Brahma can initiate binding of system calls on each interface using the `bind` function.
 It takes two arguments. `UNIQUE_TOOL_NAME` should be a tool name that is used for stacking different interception tools used by gotcha.
 `PRIORITY` is the prioritization of the tool.
 
 ```c++
-brahma_gotcha_wrap(UNIQUE_TOOL_NAME, PRIORITY);
+auto posix = brahma::POSIXTest::get_instance();
+posix->bind<brahma::POSIXTest>(UNIQUE_TOOL_NAME, PRIORITY);
 ```
 
 ### Disable bindings
 
-This routine should be called to stop the interception. 
-Some recommended choices for this are library destructor or finalization routine. 
+This routine should be called to stop the interception.
+Some recommended choices for this are library destructor or finalization routine.
 The free bindings call release the interception bindings from brahma.
+
 ```c++
- brahma_free_bindings();
+auto posix = brahma::POSIXTest::get_instance();
+posix->unbind();
 ```
 
 ### Override I/O Classes
