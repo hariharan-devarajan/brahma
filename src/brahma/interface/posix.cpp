@@ -58,17 +58,7 @@ int POSIX::open64(const char *path, int flags, ...) {
 }
 
 int POSIX::close(int fd) {
-  cpp_logger_clog(4, "BRAHMA",
-                  "[%s] %s "
-                  "[BRAHMA]\tFunction %s() not wrapped. Calling Original.\n"
-                  " [%s:%d]",
-                  brahma_macro_get_time().c_str(), __FUNCTION__, "close",
-                  "/usr/WS2/haridev/brahma/src/brahma/interface/posix.cpp", 60);
-  ;
-  ;
-  close_fptr close_wrappee =
-      (close_fptr)gotcha_get_wrappee(close_brahma_handle);
-  int result = close_wrappee(fd);
+  BRAHMA_UNWRAPPED_FUNC(close, int, (fd));
   return result;
 }
 
