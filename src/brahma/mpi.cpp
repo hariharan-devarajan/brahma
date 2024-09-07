@@ -10,16 +10,13 @@
 /* External Headers */
 
 #ifdef BRAHMA_ENABLE_MPI
-GOTCHA_MACRO(MPI_Init, int, (int *argc, char ***argv), (argc, argv),
-             brahma::MPI)
-GOTCHA_MACRO(MPI_Finalize, int, (), (), brahma::MPI)
+
 
 int update_mpi(gotcha_binding_t *&bindings, size_t &binding_index) {
-  GOTCHA_BINDING_MACRO(MPI_Init);
-  GOTCHA_BINDING_MACRO(MPI_Finalize);
+  
   return 0;
 }
-size_t count_mpi() { return 2; }
+
 
 namespace brahma {
 std::shared_ptr<MPI> MPI::my_instance = nullptr;

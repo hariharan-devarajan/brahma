@@ -38,6 +38,9 @@ class STDIO : public Interface {
     }
   }
 
+  template <typename C>
+  size_t bind(const char *name, uint16_t priority);
+
   virtual FILE *fopen(const char *path, const char *mode);
   virtual FILE *fopen64(const char *path, const char *mode);
   virtual int fclose(FILE *fp);
@@ -81,4 +84,57 @@ GOTCHA_MACRO_TYPEDEF(tmpfile, FILE *, (void), (), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(fseeko, int, (FILE * stream, off_t offset, int whence),
                      (stream, offset, whence), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(ftello, off_t, (FILE * stream), (stream), brahma::STDIO)
+
+GOTCHA_MACRO(fopen, FILE *, (const char *path, const char *mode), (path, mode),
+             brahma::STDIO)
+
+GOTCHA_MACRO(fopen64, FILE *, (const char *path, const char *mode),
+             (path, mode), brahma::STDIO)
+
+GOTCHA_MACRO(fclose, int, (FILE * fp), (fp), brahma::STDIO)
+
+GOTCHA_MACRO(fread, size_t,
+             (void *ptr, size_t size, size_t nmemb, FILE *stream),
+             (ptr, size, nmemb, stream), brahma::STDIO)
+
+GOTCHA_MACRO(fwrite, size_t,
+             (const void *ptr, size_t size, size_t nmemb, FILE *stream),
+             (ptr, size, nmemb, stream), brahma::STDIO)
+
+GOTCHA_MACRO(ftell, long, (FILE * stream), (stream), brahma::STDIO)
+
+GOTCHA_MACRO(fseek, int, (FILE * stream, long offset, int whence),
+             (stream, offset, whence), brahma::STDIO)
+GOTCHA_MACRO(fdopen, FILE *, (int fd, const char *mode), (fd, mode),
+             brahma::STDIO)
+GOTCHA_MACRO(fileno, int, (FILE * stream), (stream), brahma::STDIO)
+GOTCHA_MACRO(tmpfile, FILE *, (void), (void), brahma::STDIO)
+GOTCHA_MACRO(fseeko, int, (FILE * stream, off_t offset, int whence),
+             (stream, offset, whence), brahma::STDIO)
+GOTCHA_MACRO(ftello, off_t, (FILE * stream), (stream), brahma::STDIO)
+
+template <typename C>
+size_t brahma::STDIO::bind(const char *name, uint16_t priority) {
+  GOTCHA_BINDING_MACRO(fopen, STDIO);
+  GOTCHA_BINDING_MACRO(fopen64, STDIO);
+  GOTCHA_BINDING_MACRO(fclose, STDIO);
+  GOTCHA_BINDING_MACRO(fread, STDIO);
+  GOTCHA_BINDING_MACRO(fwrite, STDIO);
+  GOTCHA_BINDING_MACRO(ftell, STDIO);
+  GOTCHA_BINDING_MACRO(fseek, STDIO);
+  GOTCHA_BINDING_MACRO(tmpfile, STDIO);
+  GOTCHA_BINDING_MACRO(fseeko, STDIO);
+  GOTCHA_BINDING_MACRO(ftello, STDIO);
+  GOTCHA_BINDING_MACRO(fdopen, STDIO);
+  GOTCHA_BINDING_MACRO(fileno, STDIO);
+  num_bindings = bindings.size();
+  if (num_bindings > 0) {
+    char tool_name[64];
+    sprintf(tool_name, "%s_stdio", name);
+    gotcha_binding_t *raw_bindings = bindings.data();
+    gotcha_wrap(raw_bindings, num_bindings, tool_name);
+    gotcha_set_priority(tool_name, priority);
+  }
+  return num_bindings;
+}
 #endif  // BRAHMA_STDIO_H
