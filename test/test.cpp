@@ -678,17 +678,7 @@ int main(int argc, char *argv[]) {
 
   mmap64(NULL, 0, 0, 0, 0, 0);
 
-  __xstat(0, "", NULL);
-
-  __xstat64(0, "", NULL);
-
-  __lxstat(0, "", NULL);
-
-  __lxstat64(0, "", NULL);
-
-  __fxstat(0, 0, NULL);
-
-  __fxstat64(0, 0, NULL);
+  stat("", NULL);
 
   getcwd(NULL, 0);
 
