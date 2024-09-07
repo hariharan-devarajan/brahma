@@ -674,10 +674,6 @@ int main(int argc, char *argv[]) {
 
   openat(0, "", 0);
 
-  mmap(NULL, 0, 0, 0, 0, 0);
-
-  mmap64(NULL, 0, 0, 0, 0, 0);
-
   stat("", NULL);
 
   getcwd(NULL, 0);
