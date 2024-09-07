@@ -43,7 +43,7 @@ cmake --build $PWD/build --target all -j 50
 ## Including brahma in your CMake Project.
 
 ```cmake
-find_package(brahma 0.0.7 REQUIRED)
+find_package(brahma 2.0.0 REQUIRED)
 ```
 Exported variables for this package are `brahma_FOUND`, `BRAHMA_INCLUDE_DIRS`, and `BRAHMA_LIBRARIES`.
 
