@@ -8,13 +8,13 @@
 #include <brahma/brahma.h>
 #include <fcntl.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <utime.h>
 #ifdef BRAHMA_ENABLE_MPI
 #include <mpi.h>
-#include <sys/mman.h>
 
 #define LEN 10
 
