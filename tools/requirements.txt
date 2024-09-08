@@ -1,1 +1,1 @@
-clang
+libclang~=14.0

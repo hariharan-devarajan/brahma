@@ -15,8 +15,7 @@ if(BRAHMA_BUILD_WITH_HDF5)
     )
 endif()
 
-add_custom_command(
-    OUTPUT ${GENERATED_FILES}
+add_custom_target(generate_interfaces ALL 
     COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/generate_interfaces.py
         --libclang-path ${LLVM_LIBRARY_DIRS}/libclang.so
         ${COMMAND_ARGS}
@@ -24,4 +23,3 @@ add_custom_command(
     COMMENT "Generating interfaces..."
     VERBATIM
 )
-add_custom_target(generate_interfaces ALL DEPENDS ${GENERATED_FILES})

@@ -16,7 +16,9 @@ jobs:
       fail-fast: false
       matrix:
         hdf5: ["ON", "OFF"]
+        hdf5_version: ["1.8", "1.12", "1.14"]
         mpi: ["ON", "OFF"]
+        mpi_version: ["3", "4"]
     steps:
       - name: Push checkout
         if: github.event_name == 'push'
@@ -36,6 +38,7 @@ jobs:
               autoconf \
               automake \
               clang \
+              clang-format \
               cmake \
               g++ \
               gcc \
@@ -44,9 +47,7 @@ jobs:
               libarchive-dev \
               libclang-dev \
               libczmq-dev \
-              libhdf5-dev \
               liblua5.3-dev \
-              libopenmpi-dev \
               libtool \
               libtool-bin \
               libzmq5 \
@@ -55,23 +56,53 @@ jobs:
               lua5.3 \
               lz4 \
               ncurses-bin \
-              openmpi-bin \
               pkgconf \
               python3 \
               python3-pip \
               sqlite
-      - name: Build Dependencies
+      - name: Set up Spack
+        uses: spack/setup-spack@v2
+      - name: Install Spack Packages
+        shell: spack-bash {0}
+        run: spack install hdf5+cxx@${{ matrix.hdf5_version }} openmpi+cxx@${{ matrix.mpi_version }}
+      - name: Install Python Packages
+        run: python -m pip install -r tools/requirements.txt
+      - name: Generate Interfaces
+        shell: spack-bash {0}
         run: |
+          spack load hdf5 openmpi
           mkdir build
-          cd build
-          cmake -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} -DBRAHMA_BUILD_WITH_MPI=${{ matrix.mpi }} -DBRAHMA_ENABLE_TESTING=ON -DBRAHMA_BUILD_DEPENDENCIES=ON ..
-          make -j
+          cmake -Bbuild \
+            -DBRAHMA_BUILD_DEPENDENCIES=OFF \
+            -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} \
+            -DBRAHMA_BUILD_WITH_MPI=${{ matrix.mpi }} \
+            -DBRAHMA_ENABLE_TESTING=ON \
+            -DBRAHMA_GENERATE_INTERFACES=ON
+          make -C build -j
+      - name: Build Dependencies
+        shell: spack-bash {0}
+        run: |
+          spack load hdf5 openmpi
+          cmake -Bbuild \
+            -DBRAHMA_BUILD_DEPENDENCIES=ON \
+            -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} \
+            -DBRAHMA_BUILD_WITH_MPI=${{ matrix.mpi }} \
+            -DBRAHMA_ENABLE_TESTING=ON \
+            -DBRAHMA_GENERATE_INTERFACES=OFF
+          make -C build -j
       - name: Build
+        shell: spack-bash {0}
         run: |
-          cd build
-          cmake -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} -DBRAHMA_BUILD_WITH_MPI=${{ matrix.mpi }} -DBRAHMA_ENABLE_TESTING=ON -DBRAHMA_BUILD_DEPENDENCIES=OFF ..
-          make -j
+          spack load hdf5 openmpi
+          cmake -Bbuild \
+            -DBRAHMA_BUILD_DEPENDENCIES=OFF \
+            -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} \
+            -DBRAHMA_BUILD_WITH_MPI=${{ matrix.mpi }} \
+            -DBRAHMA_ENABLE_TESTING=ON \
+            -DBRAHMA_GENERATE_INTERFACES=OFF
+          make -C build -j
       - name: Test
+        shell: spack-bash {0}
         run: |
-          cd build
-          ctest -VV
+          spack load hdf5 openmpi
+          ctest --test-dir build -VV
