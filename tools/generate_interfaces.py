@@ -155,6 +155,15 @@ TEMPLATE_WRAPPER_FUNCTION = Template("""
     }
 """)
 
+TEMPLATE_WRAPPER_FUNCTION_VOID = Template("""
+    void ${namespace}::${function_name}(${args}) {
+        BRAHMA_UNWRAPPED_FUNC_VOID(${function_name}, (${arg_names}));
+    }
+""")
+
+
+# BRAHMA_UNWRAPPED_FUNC_VOID
+
 
 index = cix.Index.create()
 
@@ -207,14 +216,18 @@ for name, header_file, header_file_path, prefix in interfaces:
                     args.append(f"{arg.type.spelling} {arg.spelling}")
                 arg_names.append(arg.spelling)
 
+            if len(args) == 0:
+                args.append("void")
+                arg_names.append("")
+
             macros.append(
                 TEMPLATE_MACRO.substitute(
                     {
-                        "function_name": cursor.spelling,
-                        "return_type": cursor.result_type.spelling,
-                        "args": ", ".join(args),
                         "arg_names": ", ".join(arg_names),
+                        "args": ", ".join(args),
+                        "function_name": cursor.spelling,
                         "namespace": namespace,
+                        "return_type": cursor.result_type.spelling,
                     }
                 )
             )
@@ -230,11 +243,11 @@ for name, header_file, header_file_path, prefix in interfaces:
             macro_typedefs.append(
                 TEMPLATE_MACRO_TYPEDEF.substitute(
                     {
-                        "function_name": cursor.spelling,
-                        "return_type": cursor.result_type.spelling,
-                        "args": ", ".join(args),
                         "arg_names": ", ".join(arg_names),
+                        "args": ", ".join(args),
+                        "function_name": cursor.spelling,
                         "namespace": namespace,
+                        "return_type": cursor.result_type.spelling,
                     }
                 )
             )
@@ -242,24 +255,36 @@ for name, header_file, header_file_path, prefix in interfaces:
             virtual_functions.append(
                 TEMPLATE_VIRTUAL_FUNCTION.substitute(
                     {
-                        "return_type": cursor.result_type.spelling,
-                        "function_name": cursor.spelling,
                         "args": ", ".join(args),
+                        "function_name": cursor.spelling,
+                        "return_type": cursor.result_type.spelling,
                     }
                 )
             )
 
-            wrapper_functions.append(
-                TEMPLATE_WRAPPER_FUNCTION.substitute(
-                    {
-                        "function_name": cursor.spelling,
-                        "return_type": cursor.result_type.spelling,
-                        "args": ", ".join(args),
-                        "arg_names": ", ".join(arg_names),
-                        "namespace": namespace,
-                    }
+            if cursor.result_type.kind == cix.TypeKind.VOID:
+                wrapper_functions.append(
+                    TEMPLATE_WRAPPER_FUNCTION_VOID.substitute(
+                        {
+                            "arg_names": ", ".join(arg_names),
+                            "args": ", ".join(args),
+                            "function_name": cursor.spelling,
+                            "namespace": namespace,
+                        }
+                    )
                 )
-            )
+            else:
+                wrapper_functions.append(
+                    TEMPLATE_WRAPPER_FUNCTION.substitute(
+                        {
+                            "arg_names": ", ".join(arg_names),
+                            "args": ", ".join(args),
+                            "function_name": cursor.spelling,
+                            "namespace": namespace,
+                            "return_type": cursor.result_type.spelling,
+                        }
+                    )
+                )
 
     with open(interface_path, "w+") as interface_file:
         interface_file.write(
