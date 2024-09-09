@@ -61,14 +61,18 @@ jobs:
         uses: spack/setup-spack@v2
       - name: Install Spack Packages
         shell: spack-bash {0}
-        run: spack install hdf5+cxx@${{ matrix.hdf5_version }} openmpi+cxx@${{ matrix.mpi_version }}
-      - name: Install Python Packages
-        run: python -m pip install -r tools/requirements.txt
+        run: |
+          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack install hdf5+cxx@${{ matrix.hdf5_version }}
+          [[ "${{ matrix.mpi }}" == "ON" ]] && spack install openmpi+cxx@${{ matrix.mpi_version }}
+      - name: Create Build Directory
+        run: mkdir build
       - name: Generate Interfaces
         shell: spack-bash {0}
+        if: matrix.hdf5 == 'ON'
         run: |
-          spack load hdf5 openmpi
-          mkdir build
+          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack load hdf5
+          [[ "${{ matrix.mpi }}" == "ON" ]] && spack load openmpi
+          python -m pip install -r tools/requirements.txt
           cmake -Bbuild \
             -DBRAHMA_BUILD_DEPENDENCIES=OFF \
             -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} \
@@ -79,7 +83,8 @@ jobs:
       - name: Build Dependencies
         shell: spack-bash {0}
         run: |
-          spack load hdf5 openmpi
+          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack load hdf5
+          [[ "${{ matrix.mpi }}" == "ON" ]] && spack load openmpi
           cmake -Bbuild \
             -DBRAHMA_BUILD_DEPENDENCIES=ON \
             -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} \
@@ -90,7 +95,8 @@ jobs:
       - name: Build
         shell: spack-bash {0}
         run: |
-          spack load hdf5 openmpi
+          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack load hdf5
+          [[ "${{ matrix.mpi }}" == "ON" ]] && spack load openmpi
           cmake -Bbuild \
             -DBRAHMA_BUILD_DEPENDENCIES=OFF \
             -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} \
@@ -101,5 +107,6 @@ jobs:
       - name: Test
         shell: spack-bash {0}
         run: |
-          spack load hdf5 openmpi
+          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack load hdf5
+          [[ "${{ matrix.mpi }}" == "ON" ]] && spack load openmpi
           ctest --test-dir build -VV
