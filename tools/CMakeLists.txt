@@ -1,4 +1,4 @@
-find_package(LLVM REQUIRED CONFIG)
+find_package(LLVM 14 REQUIRED CONFIG)
 find_package(Python 3 REQUIRED)
 
 set(COMMAND_ARGS "")
