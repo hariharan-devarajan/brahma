@@ -1,9 +1,6 @@
 //
 // Created by hariharan on 8/8/22.
 //
-/* Brahma Header */
-#include <brahma/brahma.h>
-/* External Headers*/
 #include <assert.h>
 #include <brahma/brahma.h>
 #include <fcntl.h>
@@ -101,6 +98,7 @@ int main(int argc, char* argv[]) {
   char filename_link[1024];
   sprintf(filename_link, "%s/demofile_link.txt", argv[1]);
   truncate(filename, 0);
+
   FILE* fh = fopen(filename, "w+");
   if (fh != nullptr) {
     fwrite("hello", sizeof("hello"), 1, fh);

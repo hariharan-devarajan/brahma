@@ -1,0 +1,112 @@
+name: Build and Test
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+
+env:
+  BUILD_TYPE: Debug
+  LOCAL: local
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        hdf5: ["ON", "OFF"]
+        hdf5_version: ["1.8", "1.12", "1.14"]
+        mpi: ["ON", "OFF"]
+        mpi_version: ["3", "4"]
+    steps:
+      - name: Push checkout
+        if: github.event_name == 'push'
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: PR checkout
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+              autoconf \
+              automake \
+              clang-14 \
+              clang-format \
+              cmake \
+              g++ \
+              gcc \
+              gfortran \
+              hwloc \
+              libarchive-dev \
+              libclang-14-dev \
+              liblua5.3-dev \
+              libtool \
+              libtool-bin \
+              llvm-14-dev \
+              lua-posix-dev \
+              lua5.3 \
+              lz4 \
+              ncurses-bin \
+              pkgconf \
+              python3 \
+              python3-pip
+      - name: Set up Spack
+        uses: spack/setup-spack@v2
+      - name: Install Spack Packages
+        shell: spack-bash {0}
+        run: |
+          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack install hdf5+cxx@${{ matrix.hdf5_version }}
+          [[ "${{ matrix.mpi }}" == "ON" ]] && spack install openmpi+cxx@${{ matrix.mpi_version }}
+      - name: Create Build Directory
+        run: mkdir build
+      - name: Generate Interfaces
+        shell: spack-bash {0}
+        if: matrix.hdf5 == 'ON'
+        run: |
+          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack load hdf5
+          [[ "${{ matrix.mpi }}" == "ON" ]] && spack load openmpi
+          python -m pip install -r tools/requirements.txt
+          cmake -Bbuild \
+            -DBRAHMA_BUILD_DEPENDENCIES=OFF \
+            -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} \
+            -DBRAHMA_BUILD_WITH_MPI=${{ matrix.mpi }} \
+            -DBRAHMA_ENABLE_TESTING=ON \
+            -DBRAHMA_GENERATE_INTERFACES=ON
+          make -C build -j
+      - name: Build Dependencies
+        shell: spack-bash {0}
+        run: |
+          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack load hdf5
+          [[ "${{ matrix.mpi }}" == "ON" ]] && spack load openmpi
+          cmake -Bbuild \
+            -DBRAHMA_BUILD_DEPENDENCIES=ON \
+            -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} \
+            -DBRAHMA_BUILD_WITH_MPI=${{ matrix.mpi }} \
+            -DBRAHMA_ENABLE_TESTING=ON \
+            -DBRAHMA_GENERATE_INTERFACES=OFF
+          make -C build -j
+      - name: Build
+        shell: spack-bash {0}
+        run: |
+          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack load hdf5
+          [[ "${{ matrix.mpi }}" == "ON" ]] && spack load openmpi
+          cmake -Bbuild \
+            -DBRAHMA_BUILD_DEPENDENCIES=OFF \
+            -DBRAHMA_BUILD_WITH_HDF5=${{ matrix.hdf5 }} \
+            -DBRAHMA_BUILD_WITH_MPI=${{ matrix.mpi }} \
+            -DBRAHMA_ENABLE_TESTING=ON \
+            -DBRAHMA_GENERATE_INTERFACES=OFF
+          make -C build -j
+      - name: Test
+        shell: spack-bash {0}
+        run: |
+          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack load hdf5
+          [[ "${{ matrix.mpi }}" == "ON" ]] && spack load openmpi
+          ctest --test-dir build -VV

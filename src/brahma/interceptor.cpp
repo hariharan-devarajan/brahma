@@ -11,11 +11,12 @@ size_t total_apis = 0;
 extern int brahma_bind_functions() {
   BRAHMA_LOGGER_INIT();
   if (brahma::bindings == nullptr) {
-#ifdef BRAHMA_ENABLE_MPI
-    brahma::total_apis =
-        count_posix() + count_mpiio() + count_stdio() + count_mpi();
-#else
     brahma::total_apis = count_posix() + count_stdio();
+#ifdef BRAHMA_ENABLE_MPI
+    brahma::total_apis += count_mpi() + count_mpiio();
+#endif
+#ifdef BRAHMA_ENABLE_HDF5
+    brahma::total_apis += count_hdf5();
 #endif
     brahma::bindings = static_cast<gotcha_binding_t*>(
         calloc(brahma::total_apis, sizeof(gotcha_binding_t)));
@@ -25,6 +26,9 @@ extern int brahma_bind_functions() {
 #ifdef BRAHMA_ENABLE_MPI
     update_mpiio(brahma::bindings, current_index);
     update_mpi(brahma::bindings, current_index);
+#endif
+#ifdef BRAHMA_ENABLE_HDF5
+    update_hdf5(brahma::bindings, current_index);
 #endif
     if (current_index != brahma::total_apis) {
       BRAHMA_LOG_ERROR(
