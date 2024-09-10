@@ -15,7 +15,4 @@
 /* External Headers */
 #include <cassert>
 
-extern void brahma_gotcha_wrap(const char *name, uint16_t priority);
-extern int brahma_free_bindings();
-
 #endif  // BRAHMA_BRAHMA_H

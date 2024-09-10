@@ -9,6 +9,19 @@
         "string_view": "cpp",
         "tuple": "cpp",
         "complex": "cpp",
-        "format": "cpp"
+        "format": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "vector": "cpp",
+        "array": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "initializer_list": "cpp",
+        "ranges": "cpp",
+        "span": "cpp",
+        "utility": "cpp",
+        "valarray": "cpp",
+        "*.tcc": "cpp",
+        "fstream": "cpp"
     }
 }
