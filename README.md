@@ -43,7 +43,7 @@ cmake --build $PWD/build --target all -j 50
 ## Including brahma in your CMake Project.
 
 ```cmake
-find_package(brahma 2.0.0 REQUIRED)
+find_package(brahma 0.0.7 REQUIRED)
 ```
 Exported variables for this package are `brahma_FOUND`, `BRAHMA_INCLUDE_DIRS`, and `BRAHMA_LIBRARIES`.
 
@@ -57,26 +57,23 @@ There are three main steps to use brahma
 
 ### Binding functions
 
-The Binding has to be done before any interception can happen.
+The Binding has to be done before any interception can happen. 
 Some recommended places are library constructor or initialization routines.
-The libraries which use Brahma can initiate binding of system calls on each interface using the `bind` function.
+The libraries which use Brahma can initiate binding of system calls using `brahma_gotcha_wrap` function.
 It takes two arguments. `UNIQUE_TOOL_NAME` should be a tool name that is used for stacking different interception tools used by gotcha.
 `PRIORITY` is the prioritization of the tool.
 
 ```c++
-auto posix = brahma::POSIXTest::get_instance();
-posix->bind<brahma::POSIXTest>(UNIQUE_TOOL_NAME, PRIORITY);
+brahma_gotcha_wrap(UNIQUE_TOOL_NAME, PRIORITY);
 ```
 
 ### Disable bindings
 
-This routine should be called to stop the interception.
-Some recommended choices for this are library destructor or finalization routine.
+This routine should be called to stop the interception. 
+Some recommended choices for this are library destructor or finalization routine. 
 The free bindings call release the interception bindings from brahma.
-
 ```c++
-auto posix = brahma::POSIXTest::get_instance();
-posix->unbind();
+ brahma_free_bindings();
 ```
 
 ### Override I/O Classes
