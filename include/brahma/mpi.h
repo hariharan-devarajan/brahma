@@ -42,8 +42,6 @@ class MPI : public brahma::Interface {
       throw std::runtime_error("instance_i is not set");
     }
   }
-  template <typename C>
-  size_t bind(const char *name, uint16_t priority);
 
   virtual int MPI_Init(int *argc, char ***argv);
 
@@ -53,24 +51,5 @@ class MPI : public brahma::Interface {
 GOTCHA_MACRO_TYPEDEF(MPI_Init, int, (int *argc, char ***argv), (argc, argv),
                      brahma::MPI)
 GOTCHA_MACRO_TYPEDEF(MPI_Finalize, int, (), (), brahma::MPI)
-
-GOTCHA_MACRO(MPI_Init, int, (int *argc, char ***argv), (argc, argv),
-             brahma::MPI)
-GOTCHA_MACRO(MPI_Finalize, int, (), (), brahma::MPI)
-
-template <typename C>
-size_t brahma::MPI::bind(const char *name, uint16_t priority) {
-  GOTCHA_BINDING_MACRO(MPI_Init, MPI);
-  GOTCHA_BINDING_MACRO(MPI_Finalize, MPI);
-  num_bindings = bindings.size();
-  if (num_bindings > 0) {
-    char tool_name[64];
-    sprintf(tool_name, "%s_stdio", name);
-    gotcha_binding_t *raw_bindings = bindings.data();
-    gotcha_wrap(raw_bindings, num_bindings, tool_name);
-    gotcha_set_priority(tool_name, priority);
-  }
-  return num_bindings;
-}
 #endif  // BRAHMA_ENABLE_MPI
 #endif  // BRAHMA_MPI_H
