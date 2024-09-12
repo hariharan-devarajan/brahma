@@ -6,9 +6,22 @@
         "-DBRAHMA_LOGGER=CPP_LOGGER"
     ],
     "files.associations": {
+        "*.tcc": "cpp",
+        "array": "cpp",
+        "complex": "cpp",
+        "deque": "cpp",
+        "format": "cpp",
+        "fstream": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "initializer_list": "cpp",
+        "ranges": "cpp",
+        "span": "cpp",
+        "string": "cpp",
         "string_view": "cpp",
         "tuple": "cpp",
-        "complex": "cpp",
-        "format": "cpp"
+        "utility": "cpp",
+        "valarray": "cpp",
+        "vector": "cpp"
     }
 }
