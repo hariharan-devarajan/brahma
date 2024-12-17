@@ -11,7 +11,9 @@
 
 #ifdef BRAHMA_ENABLE_MPI
 
-
+GOTCHA_MACRO_DEF(MPI_Init, int, (int *argc, char ***argv), (argc, argv),
+             brahma::MPI)
+GOTCHA_MACRO_DEF(MPI_Finalize, int, (), (), brahma::MPI)
 int update_mpi(gotcha_binding_t *&bindings, size_t &binding_index) {
   
   return 0;

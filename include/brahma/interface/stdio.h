@@ -85,33 +85,33 @@ GOTCHA_MACRO_TYPEDEF(fseeko, int, (FILE * stream, off_t offset, int whence),
                      (stream, offset, whence), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(ftello, off_t, (FILE * stream), (stream), brahma::STDIO)
 
-GOTCHA_MACRO(fopen, FILE *, (const char *path, const char *mode), (path, mode),
+GOTCHA_MACRO_DECL(fopen, FILE *, (const char *path, const char *mode), (path, mode),
              brahma::STDIO)
 
-GOTCHA_MACRO(fopen64, FILE *, (const char *path, const char *mode),
+GOTCHA_MACRO_DECL(fopen64, FILE *, (const char *path, const char *mode),
              (path, mode), brahma::STDIO)
 
-GOTCHA_MACRO(fclose, int, (FILE * fp), (fp), brahma::STDIO)
+GOTCHA_MACRO_DECL(fclose, int, (FILE * fp), (fp), brahma::STDIO)
 
-GOTCHA_MACRO(fread, size_t,
+GOTCHA_MACRO_DECL(fread, size_t,
              (void *ptr, size_t size, size_t nmemb, FILE *stream),
              (ptr, size, nmemb, stream), brahma::STDIO)
 
-GOTCHA_MACRO(fwrite, size_t,
+GOTCHA_MACRO_DECL(fwrite, size_t,
              (const void *ptr, size_t size, size_t nmemb, FILE *stream),
              (ptr, size, nmemb, stream), brahma::STDIO)
 
-GOTCHA_MACRO(ftell, long, (FILE * stream), (stream), brahma::STDIO)
+GOTCHA_MACRO_DECL(ftell, long, (FILE * stream), (stream), brahma::STDIO)
 
-GOTCHA_MACRO(fseek, int, (FILE * stream, long offset, int whence),
+GOTCHA_MACRO_DECL(fseek, int, (FILE * stream, long offset, int whence),
              (stream, offset, whence), brahma::STDIO)
-GOTCHA_MACRO(fdopen, FILE *, (int fd, const char *mode), (fd, mode),
+GOTCHA_MACRO_DECL(fdopen, FILE *, (int fd, const char *mode), (fd, mode),
              brahma::STDIO)
-GOTCHA_MACRO(fileno, int, (FILE * stream), (stream), brahma::STDIO)
-GOTCHA_MACRO(tmpfile, FILE *, (void), (void), brahma::STDIO)
-GOTCHA_MACRO(fseeko, int, (FILE * stream, off_t offset, int whence),
+GOTCHA_MACRO_DECL(fileno, int, (FILE * stream), (stream), brahma::STDIO)
+GOTCHA_MACRO_DECL(tmpfile, FILE *, (void), (void), brahma::STDIO)
+GOTCHA_MACRO_DECL(fseeko, int, (FILE * stream, off_t offset, int whence),
              (stream, offset, whence), brahma::STDIO)
-GOTCHA_MACRO(ftello, off_t, (FILE * stream), (stream), brahma::STDIO)
+GOTCHA_MACRO_DECL(ftello, off_t, (FILE * stream), (stream), brahma::STDIO)
 
 template <typename C>
 size_t brahma::STDIO::bind(const char *name, uint16_t priority) {

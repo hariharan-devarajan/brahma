@@ -17,8 +17,9 @@
 #define GOTCHA_BINDING_MACRO(fname, CLASS)                      \
   if constexpr (!std::is_same_v<decltype(&C::fname),            \
                                 decltype(&CLASS::fname)>) {     \
+    auto handle = get_##fname##_brahma_handle();                \
     gotcha_binding_t binding = {#fname, (void*)fname##_wrapper, \
-                                &fname##_brahma_handle};        \
+                                &handle};                       \
     bindings.push_back(binding);                                \
   }
 
@@ -51,9 +52,13 @@
     return v;                                                        \
   }
 
-#define GOTCHA_MACRO(name, ret, args, args_val, class_name)            \
-  static gotcha_wrappee_handle_t name##_brahma_handle;                 \
-  inline static gotcha_wrappee_handle_t get_##name##_brahma_handle() { \
+#define GOTCHA_MACRO_DECL(name, ret, args, args_val, class_name)            \
+  gotcha_wrappee_handle_t get_##name##_brahma_handle();
+
+
+#define GOTCHA_MACRO_DEF(name, ret, args, args_val, class_name)            \
+  gotcha_wrappee_handle_t name##_brahma_handle;                 \
+  gotcha_wrappee_handle_t get_##name##_brahma_handle() { \
     return name##_brahma_handle;                                       \
   }
 

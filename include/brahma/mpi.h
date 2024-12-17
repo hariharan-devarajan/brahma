@@ -54,9 +54,9 @@ GOTCHA_MACRO_TYPEDEF(MPI_Init, int, (int *argc, char ***argv), (argc, argv),
                      brahma::MPI)
 GOTCHA_MACRO_TYPEDEF(MPI_Finalize, int, (), (), brahma::MPI)
 
-GOTCHA_MACRO(MPI_Init, int, (int *argc, char ***argv), (argc, argv),
+GOTCHA_MACRO_DECL(MPI_Init, int, (int *argc, char ***argv), (argc, argv),
              brahma::MPI)
-GOTCHA_MACRO(MPI_Finalize, int, (), (), brahma::MPI)
+GOTCHA_MACRO_DECL(MPI_Finalize, int, (), (), brahma::MPI)
 
 template <typename C>
 size_t brahma::MPI::bind(const char *name, uint16_t priority) {

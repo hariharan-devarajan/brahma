@@ -2,6 +2,34 @@
 // Created by hariharan on 8/16/22.
 //
 #include <brahma/interface/stdio.h>
+
+GOTCHA_MACRO_DEF(fopen, FILE *, (const char *path, const char *mode), (path, mode),
+             brahma::STDIO)
+
+GOTCHA_MACRO_DEF(fopen64, FILE *, (const char *path, const char *mode),
+             (path, mode), brahma::STDIO)
+
+GOTCHA_MACRO_DEF(fclose, int, (FILE * fp), (fp), brahma::STDIO)
+
+GOTCHA_MACRO_DEF(fread, size_t,
+             (void *ptr, size_t size, size_t nmemb, FILE *stream),
+             (ptr, size, nmemb, stream), brahma::STDIO)
+
+GOTCHA_MACRO_DEF(fwrite, size_t,
+             (const void *ptr, size_t size, size_t nmemb, FILE *stream),
+             (ptr, size, nmemb, stream), brahma::STDIO)
+
+GOTCHA_MACRO_DEF(ftell, long, (FILE * stream), (stream), brahma::STDIO)
+
+GOTCHA_MACRO_DEF(fseek, int, (FILE * stream, long offset, int whence),
+             (stream, offset, whence), brahma::STDIO)
+GOTCHA_MACRO_DEF(fdopen, FILE *, (int fd, const char *mode), (fd, mode),
+             brahma::STDIO)
+GOTCHA_MACRO_DEF(fileno, int, (FILE * stream), (stream), brahma::STDIO)
+GOTCHA_MACRO_DEF(tmpfile, FILE *, (void), (void), brahma::STDIO)
+GOTCHA_MACRO_DEF(fseeko, int, (FILE * stream, off_t offset, int whence),
+             (stream, offset, whence), brahma::STDIO)
+GOTCHA_MACRO_DEF(ftello, off_t, (FILE * stream), (stream), brahma::STDIO)
 namespace brahma {
 
 std::shared_ptr<STDIO> STDIO::my_instance = nullptr;
