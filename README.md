@@ -1,7 +1,7 @@
-# Brahma v0.0.7
+# Brahma v0.0.8
 
-A C++ style interception library for application calls. 
-This library uses [GOTCHA](https://github.com/LLNL/GOTCHA) to intercept POSIX, STDIO, and MPI-IO calls. 
+A C++ style interception library for application calls.
+This library uses [GOTCHA](https://github.com/LLNL/GOTCHA) to intercept POSIX, STDIO, and MPI-IO calls.
 The interception of MPI-IO calls are optional and the library can be compiled without MPI-IO.
 
 ## Dependencies
