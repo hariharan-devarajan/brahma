@@ -158,6 +158,83 @@ class POSIX : public Interface {
   virtual int execvpe(const char *file, char *const argv[], char *const envp[]);
 
   virtual int fork();
+
+
+
+  GOTCHA_MACRO_VAR(open)
+
+  GOTCHA_MACRO_VAR(creat64)
+
+  GOTCHA_MACRO_VAR(open64)
+
+  GOTCHA_MACRO_VAR(close)
+
+  GOTCHA_MACRO_VAR(write)
+
+  GOTCHA_MACRO_VAR(read)
+
+  GOTCHA_MACRO_VAR(lseek)
+
+  GOTCHA_MACRO_VAR(lseek64)
+
+  GOTCHA_MACRO_VAR(pread)
+
+  GOTCHA_MACRO_VAR(pread64)
+
+  GOTCHA_MACRO_VAR(pwrite)
+
+  GOTCHA_MACRO_VAR(pwrite64)
+
+  GOTCHA_MACRO_VAR(fsync)
+
+  GOTCHA_MACRO_VAR(fdatasync)
+
+  GOTCHA_MACRO_VAR(openat)
+  GOTCHA_MACRO_VAR(mmap)
+  GOTCHA_MACRO_VAR(mmap64)
+  GOTCHA_MACRO_VAR(__xstat)
+  GOTCHA_MACRO_VAR(__xstat64)
+  GOTCHA_MACRO_VAR(__lxstat)
+  GOTCHA_MACRO_VAR(__lxstat64)
+  GOTCHA_MACRO_VAR(__fxstat)
+  GOTCHA_MACRO_VAR(__fxstat64)
+  GOTCHA_MACRO_VAR(getcwd)
+  GOTCHA_MACRO_VAR(mkdir)
+  GOTCHA_MACRO_VAR(rmdir)
+  GOTCHA_MACRO_VAR(chdir)
+  GOTCHA_MACRO_VAR(link)
+  GOTCHA_MACRO_VAR(linkat)
+  GOTCHA_MACRO_VAR(unlink)
+  GOTCHA_MACRO_VAR(symlink)
+  GOTCHA_MACRO_VAR(symlinkat)
+  GOTCHA_MACRO_VAR(readlink)
+  GOTCHA_MACRO_VAR(readlinkat)
+  GOTCHA_MACRO_VAR(rename)
+  GOTCHA_MACRO_VAR(chmod)
+  GOTCHA_MACRO_VAR(chown)
+  GOTCHA_MACRO_VAR(lchown)
+  GOTCHA_MACRO_VAR(utime)
+  GOTCHA_MACRO_VAR(opendir)
+  GOTCHA_MACRO_VAR(readdir)
+  GOTCHA_MACRO_VAR(closedir)
+  GOTCHA_MACRO_VAR(rewinddir)
+  GOTCHA_MACRO_VAR(fcntl)
+  GOTCHA_MACRO_VAR(dup)
+  GOTCHA_MACRO_VAR(dup2)
+  GOTCHA_MACRO_VAR(pipe)
+  GOTCHA_MACRO_VAR(mkfifo)
+  GOTCHA_MACRO_VAR(umask)
+  GOTCHA_MACRO_VAR(access)
+  GOTCHA_MACRO_VAR(faccessat)
+  GOTCHA_MACRO_VAR(remove)
+  GOTCHA_MACRO_VAR(truncate)
+  GOTCHA_MACRO_VAR(ftruncate)
+  GOTCHA_MACRO_VAR(execl)
+  GOTCHA_MACRO_VAR(execlp)
+  GOTCHA_MACRO_VAR(execv)
+  GOTCHA_MACRO_VAR(execvp)
+  GOTCHA_MACRO_VAR(execvpe)
+  GOTCHA_MACRO_VAR(fork)
 };
 
 }  // namespace brahma
@@ -334,136 +411,6 @@ GOTCHA_MACRO_TYPEDEF(execvpe, int,
                      (pathname, argv, envp), brahma::POSIX)
 
 GOTCHA_MACRO_TYPEDEF(fork, int, (), (), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(open, int, (const char *pathname, int flags, mode_t mode),
-             (pathname, flags, mode), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(creat64, int, (const char *path, mode_t mode), (path, mode),
-             brahma::POSIX)
-
-GOTCHA_MACRO_DECL(open64, int, (const char *path, int flags, mode_t mode),
-             (path, flags, mode), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(close, int, (int fd), (fd), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(write, ssize_t, (int fd, const void *buf, size_t count),
-             (fd, buf, count), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(read, ssize_t, (int fd, void *buf, size_t count), (fd, buf, count),
-             brahma::POSIX)
-
-GOTCHA_MACRO_DECL(lseek, off_t, (int fd, off_t offset, int whence),
-             (fd, offset, whence), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(lseek64, off64_t, (int fd, off64_t offset, int whence),
-             (fd, offset, whence), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(pread, ssize_t, (int fd, void *buf, size_t count, off_t offset),
-             (fd, buf, count, offset), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(pread64, ssize_t,
-             (int fd, void *buf, size_t count, off64_t offset),
-             (fd, buf, count, offset), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(pwrite, ssize_t,
-             (int fd, const void *buf, size_t count, off_t offset),
-             (fd, buf, count, offset), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(pwrite64, ssize_t,
-             (int fd, const void *buf, size_t count, off64_t offset),
-             (fd, buf, count, offset), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(fsync, int, (int fd), (fd), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(fdatasync, int, (int fd), (fd), brahma::POSIX)
-
-GOTCHA_MACRO_DECL(openat, int,
-             (int dirfd, const char *pathname, int flags, mode_t mode),
-             (dirfd, pathname, flags, mode), brahma::POSIX)
-GOTCHA_MACRO_DECL(mmap, void *,
-             (void *addr, size_t length, int prot, int flags, int fd,
-              off_t offset),
-             (addr, length, prot, flags, fd, offset), brahma::POSIX)
-GOTCHA_MACRO_DECL(mmap64, void *,
-             (void *addr, size_t length, int prot, int flags, int fd,
-              off64_t offset),
-             (addr, length, prot, flags, fd, offset), brahma::POSIX)
-GOTCHA_MACRO_DECL(__xstat, int, (int vers, const char *path, stat *buf),
-             (vers, path, buf), brahma::POSIX)
-GOTCHA_MACRO_DECL(__xstat64, int, (int vers, const char *path, stat64 *buf),
-             (vers, path, buf), brahma::POSIX)
-GOTCHA_MACRO_DECL(__lxstat, int, (int vers, const char *path, stat *buf),
-             (vers, path, buf), brahma::POSIX)
-GOTCHA_MACRO_DECL(__lxstat64, int, (int vers, const char *path, stat64 *buf),
-             (vers, path, buf), brahma::POSIX)
-GOTCHA_MACRO_DECL(__fxstat, int, (int vers, int fd, stat *buf), (vers, path, buf),
-             brahma::POSIX)
-GOTCHA_MACRO_DECL(__fxstat64, int, (int vers, int fd, stat64 *buf),
-             (vers, path, buf), brahma::POSIX)
-GOTCHA_MACRO_DECL(getcwd, char *, (char *buf, size_t size), (buf, size),
-             brahma::POSIX)
-GOTCHA_MACRO_DECL(mkdir, int, (const char *pathname, mode_t mode), (pathname, mode),
-             brahma::POSIX)
-GOTCHA_MACRO_DECL(rmdir, int, (const char *pathname), (pathname), brahma::POSIX)
-GOTCHA_MACRO_DECL(chdir, int, (const char *path), (path), brahma::POSIX)
-GOTCHA_MACRO_DECL(link, int, (const char *oldpath, const char *newpath),
-             (oldpath, newpath), brahma::POSIX)
-GOTCHA_MACRO_DECL(linkat, int,
-             (int fd1, const char *path1, int fd2, const char *path2, int flag),
-             (fd1, path1, fd2, path2, flag), brahma::POSIX)
-GOTCHA_MACRO_DECL(unlink, int, (const char *pathname), (pathname), brahma::POSIX)
-GOTCHA_MACRO_DECL(symlink, int, (const char *path1, const char *path2),
-             (path1, path2), brahma::POSIX)
-GOTCHA_MACRO_DECL(symlinkat, int, (const char *path1, int fd, const char *path2),
-             (path1, fd, path2), brahma::POSIX)
-GOTCHA_MACRO_DECL(readlink, ssize_t, (const char *path, char *buf, size_t bufsize),
-             (path, buf, bufsize), brahma::POSIX)
-GOTCHA_MACRO_DECL(readlinkat, ssize_t,
-             (int fd, const char *path, char *buf, size_t bufsize),
-             (fd, path, buf, bufsize), brahma::POSIX)
-GOTCHA_MACRO_DECL(rename, int, (const char *oldpath, const char *newpath),
-             (oldpath, newpath), brahma::POSIX)
-GOTCHA_MACRO_DECL(chmod, int, (const char *path, mode_t mode), (path, mode),
-             brahma::POSIX)
-GOTCHA_MACRO_DECL(chown, int, (const char *path, uid_t owner, gid_t group),
-             (path, owner, group), brahma::POSIX)
-GOTCHA_MACRO_DECL(lchown, int, (const char *path, uid_t owner, gid_t group),
-             (path, owner, group), brahma::POSIX)
-GOTCHA_MACRO_DECL(utime, int, (const char *filename, const utimbuf *buf),
-             (filename, buf), brahma::POSIX)
-GOTCHA_MACRO_DECL(opendir, DIR *, (const char *name), (name), brahma::POSIX)
-GOTCHA_MACRO_DECL(readdir, struct dirent *, (DIR * dir), (dir), brahma::POSIX)
-GOTCHA_MACRO_DECL(closedir, int, (DIR * dir), (dir), brahma::POSIX)
-GOTCHA_MACRO_DECL(rewinddir, void, (DIR * dir), (dir), brahma::POSIX)
-GOTCHA_MACRO_DECL(fcntl, int, (int fd, int cmd, long arg), (fd, cmd, arg),
-             brahma::POSIX)
-GOTCHA_MACRO_DECL(dup, int, (int oldfd), (oldfd), brahma::POSIX)
-GOTCHA_MACRO_DECL(dup2, int, (int oldfd, int newfd), (oldfd, newfd), brahma::POSIX)
-GOTCHA_MACRO_DECL(pipe, int, (int pipefd[2]), (pipefd), brahma::POSIX)
-GOTCHA_MACRO_DECL(mkfifo, int, (const char *pathname, mode_t mode), (pathname, mode),
-             brahma::POSIX)
-GOTCHA_MACRO_DECL(umask, mode_t, (mode_t mask), (mask), brahma::POSIX)
-GOTCHA_MACRO_DECL(access, int, (const char *path, int amode), (path, amode),
-             brahma::POSIX)
-GOTCHA_MACRO_DECL(faccessat, int, (int fd, const char *path, int amode, int flag),
-             (fd, path, amode, flag), brahma::POSIX)
-GOTCHA_MACRO_DECL(remove, int, (const char *pathname), (pathname), brahma::POSIX)
-GOTCHA_MACRO_DECL(truncate, int, (const char *pathname, off_t length),
-             (pathname, length), brahma::POSIX)
-GOTCHA_MACRO_DECL(ftruncate, int, (int fd, off_t length), (fd, length),
-             brahma::POSIX)
-GOTCHA_MACRO_DECL(execl, int, (const char *pathname, const char *arg, char *val),
-             (pathname, arg, val), brahma::POSIX)
-GOTCHA_MACRO_DECL(execlp, int, (const char *pathname, const char *arg, char *val),
-             (pathname, arg, val), brahma::POSIX)
-GOTCHA_MACRO_DECL(execv, int, (const char *pathname, char *const argv[]),
-             (pathname, argv), brahma::POSIX)
-GOTCHA_MACRO_DECL(execvp, int, (const char *pathname, char *const argv[]),
-             (pathname, argv), brahma::POSIX)
-GOTCHA_MACRO_DECL(execvpe, int,
-             (const char *pathname, char *const argv[], char *const envp[]),
-             (pathname, argv, envp), brahma::POSIX)
-GOTCHA_MACRO_DECL(fork, int, (), (), brahma::POSIX)
 
 template <typename C>
 size_t brahma::POSIX::bind(const char *name, uint16_t priority) {

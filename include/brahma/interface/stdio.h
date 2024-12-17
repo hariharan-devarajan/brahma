@@ -54,6 +54,20 @@ class STDIO : public Interface {
   virtual FILE *tmpfile(void);
   virtual int fseeko(FILE *stream, off_t offset, int whence);
   virtual off_t ftello(FILE *stream);
+
+
+  GOTCHA_MACRO_VAR(fopen)
+  GOTCHA_MACRO_VAR(fopen64)
+  GOTCHA_MACRO_VAR(fclose)
+  GOTCHA_MACRO_VAR(fread)
+  GOTCHA_MACRO_VAR(fwrite)
+  GOTCHA_MACRO_VAR(ftell)
+  GOTCHA_MACRO_VAR(fseek)
+  GOTCHA_MACRO_VAR(fdopen)
+  GOTCHA_MACRO_VAR(fileno)
+  GOTCHA_MACRO_VAR(tmpfile)
+  GOTCHA_MACRO_VAR(fseeko)
+  GOTCHA_MACRO_VAR(ftello)
 };
 
 }  // namespace brahma
@@ -85,33 +99,6 @@ GOTCHA_MACRO_TYPEDEF(fseeko, int, (FILE * stream, off_t offset, int whence),
                      (stream, offset, whence), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(ftello, off_t, (FILE * stream), (stream), brahma::STDIO)
 
-GOTCHA_MACRO_DECL(fopen, FILE *, (const char *path, const char *mode), (path, mode),
-             brahma::STDIO)
-
-GOTCHA_MACRO_DECL(fopen64, FILE *, (const char *path, const char *mode),
-             (path, mode), brahma::STDIO)
-
-GOTCHA_MACRO_DECL(fclose, int, (FILE * fp), (fp), brahma::STDIO)
-
-GOTCHA_MACRO_DECL(fread, size_t,
-             (void *ptr, size_t size, size_t nmemb, FILE *stream),
-             (ptr, size, nmemb, stream), brahma::STDIO)
-
-GOTCHA_MACRO_DECL(fwrite, size_t,
-             (const void *ptr, size_t size, size_t nmemb, FILE *stream),
-             (ptr, size, nmemb, stream), brahma::STDIO)
-
-GOTCHA_MACRO_DECL(ftell, long, (FILE * stream), (stream), brahma::STDIO)
-
-GOTCHA_MACRO_DECL(fseek, int, (FILE * stream, long offset, int whence),
-             (stream, offset, whence), brahma::STDIO)
-GOTCHA_MACRO_DECL(fdopen, FILE *, (int fd, const char *mode), (fd, mode),
-             brahma::STDIO)
-GOTCHA_MACRO_DECL(fileno, int, (FILE * stream), (stream), brahma::STDIO)
-GOTCHA_MACRO_DECL(tmpfile, FILE *, (void), (void), brahma::STDIO)
-GOTCHA_MACRO_DECL(fseeko, int, (FILE * stream, off_t offset, int whence),
-             (stream, offset, whence), brahma::STDIO)
-GOTCHA_MACRO_DECL(ftello, off_t, (FILE * stream), (stream), brahma::STDIO)
 
 template <typename C>
 size_t brahma::STDIO::bind(const char *name, uint16_t priority) {
