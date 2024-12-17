@@ -5,7 +5,6 @@
 
 #include <stdexcept>
 #ifdef BRAHMA_ENABLE_MPI
-
 namespace brahma {
 std::shared_ptr<MPIIO> MPIIO::my_instance = nullptr;
 

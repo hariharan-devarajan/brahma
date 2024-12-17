@@ -48,15 +48,16 @@ class MPI : public brahma::Interface {
   virtual int MPI_Init(int *argc, char ***argv);
 
   virtual int MPI_Finalize();
+
+  GOTCHA_MACRO_VAR(MPI_Init)
+  GOTCHA_MACRO_VAR(MPI_Finalize)
 };
 }  // namespace brahma
 GOTCHA_MACRO_TYPEDEF(MPI_Init, int, (int *argc, char ***argv), (argc, argv),
                      brahma::MPI)
 GOTCHA_MACRO_TYPEDEF(MPI_Finalize, int, (), (), brahma::MPI)
 
-GOTCHA_MACRO(MPI_Init, int, (int *argc, char ***argv), (argc, argv),
-             brahma::MPI)
-GOTCHA_MACRO(MPI_Finalize, int, (), (), brahma::MPI)
+
 
 template <typename C>
 size_t brahma::MPI::bind(const char *name, uint16_t priority) {
