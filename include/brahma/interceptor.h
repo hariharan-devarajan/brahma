@@ -51,11 +51,7 @@
     return v;                                                        \
   }
 
-#define GOTCHA_MACRO(name, ret, args, args_val, class_name)            \
-  static gotcha_wrappee_handle_t name##_brahma_handle;                 \
-  inline static gotcha_wrappee_handle_t get_##name##_brahma_handle() { \
-    return name##_brahma_handle;                                       \
-  }
+#define GOTCHA_MACRO_VAR(name) gotcha_wrappee_handle_t name##_brahma_handle;
 
 #define BRAHMA_WRAPPER(name) name##_wrapper;
 
@@ -74,7 +70,7 @@
   name##_wrappee args;
 #define BRAHMA_MAP_OR_FAIL(func_)                                      \
   auto __real_##func_ =                                                \
-      (func_##_fptr)gotcha_get_wrappee(get_##func_##_brahma_handle()); \
+      (func_##_fptr)gotcha_get_wrappee(func_##_brahma_handle); \
   assert(__real_##func_ != NULL)
 
 #endif  // BRAHMA_INTERCEPTOR_H
