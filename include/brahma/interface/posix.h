@@ -65,12 +65,6 @@ class POSIX : public Interface {
 
   virtual int openat(int dirfd, const char *pathname, int flags, ...);
 
-  virtual void *mmap(void *addr, size_t length, int prot, int flags, int fd,
-                     off_t offset);
-
-  virtual void *mmap64(void *addr, size_t length, int prot, int flags, int fd,
-                       off64_t offset);
-
   virtual int __xstat(int vers, const char *path, struct stat *buf);
 
   virtual int __xstat64(int vers, const char *path, struct stat64 *buf);
@@ -159,39 +153,48 @@ class POSIX : public Interface {
 
   virtual int fork();
 
+  virtual void _exit(int status);
 
+  virtual void *mmap(void *addr, size_t length, int prot, int flags, int fd,
+                     off_t offset);
 
+  virtual void *mmap64(void *addr, size_t length, int prot, int flags, int fd,
+                       off64_t offset);
+  
+  virtual int munmap(void *addr, size_t len);
+
+  virtual int msync(void *addr, size_t len, int flags);
+
+  virtual long sysconf(int name);
+
+  virtual int madvise(void *addr, size_t length, int advice);
+
+  virtual int mprotect(void *addr, size_t length, int prot);
+
+  virtual int mlock(const void *addr, size_t len);
+  
+  virtual int munlock(const void *addr, size_t len);
+
+  virtual int mlockall(int flags);
+
+  virtual int munlockall(void);
+
+  /* Handler Definitions */
   GOTCHA_MACRO_VAR(open)
-
   GOTCHA_MACRO_VAR(creat64)
-
   GOTCHA_MACRO_VAR(open64)
-
   GOTCHA_MACRO_VAR(close)
-
   GOTCHA_MACRO_VAR(write)
-
   GOTCHA_MACRO_VAR(read)
-
   GOTCHA_MACRO_VAR(lseek)
-
   GOTCHA_MACRO_VAR(lseek64)
-
   GOTCHA_MACRO_VAR(pread)
-
   GOTCHA_MACRO_VAR(pread64)
-
   GOTCHA_MACRO_VAR(pwrite)
-
   GOTCHA_MACRO_VAR(pwrite64)
-
   GOTCHA_MACRO_VAR(fsync)
-
   GOTCHA_MACRO_VAR(fdatasync)
-
   GOTCHA_MACRO_VAR(openat)
-  GOTCHA_MACRO_VAR(mmap)
-  GOTCHA_MACRO_VAR(mmap64)
   GOTCHA_MACRO_VAR(__xstat)
   GOTCHA_MACRO_VAR(__xstat64)
   GOTCHA_MACRO_VAR(__lxstat)
@@ -235,64 +238,54 @@ class POSIX : public Interface {
   GOTCHA_MACRO_VAR(execvp)
   GOTCHA_MACRO_VAR(execvpe)
   GOTCHA_MACRO_VAR(fork)
+  GOTCHA_MACRO_VAR(_exit)
+  GOTCHA_MACRO_VAR(mmap)
+  GOTCHA_MACRO_VAR(mmap64)
+  GOTCHA_MACRO_VAR(munmap)
+  GOTCHA_MACRO_VAR(msync)
+  GOTCHA_MACRO_VAR(sysconf)
+  GOTCHA_MACRO_VAR(madvise)
+  GOTCHA_MACRO_VAR(mprotect)
+  GOTCHA_MACRO_VAR(mlock)
+  GOTCHA_MACRO_VAR(munlock)
+  GOTCHA_MACRO_VAR(mlockall)
+  GOTCHA_MACRO_VAR(munlockall)
 };
 
 }  // namespace brahma
 
 GOTCHA_MACRO_TYPEDEF_OPEN(open, int, (const char *pathname, int flags, ...),
                           (pathname, flags, mode), flags, brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(creat64, int, (const char *path, mode_t mode),
                      (path, mode), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF_OPEN(open64, int, (const char *path, int flags, ...),
                           (path, flags, mode), flags, brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(close, int, (int fd), (fd), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(write, ssize_t, (int fd, const void *buf, size_t count),
                      (fd, buf, count), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(read, ssize_t, (int fd, void *buf, size_t count),
                      (fd, buf, count), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(lseek, off_t, (int fd, off_t offset, int whence),
                      (fd, offset, whence), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(lseek64, off64_t, (int fd, off64_t offset, int whence),
                      (fd, offset, whence), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(pread, ssize_t,
                      (int fd, void *buf, size_t count, off_t offset),
                      (fd, buf, count, offset), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(pread64, ssize_t,
                      (int fd, void *buf, size_t count, off64_t offset),
                      (fd, buf, count, offset), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(pwrite, ssize_t,
                      (int fd, const void *buf, size_t count, off_t offset),
                      (fd, buf, count, offset), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(pwrite64, ssize_t,
                      (int fd, const void *buf, size_t count, off64_t offset),
                      (fd, buf, count, offset), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(fsync, int, (int fd), (fd), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(fdatasync, int, (int fd), (fd), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF_OPEN(openat, int,
                           (int dirfd, const char *pathname, int flags, ...),
                           (dirfd, pathname, flags, mode), flags, brahma::POSIX)
-GOTCHA_MACRO_TYPEDEF(mmap, void *,
-                     (void *addr, size_t length, int prot, int flags, int fd,
-                      off_t offset),
-                     (addr, length, prot, flags, fd, offset), brahma::POSIX)
-GOTCHA_MACRO_TYPEDEF(mmap64, void *,
-                     (void *addr, size_t length, int prot, int flags, int fd,
-                      off64_t offset),
-                     (addr, length, prot, flags, fd, offset), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(__xstat, int,
                      (int vers, const char *path, struct stat *buf),
                      (vers, path, buf), brahma::POSIX)
@@ -409,8 +402,43 @@ GOTCHA_MACRO_TYPEDEF(execvpe, int,
                      (const char *pathname, char *const argv[],
                       char *const envp[]),
                      (pathname, argv, envp), brahma::POSIX)
-
 GOTCHA_MACRO_TYPEDEF(fork, int, (), (), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(_exit, void,
+                     (int status),
+                     (status), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(mmap, void *,
+                     (void *addr, size_t length, int prot, int flags, int fd,
+                      off_t offset),
+                     (addr, length, prot, flags, fd, offset), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(mmap64, void *,
+                     (void *addr, size_t length, int prot, int flags, int fd,
+                      off64_t offset),
+                     (addr, length, prot, flags, fd, offset), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(munmap, int,
+                     (void *addr, size_t len),
+                     (addr, len), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(msync, int,
+                     (void *addr, size_t len, int flags),
+                     (addr, len, flags), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(sysconf, long,
+                     (int name),
+                     (name), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(madvise, int,
+                     (void *addr, size_t length, int advice),
+                     (addr, length, advice), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(mprotect, int,
+                     (void *addr, size_t length, int prot),
+                     (addr, length, prot), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(mlock, int,
+                     (const void *addr, size_t length),
+                     (addr, length), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(munlock, int,
+                     (const void *addr, size_t length),
+                     (addr, length), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(mlockall, int,
+                     (int flags),
+                     (flags), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(munlockall, int, (), (), brahma::POSIX)
 
 template <typename C>
 size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
@@ -429,8 +457,6 @@ size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(fsync, POSIX);
   GOTCHA_BINDING_MACRO(fdatasync, POSIX);
   GOTCHA_BINDING_MACRO(openat, POSIX);
-  GOTCHA_BINDING_MACRO(mmap, POSIX);
-  GOTCHA_BINDING_MACRO(mmap64, POSIX);
   GOTCHA_BINDING_MACRO(__xstat, POSIX);
   GOTCHA_BINDING_MACRO(__xstat64, POSIX);
   GOTCHA_BINDING_MACRO(__lxstat, POSIX);
@@ -474,6 +500,18 @@ size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(execvp, POSIX);
   GOTCHA_BINDING_MACRO(execvpe, POSIX);
   GOTCHA_BINDING_MACRO(fork, POSIX);
+  GOTCHA_BINDING_MACRO(_exit, POSIX);
+  GOTCHA_BINDING_MACRO(mmap, POSIX);
+  GOTCHA_BINDING_MACRO(mmap64, POSIX);
+  GOTCHA_BINDING_MACRO(munmap, POSIX);
+  GOTCHA_BINDING_MACRO(msync, POSIX);
+  GOTCHA_BINDING_MACRO(sysconf, POSIX);
+  GOTCHA_BINDING_MACRO(madvise, POSIX);
+  GOTCHA_BINDING_MACRO(mprotect, POSIX);
+  GOTCHA_BINDING_MACRO(mlock, POSIX);
+  GOTCHA_BINDING_MACRO(munlock, POSIX);
+  GOTCHA_BINDING_MACRO(mlockall, POSIX);
+  GOTCHA_BINDING_MACRO(munlockall, POSIX);
   num_bindings = bindings.size();
   if (num_bindings > 0) {
     char tool_name[64];
