@@ -125,18 +125,6 @@ int POSIX::openat(int dirfd, const char *pathname, int flags, ...) {
     return result;
   }
 }
-void *POSIX::mmap(void *addr, size_t length, int prot, int flags, int fd,
-                  off_t offset) {
-  BRAHMA_UNWRAPPED_FUNC(mmap, void *, (addr, length, prot, flags, fd, offset));
-  return result;
-}
-
-void *POSIX::mmap64(void *addr, size_t length, int prot, int flags, int fd,
-                    off64_t offset) {
-  BRAHMA_UNWRAPPED_FUNC(mmap64, void *,
-                        (addr, length, prot, flags, fd, offset));
-  return result;
-}
 int POSIX::__xstat(int vers, const char *path, struct stat *buf) {
   BRAHMA_UNWRAPPED_FUNC(__xstat, int, (vers, path, buf));
   return result;
@@ -335,9 +323,66 @@ int POSIX::execvpe(const char *pathname, char *const argv[],
   BRAHMA_UNWRAPPED_FUNC(execvpe, int, (pathname, argv, envp));
   return result;
 }
-
 int POSIX::fork() {
   BRAHMA_UNWRAPPED_FUNC(fork, int, ());
+  return result;
+}
+void POSIX::_exit(int status) {
+  BRAHMA_UNWRAPPED_FUNC_VOID(_exit, (status));
+}
+void *POSIX::mmap(void *addr, size_t length, int prot, int flags, int fd,
+                  off_t offset) {
+  BRAHMA_UNWRAPPED_FUNC(mmap, void *, (addr, length, prot, flags, fd, offset));
+  return result;
+}
+void *POSIX::mmap64(void *addr, size_t length, int prot, int flags, int fd,
+                    off64_t offset) {
+  BRAHMA_UNWRAPPED_FUNC(mmap64, void *,
+                        (addr, length, prot, flags, fd, offset));
+  return result;
+}
+int POSIX::munmap(void *addr, size_t len) {
+  BRAHMA_UNWRAPPED_FUNC(munmap, int,
+                        (addr, len));
+  return result;
+}
+int POSIX::msync(void *addr, size_t len, int flags) {
+  BRAHMA_UNWRAPPED_FUNC(msync, int,
+                        (addr, len,flags));
+  return result;
+}
+long POSIX::sysconf(int name) {
+  BRAHMA_UNWRAPPED_FUNC(sysconf, long,
+                        (name));
+  return result;
+}
+int POSIX::madvise(void *addr, size_t length, int advice) {
+  BRAHMA_UNWRAPPED_FUNC(madvise, int,
+                        (addr, length, advice));
+  return result;
+}
+int POSIX::mprotect(void *addr, size_t len, int prot) {
+  BRAHMA_UNWRAPPED_FUNC(mprotect, int,
+                        (addr, len, prot));
+  return result;
+}
+int POSIX::mlock(const void *addr, size_t len) {
+  BRAHMA_UNWRAPPED_FUNC(mlock, int,
+                        (addr, len));
+  return result;
+}
+int POSIX::munlock(const void *addr, size_t len) {
+  BRAHMA_UNWRAPPED_FUNC(munlock, int,
+                        (addr, len));
+  return result;
+}
+int POSIX::mlockall(int flags) {
+  BRAHMA_UNWRAPPED_FUNC(mlockall, int,
+                        (flags));
+  return result;
+}
+int POSIX::munlockall() {
+  BRAHMA_UNWRAPPED_FUNC(munlockall, int, ());
   return result;
 }
 

@@ -120,18 +120,6 @@ class POSIXTest : public POSIX {
     return 0;
   }
 
-  void *mmap(void *addr, size_t length, int prot, int flags, int fd,
-             off_t offset) override {
-    api_count++;
-    return 0;
-  }
-
-  void *mmap64(void *addr, size_t length, int prot, int flags, int fd,
-               off64_t offset) override {
-    api_count++;
-    return 0;
-  }
-
   int __xstat(int vers, const char *path, struct stat *buf) override {
     api_count++;
     return 0;
@@ -340,6 +328,65 @@ class POSIXTest : public POSIX {
   }
 
   int fork() override {
+    api_count++;
+    return 0;
+  }
+
+  void _exit(int status) override { api_count++; }
+
+  void *mmap(void *addr, size_t length, int prot, int flags, int fd,
+             off_t offset) override {
+    api_count++;
+    return 0;
+  }
+
+  void *mmap64(void *addr, size_t length, int prot, int flags, int fd,
+               off64_t offset) override {
+    api_count++;
+    return 0;
+  }
+
+  int munmap(void *addr, size_t len) override {
+    api_count++;
+    return 0;
+  }
+
+  int msync(void *addr, size_t len, int flags) override {
+    api_count++;
+    return 0;
+  }
+
+  long sysconf(int name) override {
+    api_count++;
+    return 0;
+  }
+
+  int madvise(void *addr, size_t length, int advice) override {
+    api_count++;
+    return 0;
+  }
+
+  int mprotect(void *addr, size_t length, int prot) override {
+    api_count++;
+    return 0;
+  }
+
+  int mlock(const void *addr, size_t len) override {
+    api_count++;
+    return 0;
+  }
+
+  int munlock(const void *addr, size_t len) override {
+    api_count++;
+    return 0;
+  }
+
+  int mlockall(int flags) override {
+    api_count++;
+    return 0;
+  }
+
+  int munlockall(void) override {
     api_count++;
     return 0;
   }
@@ -747,6 +794,28 @@ int main(int argc, char *argv[]) {
 
   fork();
 
+  mmap(NULL, 0, 0, 0, 0, 0);
+
+  mmap64(NULL, 0, 0, 0, 0, 0);
+
+  munmap(NULL, 0);
+
+  msync(NULL, 0, 0);
+
+  sysconf(0);
+
+  madvise(NULL, 0, 0);
+
+  mprotect(NULL, 0, 0);
+
+  mlock(NULL, 0);
+
+  munlock(NULL, 0);
+
+  mlockall(0);
+
+  munlockall();
+
   fopen("", "");
   fopen64("", "");
   fclose(NULL);
@@ -819,5 +888,6 @@ int main(int argc, char *argv[]) {
   MPI_File_write_shared(NULL, NULL, 0, 0, NULL);
   MPI_File_delete(NULL, NULL);
 #endif
+  exit(0);
   return 0;
 }

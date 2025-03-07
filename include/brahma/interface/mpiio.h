@@ -118,6 +118,64 @@ class MPIIO : public Interface {
   virtual int MPI_File_write_shared(MPI_File fh, const void *buf, int count,
                                     MPI_Datatype datatype, MPI_Status *status);
   virtual int MPI_File_delete(const char *filename, MPI_Info info);
+
+  GOTCHA_MACRO_VAR(MPI_File_close)
+
+GOTCHA_MACRO_VAR(MPI_File_set_size)
+
+GOTCHA_MACRO_VAR(MPI_File_iread_at)
+
+GOTCHA_MACRO_VAR(MPI_File_iread)
+
+GOTCHA_MACRO_VAR(MPI_File_iread_shared)
+
+GOTCHA_MACRO_VAR(MPI_File_iwrite_at)
+
+GOTCHA_MACRO_VAR(MPI_File_iwrite)
+
+GOTCHA_MACRO_VAR(MPI_File_iwrite_shared)
+
+GOTCHA_MACRO_VAR(MPI_File_open)
+
+GOTCHA_MACRO_VAR(MPI_File_read_all_begin)
+
+GOTCHA_MACRO_VAR(MPI_File_read_all)
+
+GOTCHA_MACRO_VAR(MPI_File_read_at_all)
+
+GOTCHA_MACRO_VAR(MPI_File_read_at_all_begin)
+
+GOTCHA_MACRO_VAR(MPI_File_read_at)
+
+GOTCHA_MACRO_VAR(MPI_File_read)
+
+GOTCHA_MACRO_VAR(MPI_File_read_ordered_begin)
+
+GOTCHA_MACRO_VAR(MPI_File_read_ordered)
+
+GOTCHA_MACRO_VAR(MPI_File_read_shared)
+
+GOTCHA_MACRO_VAR(MPI_File_sync)
+
+GOTCHA_MACRO_VAR(MPI_File_write_all_begin)
+
+GOTCHA_MACRO_VAR(MPI_File_write_all)
+
+GOTCHA_MACRO_VAR(MPI_File_write_at_all_begin)
+
+GOTCHA_MACRO_VAR(MPI_File_write_at_all)
+
+GOTCHA_MACRO_VAR(MPI_File_write_at)
+
+GOTCHA_MACRO_VAR(MPI_File_write)
+
+GOTCHA_MACRO_VAR(MPI_File_write_ordered_begin)
+
+GOTCHA_MACRO_VAR(MPI_File_write_ordered)
+
+GOTCHA_MACRO_VAR(MPI_File_write_shared)
+
+GOTCHA_MACRO_VAR(MPI_File_delete)
 };
 
 }  // namespace brahma
@@ -256,136 +314,7 @@ GOTCHA_MACRO_TYPEDEF(MPI_File_delete, int,
                      (const char *filename, MPI_Info info), (filename, info),
                      brahma::MPIIO)
 
-GOTCHA_MACRO(MPI_File_close, int, (MPI_File * fh), (fh), brahma::MPIIO)
 
-GOTCHA_MACRO(MPI_File_set_size, int, (MPI_File fh, MPI_Offset size), (fh, size),
-             brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_iread_at, int,
-             (MPI_File fh, MPI_Offset offset, void *buf, int count,
-              MPI_Datatype datatype, MPI_Request *request),
-             (fh, offset, buf, count, datatype, request), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_iread, int,
-             (MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-              MPI_Request *request),
-             (fh, buf, count, datatype, request), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_iread_shared, int,
-             (MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-              MPI_Request *request),
-             (fh, buf, count, datatype, request), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_iwrite_at, int,
-             (MPI_File fh, MPI_Offset offset, const void *buf, int count,
-              MPI_Datatype datatype, MPI_Request *request),
-             (fh, offset, buf, count, datatype, request), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_iwrite, int,
-             (MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-              MPI_Request *request),
-             (fh, buf, count, datatype, request), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_iwrite_shared, int,
-             (MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-              MPI_Request *request),
-             (fh, buf, count, datatype, request), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_open, int,
-             (MPI_Comm comm, const char *filename, int amode, MPI_Info info,
-              MPI_File *fh),
-             (comm, filename, amode, info, fh), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_read_all_begin, int,
-             (MPI_File fh, void *buf, int count, MPI_Datatype datatype),
-             (fh, buf, count, datatype), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_read_all, int,
-             (MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-              MPI_Status *status),
-             (fh, buf, count, datatype, status), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_read_at_all, int,
-             (MPI_File fh, MPI_Offset offset, void *buf, int count,
-              MPI_Datatype datatype, MPI_Status *status),
-             (fh, offset, buf, count, datatype, status), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_read_at_all_begin, int,
-             (MPI_File fh, MPI_Offset offset, void *buf, int count,
-              MPI_Datatype datatype),
-             (fh, offset, buf, count, datatype), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_read_at, int,
-             (MPI_File fh, MPI_Offset offset, void *buf, int count,
-              MPI_Datatype datatype, MPI_Status *status),
-             (fh, offset, buf, count, datatype, status), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_read, int,
-             (MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-              MPI_Status *status),
-             (fh, buf, count, datatype, status), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_read_ordered_begin, int,
-             (MPI_File fh, void *buf, int count, MPI_Datatype datatype),
-             (fh, buf, count, datatype), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_read_ordered, int,
-             (MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-              MPI_Status *status),
-             (fh, buf, count, datatype, status), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_read_shared, int,
-             (MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-              MPI_Status *status),
-             (fh, buf, count, datatype, status), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_sync, int, (MPI_File fh), (fh), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_write_all_begin, int,
-             (MPI_File fh, const void *buf, int count, MPI_Datatype datatype),
-             (fh, buf, count, datatype), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_write_all, int,
-             (MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-              MPI_Status *status),
-             (fh, buf, count, datatype, status), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_write_at_all_begin, int,
-             (MPI_File fh, MPI_Offset offset, const void *buf, int count,
-              MPI_Datatype datatype),
-             (fh, offset, buf, count, datatype), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_write_at_all, int,
-             (MPI_File fh, MPI_Offset offset, const void *buf, int count,
-              MPI_Datatype datatype, MPI_Status *status),
-             (fh, offset, buf, count, datatype, status), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_write_at, int,
-             (MPI_File fh, MPI_Offset offset, const void *buf, int count,
-              MPI_Datatype datatype, MPI_Status *status),
-             (fh, offset, buf, count, datatype, status), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_write, int,
-             (MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-              MPI_Status *status),
-             (fh, buf, count, datatype, status), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_write_ordered_begin, int,
-             (MPI_File fh, const void *buf, int count, MPI_Datatype datatype),
-             (fh, buf, count, datatype), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_write_ordered, int,
-             (MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-              MPI_Status *status),
-             (fh, buf, count, datatype, status), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_write_shared, int,
-             (MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-              MPI_Status *status),
-             (fh, buf, count, datatype, status), brahma::MPIIO)
-
-GOTCHA_MACRO(MPI_File_delete, int, (const char *filename, MPI_Info info),
-             (filename, info), brahma::MPIIO)
 
 template <typename C>
 size_t brahma::MPIIO::bind(const char *name, uint16_t priority) {

@@ -11,7 +11,6 @@
 
 #ifdef BRAHMA_ENABLE_MPI
 
-
 int update_mpi(gotcha_binding_t *&bindings, size_t &binding_index) {
   
   return 0;
