@@ -51,6 +51,10 @@ else ()
    message(STATUS "BRAHMA_LIBDIR set to ${BRAHMA_LIBDIR}")
 endif ()
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/brahma-utils.cmake)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/brahma-utils.cmake"
+        DESTINATION "${BRAHMA_LIBDIR}/cmake/brahma")
+
 #------------------------------------------------------------------------------
 # Internal Paths for cmake libraries and Setup install and output Directories
 #------------------------------------------------------------------------------
@@ -332,7 +336,9 @@ if(BRAHMA_BUILD_WITH_HDF5)
     # find HDF5
     find_package(HDF5 COMPONENTS CXX REQUIRED)
     if (HDF5_FOUND)
+        convert_version_to_number("${HDF5_VERSION}" BRAHMA_HDF5_VERSION)
         message(STATUS "[${PROJECT_NAME}] found hdf5.h at ${HDF5_CXX_INCLUDE_DIRS}")
+        message(STATUS "[${PROJECT_NAME}] HDF5 version: ${HDF5_VERSION} (${BRAHMA_HDF5_VERSION})")
         include_directories(${HDF5_CXX_INCLUDE_DIRS})
         set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${HDF5_CXX_LIBRARIES})
     else ()
@@ -478,14 +484,10 @@ install(FILES
         DESTINATION
         ${BRAHMA_INSTALL_DOCDIR})
 
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/brahma-utils.cmake"
-        DESTINATION "${BRAHMA_LIBDIR}/cmake/brahma")
-
-
 ###############################################################################
 #                      Print out configuration summary
 ###############################################################################
-include(brahma-utils)
+
 if (CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
   set(BRAHMA_GNU_LINUX TRUE)
 endif ()
@@ -529,6 +531,10 @@ string(APPEND _str
   "  BRAHMA_GIT_VERSION:            ${BRAHMA_GIT_VERSION}\n")
 string(APPEND _str
   "  BRAHMA_BUILD_WITH_HDF5:         ${BRAHMA_BUILD_WITH_HDF5}\n")
+if(BRAHMA_BUILD_WITH_HDF5)
+  string(APPEND _str
+    "  BRAHMA_HDF5_VERSION:         ${BRAHMA_HDF5_VERSION}\n")
+endif()
 string(APPEND _str
   "  BRAHMA_BUILD_WITH_MPI:          ${BRAHMA_BUILD_WITH_MPI}\n")
 if(BRAHMA_BUILD_WITH_MPI)
