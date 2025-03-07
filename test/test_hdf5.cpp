@@ -2,90 +2,106 @@
 // Created by Izzet Yildirim <iyildirim@hawk.iit.edu> on 9/4/24.
 //
 #include <brahma/brahma.h>
+
+#include <iostream>
 #ifdef BRAHMA_ENABLE_HDF5
 #include <hdf5.h>
 
 namespace brahma {
-class POSIXTest : public POSIX {
- private:
-  static std::shared_ptr<POSIXTest> instance;
-
- public:
-  POSIXTest() {}
-  static std::shared_ptr<POSIXTest> get_instance() {
-    if (instance == nullptr) {
-      instance = std::make_shared<POSIXTest>();
-      POSIX::set_instance(instance);
-    }
-    return instance;
-  }
-};
-class STDIOTest : public STDIO {
- private:
-  static std::shared_ptr<STDIOTest> instance;
-
- public:
-  STDIOTest() {}
-  static std::shared_ptr<STDIOTest> get_instance() {
-    if (instance == nullptr) {
-      instance = std::make_shared<STDIOTest>();
-      STDIOTest::set_instance(instance);
-    }
-    return instance;
-  }
-};
-#ifdef BRAHMA_ENABLE_MPI
-class MPIIOTest : public MPIIO {
- private:
-  static std::shared_ptr<MPIIOTest> instance;
-
- public:
-  MPIIOTest() {}
-  static std::shared_ptr<MPIIOTest> get_instance() {
-    if (instance == nullptr) {
-      instance = std::make_shared<MPIIOTest>();
-      MPIIOTest::set_instance(instance);
-    }
-    return instance;
-  }
-};
-#endif
 class HDF5Test : public HDF5 {
  private:
   static std::shared_ptr<HDF5Test> instance;
 
  public:
-  HDF5Test() {}
+  HDF5Test() : api_count(0) {}
+
+  virtual ~HDF5Test() {}
+
   static std::shared_ptr<HDF5Test> get_instance() {
     if (instance == nullptr) {
       instance = std::make_shared<HDF5Test>();
-      HDF5Test::set_instance(instance);
+      HDF5::set_instance(instance);
     }
     return instance;
   }
+
+  size_t api_count;
+
+#if BRAHMA_HDF5_VERSION >= 100800
+  hid_t H5Fcreate(const char* filename, unsigned int flags, hid_t fcpl_id,
+                  hid_t fapl_id) override {
+    api_count++;
+    return HDF5::H5Fcreate(filename, flags, fcpl_id, fapl_id);
+  }
+
+  hid_t H5Dcreate2(hid_t loc_id, const char* name, hid_t type_id,
+                   hid_t space_id, hid_t lcpl_id, hid_t dcpl_id,
+                   hid_t dapl_id) override {
+    api_count++;
+    return HDF5::H5Dcreate2(loc_id, name, type_id, space_id, lcpl_id, dcpl_id,
+                            dapl_id);
+  }
+
+  hid_t H5Screate_simple(int rank, const hsize_t* current_dims,
+                         const hsize_t* maximum_dims) override {
+    api_count++;
+    return HDF5::H5Screate_simple(rank, current_dims, maximum_dims);
+  }
+
+  herr_t H5Dwrite(hid_t dataset_id, hid_t mem_type_id, hid_t mem_space_id,
+                  hid_t file_space_id, hid_t xfer_plist_id,
+                  const void* buf) override {
+    api_count++;
+    return HDF5::H5Dwrite(dataset_id, mem_type_id, mem_space_id, file_space_id,
+                          xfer_plist_id, buf);
+  }
+
+  herr_t H5Dread(hid_t dataset_id, hid_t mem_type_id, hid_t mem_space_id,
+                 hid_t file_space_id, hid_t xfer_plist_id, void* buf) override {
+    api_count++;
+    return HDF5::H5Dread(dataset_id, mem_type_id, mem_space_id, file_space_id,
+                         xfer_plist_id, buf);
+  }
+
+  herr_t H5Dclose(hid_t dataset_id) override {
+    api_count++;
+    return HDF5::H5Dclose(dataset_id);
+  }
+
+  herr_t H5Sclose(hid_t dataspace_id) override {
+    api_count++;
+    return HDF5::H5Sclose(dataspace_id);
+  }
+
+  herr_t H5Fclose(hid_t file_id) override {
+    api_count++;
+    return HDF5::H5Fclose(file_id);
+  }
+#endif
 };
-std::shared_ptr<POSIXTest> POSIXTest::instance = nullptr;
-std::shared_ptr<STDIOTest> STDIOTest::instance = nullptr;
-#ifdef BRAHMA_ENABLE_MPI
-std::shared_ptr<MPIIOTest> MPIIOTest::instance = nullptr;
-#endif
-#ifdef BRAHMA_ENABLE_HDF5
+
 std::shared_ptr<HDF5Test> HDF5Test::instance = nullptr;
-#endif
+
 }  // namespace brahma
 
 #endif
 
 void __attribute__((constructor)) test_init() {
-  brahma_gotcha_wrap("tool", 1);
-  brahma::POSIXTest::get_instance();
-  brahma::STDIOTest::get_instance();
-#ifdef BRAHMA_ENABLE_MPI
-  brahma::MPIIOTest::get_instance();
+#ifdef BRAHMA_ENABLE_HDF5
+  auto hdf5 = brahma::HDF5Test::get_instance();
+  hdf5->bind<brahma::HDF5Test>("test", 0);
 #endif
-  brahma::HDF5Test::get_instance();
 }
-void __attribute__((destructor)) test_finalize() { brahma_free_bindings(); }
+
+void __attribute__((destructor)) test_finalize() {
+#ifdef BRAHMA_ENABLE_HDF5
+  auto hdf5 = brahma::HDF5Test::get_instance();
+  hdf5->unbind();
+  std::cout << "HDF5 num_bindings: " << hdf5->num_bindings << std::endl;
+  std::cout << "HDF5 api_count: " << hdf5->api_count << std::endl;
+  assert(hdf5->num_bindings == hdf5->api_count);
+#endif
+}
 
 int main(int argc, char* argv[]) {
 #ifdef BRAHMA_ENABLE_HDF5
