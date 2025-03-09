@@ -1,8 +1,8 @@
 # Brahma v0.0.9
 
 A C++ style interception library for application calls.
-This library uses [GOTCHA](https://github.com/LLNL/GOTCHA) to intercept POSIX, STDIO, and MPI-IO calls.
-The interception of MPI-IO calls are optional and the library can be compiled without MPI-IO.
+This library uses [GOTCHA](https://github.com/LLNL/GOTCHA) to intercept POSIX, STDIO, MPI-IO, and HDF5 calls.
+The interception of MPI-IO and HDF5 calls are optional and the library can be compiled without MPI-IO or HDF5.
 
 ## Dependencies
 
@@ -135,7 +135,7 @@ namespace brahma {
 
 ## Auto Interface Code Generation
 
-This Python script generates interface and implementation files for specific libraries (currently only HDF5) used with the Brahma framework.
+This Python script generates interface and implementation files for specific libraries (currently MPI-IO and HDF5) used with the Brahma framework.
 
 Enable auto-generation during the build process:
 
@@ -147,11 +147,14 @@ Enable auto-generation during the build process:
 You can also run the script manually with the following command:
 
 ```bash
-python generate_interfaces.py --libclang-path <path_to_libclang> --hdf5-header-path <path_to_hdf5_header> [--verbose]
+python3 generate_interfaces.py --libclang-path <path_to_libclang> --hdf5-header-path <path_to_hdf5_header> --hdf5-version <version_of_hdf5> --mpio-header-path <path_to_mpio_header>[--with-tests] [--verbose]
 ```
 
-* `--libclang-path`: Path to the libclang library (required)
-* `--hdf5-header-path`: Path to the HDF5 library header file (required)
+* `--libclang-path`: Path to the libclang library
+* `--hdf5-header-path`: Path to the HDF5 library header file
+* `--hdf5-version`: Version of the HDF5 library
+* `--mpio-header-path`: Path to the MPI-IO header file
+* `--with-tests`: Generate test cases during generation
 * `--verbose`: Print verbose output (optional)
 
 The script generates two files for each interface:
