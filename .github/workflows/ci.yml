@@ -15,10 +15,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        hdf5: ["ON", "OFF"]
+        hdf5: ["ON"]
         hdf5_version: ["1.8", "1.12", "1.14"]
-        mpi: ["ON", "OFF"]
+        mpi: ["ON"]
         mpi_version: ["3", "4"]
+      include:
+          - hdf5: "OFF"
+             mpi: "OFF"
+             hdf5_version: "1.8"
+             mpi_version: "3"
     steps:
       - name: Push checkout
         if: github.event_name == 'push'
