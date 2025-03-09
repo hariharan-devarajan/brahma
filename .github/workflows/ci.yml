@@ -30,9 +30,11 @@ jobs:
           - hdf5: "OFF"
             mpi: "ON"
           - hdf5: "OFF"
-            hdf5_version: ["1.12", "1.14"]
+            hdf5_version: "1.12"
+          - hdf5: "OFF"
+            hdf5_version: "1.14"
           - mpi: "OFF"
-            hdf5_version: ["4"]
+            hdf5_version: "4"
     steps:
       - name: Push checkout
         if: github.event_name == 'push'
