@@ -70,7 +70,7 @@ jobs:
         shell: spack-bash {0}
         if: matrix.hdf5 == 'ON'
         run: |
-          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack load hdf5
+          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack load hdf5@${{ matrix.hdf5_version }}
           [[ "${{ matrix.mpi }}" == "ON" ]] && spack load openmpi
           python -m pip install -r tools/requirements.txt
           cmake -Bbuild \
