@@ -62,8 +62,8 @@ jobs:
       - name: Install Spack Packages
         shell: spack-bash {0}
         run: |
-          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack install hdf5+cxx@${{ matrix.hdf5_version }}
-          [[ "${{ matrix.mpi }}" == "ON" ]] && spack install openmpi+cxx@${{ matrix.mpi_version }}
+          [[ "${{ matrix.hdf5 }}" == "ON" ]] && spack install hdf5@${{ matrix.hdf5_version }}
+          [[ "${{ matrix.mpi }}" == "ON" ]] && spack install openmpi@${{ matrix.mpi_version }}
       - name: Create Build Directory
         run: mkdir build
       - name: Generate Interfaces
