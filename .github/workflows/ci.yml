@@ -26,8 +26,6 @@ jobs:
             mpi_version: "3"
         exclude:
           - hdf5: "ON"
-            mpi: "OFF"
-          - hdf5: "OFF"
             mpi: "ON"
           - hdf5: "OFF"
             hdf5_version: "1.12"
