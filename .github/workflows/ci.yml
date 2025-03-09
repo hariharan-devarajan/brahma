@@ -21,9 +21,9 @@ jobs:
         mpi_version: ["3", "4"]
       include:
           - hdf5: "OFF"
-             mpi: "OFF"
-             hdf5_version: "1.8"
-             mpi_version: "3"
+            mpi: "OFF"
+            hdf5_version: "1.8"
+            mpi_version: "3"
     steps:
       - name: Push checkout
         if: github.event_name == 'push'
