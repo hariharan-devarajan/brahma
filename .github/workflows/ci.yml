@@ -19,7 +19,7 @@ jobs:
         hdf5_version: ["1.8", "1.12", "1.14"]
         mpi: ["ON"]
         mpi_version: ["3", "4"]
-      include:
+        include:
           - hdf5: "OFF"
             mpi: "OFF"
             hdf5_version: "1.8"
