@@ -45,3 +45,4 @@ add_custom_target(generate_interfaces ALL
     COMMENT "Generating interfaces..."
     VERBATIM
 )
+
