@@ -34,7 +34,7 @@ cmake --build $PWD/build --target all -j 50
 | Option                      | Description                                                                                 |
 | --------------------------- | ------------------------------------------------------------------------------------------- |
 | BRAHMA_BUILD_DEPENDENCIES   | Build Brahma dependencies                                                                   |
-| BRAHMA_BUILD_WITH_HDF5      | Enable MPI and MPI-IO interceptions                                                         |
+| BRAHMA_BUILD_WITH_HDF5      | Enable HDF5 interceptions                                                         |
 | BRAHMA_BUILD_WITH_MPI       | Enable MPI and MPI-IO interceptions                                                         |
 | BRAHMA_ENABLE_TESTING       | Enable testing                                                                              |
 | BRAHMA_GENERATE_INTERFACES  | Generate interfaces                                                                         |
