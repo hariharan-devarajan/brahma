@@ -36,6 +36,21 @@ macro(brahma_get_max_str_length OUTPUT_VAR)
   endforeach ()
 endmacro ()
 
+# Define the function to convert version to the required format
+function(convert_version_to_number VERSION OUTPUT_VAR)
+    # Extract major, minor, and patch versions using regex
+    string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${VERSION})
+    set(MAJOR ${CMAKE_MATCH_1})
+    set(MINOR ${CMAKE_MATCH_2})
+    set(PATCH ${CMAKE_MATCH_3})
+
+    # Compute the formatted version using the given formula
+    math(EXPR FORMATTED_VERSION "${MAJOR} * 100000 + ${MINOR} * 100 + ${PATCH}")
+
+    # Set the computed version as an output variable
+    set(${OUTPUT_VAR} ${FORMATTED_VERSION} PARENT_SCOPE)
+endfunction()
+
 # Check to see if we are in a git repo
 find_program(__GIT_EXECUTABLE git)
 mark_as_advanced(__GIT_EXECUTABLE)
