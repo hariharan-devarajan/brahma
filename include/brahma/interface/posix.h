@@ -153,7 +153,7 @@ class POSIX : public Interface {
 
   virtual int fork();
 
-  virtual void _exit(int status);
+  virtual void exit(int status);
 
   virtual void *mmap(void *addr, size_t length, int prot, int flags, int fd,
                      off_t offset);
@@ -238,7 +238,7 @@ class POSIX : public Interface {
   GOTCHA_MACRO_VAR(execvp)
   GOTCHA_MACRO_VAR(execvpe)
   GOTCHA_MACRO_VAR(fork)
-  GOTCHA_MACRO_VAR(_exit)
+  GOTCHA_MACRO_VAR(exit)
   GOTCHA_MACRO_VAR(mmap)
   GOTCHA_MACRO_VAR(mmap64)
   GOTCHA_MACRO_VAR(munmap)
@@ -403,7 +403,7 @@ GOTCHA_MACRO_TYPEDEF(execvpe, int,
                       char *const envp[]),
                      (pathname, argv, envp), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(fork, int, (), (), brahma::POSIX)
-GOTCHA_MACRO_TYPEDEF(_exit, void,
+GOTCHA_MACRO_TYPEDEF(exit, void,
                      (int status),
                      (status), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(mmap, void *,
@@ -500,7 +500,7 @@ size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(execvp, POSIX);
   GOTCHA_BINDING_MACRO(execvpe, POSIX);
   GOTCHA_BINDING_MACRO(fork, POSIX);
-  GOTCHA_BINDING_MACRO(_exit, POSIX);
+  GOTCHA_BINDING_MACRO(exit, POSIX);
   GOTCHA_BINDING_MACRO(mmap, POSIX);
   GOTCHA_BINDING_MACRO(mmap64, POSIX);
   GOTCHA_BINDING_MACRO(munmap, POSIX);

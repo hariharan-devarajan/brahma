@@ -22,6 +22,8 @@
         "utility": "cpp",
         "valarray": "cpp",
         "*.tcc": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "typeinfo": "cpp",
+        "chrono": "cpp"
     }
 }

@@ -327,8 +327,8 @@ int POSIX::fork() {
   BRAHMA_UNWRAPPED_FUNC(fork, int, ());
   return result;
 }
-void POSIX::_exit(int status) {
-  BRAHMA_UNWRAPPED_FUNC_VOID(_exit, (status));
+void POSIX::exit(int status) {
+  BRAHMA_UNWRAPPED_FUNC_VOID(exit, (status));
 }
 void *POSIX::mmap(void *addr, size_t length, int prot, int flags, int fd,
                   off_t offset) {
