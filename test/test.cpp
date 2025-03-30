@@ -122,49 +122,7 @@ class POSIXTest : public POSIX {
     api_count++;
     return 0;
   }
-
-  void *mmap(void *addr, size_t length, int prot, int flags, int fd,
-             off_t offset) override {
-    api_count++;
-    return 0;
-  }
-
-  void *mmap64(void *addr, size_t length, int prot, int flags, int fd,
-               off64_t offset) override {
-    api_count++;
-    return 0;
-  }
-
-  int __xstat(int vers, const char *path, struct stat *buf) override {
-    api_count++;
-    return 0;
-  }
-
-  int __xstat64(int vers, const char *path, struct stat64 *buf) override {
-    api_count++;
-    return 0;
-  }
-
-  int __lxstat(int vers, const char *path, struct stat *buf) override {
-    api_count++;
-    return 0;
-  }
-
-  int __lxstat64(int vers, const char *path, struct stat64 *buf) override {
-    api_count++;
-    return 0;
-  }
-
-  int __fxstat(int vers, int fd, struct stat *buf) override {
-    api_count++;
-    return 0;
-  }
-
-  int __fxstat64(int vers, int fd, struct stat64 *buf) override {
-    api_count++;
-    return 0;
-  }
-
+  
   char *getcwd(char *buf, size_t size) override {
     api_count++;
     return 0;
@@ -343,6 +301,70 @@ class POSIXTest : public POSIX {
   }
 
   int fork() override {
+    api_count++;
+    return 0;
+  }
+
+  void exit(int status) override {
+    BRAHMA_MAP_OR_FAIL(exit);
+    printf("Captured exit with code %d\n", status);
+    api_count++;
+    __real_exit(0);
+  }
+
+  void *mmap(void *addr, size_t length, int prot, int flags, int fd,
+                     off_t offset) override {
+    api_count++;
+    return 0;
+  }
+  
+  void *mmap64(void *addr, size_t length, int prot, int flags, int fd,
+                       off64_t offset) override {
+    api_count++;
+    return 0;
+  }
+
+  int munmap(void *addr, size_t len) override {
+    api_count++;
+    return 0;
+  }
+
+  int msync(void *addr, size_t len, int flags) override {
+    api_count++;
+    return 0;
+  }
+
+  long sysconf(int name) override {
+    api_count++;
+    return 0;
+  }
+
+  int madvise(void *addr, size_t length, int advice) override {
+    api_count++;
+    return 0;
+  }
+
+  int mprotect(void *addr, size_t length, int prot) override {
+    api_count++;
+    return 0;
+  }
+
+  int mlock(const void *addr, size_t len) override {
+    api_count++;
+    return 0;
+  }
+  
+  int munlock(const void *addr, size_t len) override {
+    api_count++;
+    return 0;
+  }
+
+  int mlockall(int flags) override {
+    api_count++;
+    return 0;
+  }
+
+  int munlockall(void) override {
     api_count++;
     return 0;
   }
@@ -632,6 +654,7 @@ void __attribute__((constructor)) test_init() {
 void __attribute__((destructor)) test_finalize() {
   auto posix = brahma::POSIXTest::get_instance();
   posix->unbind();
+  printf("POSIX num_bindings: %zu, api_count: %zu\n", posix->num_bindings, posix->api_count);
   assert(posix->num_bindings == posix->api_count);
   auto stdio = brahma::STDIOTest::get_instance();
   stdio->unbind();
@@ -750,6 +773,28 @@ int main(int argc, char *argv[]) {
 
   fork();
 
+  mmap(NULL,0,0,0,0,0);
+
+  mmap64(NULL,0,0,0,0,0);
+  
+  munmap(NULL, 0);
+
+  msync(NULL, 0, 0);
+
+  sysconf(0);
+
+  madvise(NULL, 0, 0);
+
+  mprotect(NULL, 0, 0);
+
+  mlock(NULL, 0);
+  
+  munlock(NULL, 0);
+
+  mlockall(0);
+
+  munlockall();
+
   fopen("", "");
   fopen64("", "");
   fclose(NULL);
@@ -781,7 +826,7 @@ int main(int argc, char *argv[]) {
 
   MPI_File_iwrite_shared(NULL, NULL, 0, 0, NULL);
 
-  MPI_File_open(NULL, NULL, 0, NULL, NULL);
+  MPI_File_open(NULL, NULL, 0, 0, NULL);
 
   MPI_File_read_all_begin(NULL, NULL, 0, 0);
 
@@ -820,7 +865,8 @@ int main(int argc, char *argv[]) {
   MPI_File_write_ordered(NULL, NULL, 0, 0, NULL);
 
   MPI_File_write_shared(NULL, NULL, 0, 0, NULL);
-  MPI_File_delete(NULL, NULL);
+  MPI_File_delete(NULL, 0);
 #endif
+  exit(100);
   return 0;
 }
