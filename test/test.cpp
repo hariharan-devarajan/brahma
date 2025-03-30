@@ -307,9 +307,9 @@ class POSIXTest : public POSIX {
 
   void exit(int status) override {
     BRAHMA_MAP_OR_FAIL(exit);
-    printf("Captured exit with code %d", status);
+    printf("Captured exit with code %d\n", status);
     api_count++;
-    __real_exit(status);
+    __real_exit(0);
   }
 
   void *mmap(void *addr, size_t length, int prot, int flags, int fd,
