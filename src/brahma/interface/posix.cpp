@@ -386,6 +386,8 @@ int POSIX::munlockall() {
   return result;
 }
 
+
+// Set the unbindings - call the original function with a higher priority
 size_t brahma::POSIX::unbind() {
   num_bindings = unbindings.size();
   if (num_bindings > 0) {
