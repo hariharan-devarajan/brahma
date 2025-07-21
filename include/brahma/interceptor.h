@@ -20,12 +20,15 @@
     gotcha_binding_t binding = {#fname, (void*)fname##_wrapper, \
                                 &fname##_brahma_handle};        \
     bindings.push_back(binding);                                \
+    gotcha_binding_t unbinding = {#fname, (void*)::fname, \
+                                   &fname##_brahma_handle};      \
+    unbindings.push_back(unbinding);                            \
   }
 
 #define GOTCHA_MACRO_TYPEDEF(name, ret, args, args_val, class_name) \
   typedef ret(*name##_fptr) args;                                   \
   inline ret name##_wrapper args {                                  \
-    return class_name::get_instance()->name args_val;               \
+      return class_name::get_instance()->name args_val;               \
   }
 #define GOTCHA_MACRO_TYPEDEF_OPEN(name, ret, args, args_val, start, \
                                   class_name)                       \

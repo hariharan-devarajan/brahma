@@ -227,5 +227,17 @@ int MPIIO::MPI_File_delete(const char *filename, MPI_Info info) {
   BRAHMA_UNWRAPPED_FUNC(MPI_File_delete, int, (filename, info));
   return result;
 }
+
+size_t brahma::MPIIO::unbind() {
+  num_bindings = unbindings.size();
+  if (num_bindings > 0) {
+    gotcha_binding_t *raw_bindings = unbindings.data();
+    char unbind_name[128];
+    sprintf(unbind_name, "%s_mpiio_unbind", tool_name);
+    gotcha_wrap(raw_bindings, num_bindings, unbind_name);
+    gotcha_set_priority(unbind_name, bind_priority+1);
+  }
+  return num_bindings;
+}
 }  // namespace brahma
 #endif  // BRAHMA_ENABLE_MPI

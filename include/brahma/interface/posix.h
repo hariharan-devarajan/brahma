@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <utime.h>
+#include <sys/mman.h>
 
 #include <cstdlib>
 #include <stdexcept>
@@ -29,8 +30,12 @@ class POSIX : public Interface {
   POSIX() : Interface() {}
 
   virtual ~POSIX() {}
+
   template <typename C>
   size_t bind(const char *name, uint16_t priority);
+
+
+  size_t unbind();
 
   static int set_instance(std::shared_ptr<POSIX> instance_i);
 
@@ -514,10 +519,10 @@ size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(munlockall, POSIX);
   num_bindings = bindings.size();
   if (num_bindings > 0) {
-    char tool_name[64];
     sprintf(tool_name, "%s_posix", name);
     gotcha_binding_t *raw_bindings = bindings.data();
     gotcha_wrap(raw_bindings, num_bindings, tool_name);
+    bind_priority = priority;
     gotcha_set_priority(tool_name, priority);
   }
   return num_bindings;
