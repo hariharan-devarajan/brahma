@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 
 #include <cstdlib>
 #include <stdexcept>
