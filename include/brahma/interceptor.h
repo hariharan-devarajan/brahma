@@ -23,12 +23,9 @@
     gotcha_binding_t binding = {#fname, (void*)fname##_wrapper, \
                                 &fname##_brahma_handle};        \
     bindings.push_back(binding);                                \
-    if constexpr (std::is_function_v<std::remove_pointer_t<     \
-                    decltype(&::fname)>>) {                     \
-      gotcha_binding_t unbinding = {#fname, (void*)::fname,     \
-                                     &fname##_brahma_handle};   \
-      unbindings.push_back(unbinding);                          \
-    }                                                           \
+    gotcha_binding_t unbinding = {#fname, (void*)::fname,       \
+                                   &fname##_brahma_handle};     \
+    unbindings.push_back(unbinding);                            \
   }
 
 #define GOTCHA_MACRO_TYPEDEF(name, ret, args, args_val, class_name) \
