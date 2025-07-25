@@ -32,7 +32,7 @@
   inline ret name##_wrapper args {                                          \
     return class_name::get_instance()->name args_val;                       \
   }                                                                         \
-  inline ret __attribute__((weak)) name args;
+  ret __attribute__((weak)) name args;
 #define GOTCHA_MACRO_TYPEDEF_OPEN(name, ret, args, args_val, start, \
                                   class_name)                       \
   typedef ret(*name##_fptr) args;                                   \
@@ -44,7 +44,7 @@
     ret v = class_name::get_instance()->name args_val;              \
     return v;                                                       \
   }                                                                 \
-  inline ret __attribute__((weak)) name args;
+  ret __attribute__((weak)) name args;
 
 #define GOTCHA_MACRO_TYPEDEF_EXECL(name, ret, args, args_val, start, \
                                    class_name)                       \
@@ -57,7 +57,7 @@
     ret v = class_name::get_instance()->name args_val;              \
     return v;                                                       \
   }                                                                 \
-  inline ret __attribute__((weak)) name args; 
+  ret __attribute__((weak)) name args; 
 
 #define GOTCHA_MACRO_VAR(name) gotcha_wrappee_handle_t name##_brahma_handle;
 
