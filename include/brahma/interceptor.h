@@ -23,9 +23,11 @@
     gotcha_binding_t binding = {#fname, (void*)fname##_wrapper,       \
                                 &fname##_brahma_handle};              \
     bindings.push_back(binding);                                      \
+    if(::fname){                                                      \
       gotcha_binding_t unbinding = {#fname, (void*)::fname,           \
                                     &fname##_brahma_handle};          \
       unbindings.push_back(unbinding);                                \
+      }                                                               \
 }
 #define GOTCHA_MACRO_TYPEDEF(name, ret, args, args_val, class_name)         \
   typedef ret(*name##_fptr) args;                                           \
