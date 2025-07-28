@@ -25,6 +25,8 @@ class MPIIO : public Interface {
   template <typename C>
   size_t bind(const char *name, uint16_t priority);
 
+  size_t unbind();
+
   static int set_instance(std::shared_ptr<MPIIO> instance_i);
 
   virtual int MPI_File_close(MPI_File *fh);
@@ -354,13 +356,16 @@ size_t brahma::MPIIO::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(MPI_File_delete, MPIIO);
   num_bindings = bindings.size();
   if (num_bindings > 0) {
-    char tool_name[64];
     sprintf(tool_name, "%s_mpiio", name);
     gotcha_binding_t *raw_bindings = bindings.data();
     gotcha_wrap(raw_bindings, num_bindings, tool_name);
+    bind_priority = priority;
     gotcha_set_priority(tool_name, priority);
   }
   return num_bindings;
 }
+
+
+
 #endif  // BRAHMA_ENABLE_MPI
 #endif  // BRAHMA_MPIIO_H

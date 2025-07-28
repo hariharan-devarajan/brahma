@@ -327,8 +327,8 @@ int POSIX::fork() {
   BRAHMA_UNWRAPPED_FUNC(fork, int, ());
   return result;
 }
-void POSIX::_exit(int status) {
-  BRAHMA_UNWRAPPED_FUNC_VOID(_exit, (status));
+void POSIX::exit(int status) {
+  BRAHMA_UNWRAPPED_FUNC_VOID(exit, (status));
 }
 void *POSIX::mmap(void *addr, size_t length, int prot, int flags, int fd,
                   off_t offset) {
@@ -384,6 +384,20 @@ int POSIX::mlockall(int flags) {
 int POSIX::munlockall() {
   BRAHMA_UNWRAPPED_FUNC(munlockall, int, ());
   return result;
+}
+
+
+// Set the unbindings - call the original function with a higher priority
+size_t brahma::POSIX::unbind() {
+  num_bindings = unbindings.size();
+  if (num_bindings > 0) {
+    gotcha_binding_t *raw_bindings = unbindings.data();
+    char unbind_name[128];
+    sprintf(unbind_name, "%s_posix_unbind", tool_name);
+    gotcha_wrap(raw_bindings, num_bindings, unbind_name);
+    gotcha_set_priority(unbind_name, bind_priority+1);
+  }
+  return num_bindings;
 }
 
 }  // namespace brahma

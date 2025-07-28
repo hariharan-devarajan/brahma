@@ -14,6 +14,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <utime.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 
 #include <cstdlib>
 #include <stdexcept>
@@ -29,8 +31,12 @@ class POSIX : public Interface {
   POSIX() : Interface() {}
 
   virtual ~POSIX() {}
+
   template <typename C>
   size_t bind(const char *name, uint16_t priority);
+
+
+  size_t unbind();
 
   static int set_instance(std::shared_ptr<POSIX> instance_i);
 
@@ -153,7 +159,7 @@ class POSIX : public Interface {
 
   virtual int fork();
 
-  virtual void _exit(int status);
+  virtual void exit(int status);
 
   virtual void *mmap(void *addr, size_t length, int prot, int flags, int fd,
                      off_t offset);
@@ -238,7 +244,7 @@ class POSIX : public Interface {
   GOTCHA_MACRO_VAR(execvp)
   GOTCHA_MACRO_VAR(execvpe)
   GOTCHA_MACRO_VAR(fork)
-  GOTCHA_MACRO_VAR(_exit)
+  GOTCHA_MACRO_VAR(exit)
   GOTCHA_MACRO_VAR(mmap)
   GOTCHA_MACRO_VAR(mmap64)
   GOTCHA_MACRO_VAR(munmap)
@@ -403,7 +409,7 @@ GOTCHA_MACRO_TYPEDEF(execvpe, int,
                       char *const envp[]),
                      (pathname, argv, envp), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(fork, int, (), (), brahma::POSIX)
-GOTCHA_MACRO_TYPEDEF(_exit, void,
+GOTCHA_MACRO_TYPEDEF(exit, void,
                      (int status),
                      (status), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(mmap, void *,
@@ -500,7 +506,7 @@ size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(execvp, POSIX);
   GOTCHA_BINDING_MACRO(execvpe, POSIX);
   GOTCHA_BINDING_MACRO(fork, POSIX);
-  GOTCHA_BINDING_MACRO(_exit, POSIX);
+  GOTCHA_BINDING_MACRO(exit, POSIX);
   GOTCHA_BINDING_MACRO(mmap, POSIX);
   GOTCHA_BINDING_MACRO(mmap64, POSIX);
   GOTCHA_BINDING_MACRO(munmap, POSIX);
@@ -514,10 +520,10 @@ size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(munlockall, POSIX);
   num_bindings = bindings.size();
   if (num_bindings > 0) {
-    char tool_name[64];
     sprintf(tool_name, "%s_posix", name);
     gotcha_binding_t *raw_bindings = bindings.data();
     gotcha_wrap(raw_bindings, num_bindings, tool_name);
+    bind_priority = priority;
     gotcha_set_priority(tool_name, priority);
   }
   return num_bindings;
