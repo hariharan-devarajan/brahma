@@ -41,6 +41,9 @@ class STDIO : public Interface {
   template <typename C>
   size_t bind(const char *name, uint16_t priority);
 
+
+  size_t unbind();
+
   virtual FILE *fopen(const char *path, const char *mode);
   virtual FILE *fopen64(const char *path, const char *mode);
   virtual int fclose(FILE *fp);
@@ -116,10 +119,10 @@ size_t brahma::STDIO::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(fileno, STDIO);
   num_bindings = bindings.size();
   if (num_bindings > 0) {
-    char tool_name[64];
     sprintf(tool_name, "%s_stdio", name);
     gotcha_binding_t *raw_bindings = bindings.data();
     gotcha_wrap(raw_bindings, num_bindings, tool_name);
+    bind_priority = priority;
     gotcha_set_priority(tool_name, priority);
   }
   return num_bindings;

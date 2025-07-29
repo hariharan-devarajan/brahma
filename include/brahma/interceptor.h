@@ -14,19 +14,27 @@
 #include <cstdarg>
 #include <memory>
 
-#define GOTCHA_BINDING_MACRO(fname, CLASS)                      \
-  if constexpr (!std::is_same_v<decltype(&C::fname),            \
-                                decltype(&CLASS::fname)>) {     \
-    gotcha_binding_t binding = {#fname, (void*)fname##_wrapper, \
-                                &fname##_brahma_handle};        \
-    bindings.push_back(binding);                                \
-  }
 
-#define GOTCHA_MACRO_TYPEDEF(name, ret, args, args_val, class_name) \
-  typedef ret(*name##_fptr) args;                                   \
-  inline ret name##_wrapper args {                                  \
-    return class_name::get_instance()->name args_val;               \
-  }
+
+// The unbinding points to the original function
+#define GOTCHA_BINDING_MACRO(fname, CLASS)                            \
+  if constexpr (!std::is_same_v<decltype(&C::fname),                  \
+                                decltype(&CLASS::fname)>) {           \
+    gotcha_binding_t binding = {#fname, (void*)fname##_wrapper,       \
+                                &fname##_brahma_handle};              \
+    bindings.push_back(binding);                                      \
+    if(::fname){                                                      \
+      gotcha_binding_t unbinding = {#fname, (void*)::fname,           \
+                                    &fname##_brahma_handle};          \
+      unbindings.push_back(unbinding);                                \
+      }                                                               \
+}
+#define GOTCHA_MACRO_TYPEDEF(name, ret, args, args_val, class_name)         \
+  typedef ret(*name##_fptr) args;                                           \
+  inline ret name##_wrapper args {                                          \
+    return class_name::get_instance()->name args_val;                       \
+  }                                                                         \
+  ret __attribute__((weak)) name args;
 #define GOTCHA_MACRO_TYPEDEF_OPEN(name, ret, args, args_val, start, \
                                   class_name)                       \
   typedef ret(*name##_fptr) args;                                   \
@@ -37,7 +45,8 @@
     va_end(_args);                                                  \
     ret v = class_name::get_instance()->name args_val;              \
     return v;                                                       \
-  }
+  }                                                                 \
+  ret __attribute__((weak)) name args;
 
 #define GOTCHA_MACRO_TYPEDEF_EXECL(name, ret, args, args_val, start, \
                                    class_name)                       \
@@ -47,9 +56,10 @@
     va_start(_args, start);                                          \
     char* val = va_arg(_args, char*);                                \
     va_end(_args);                                                   \
-    ret v = class_name::get_instance()->name args_val;               \
-    return v;                                                        \
-  }
+    ret v = class_name::get_instance()->name args_val;              \
+    return v;                                                       \
+  }                                                                 \
+  ret __attribute__((weak)) name args; 
 
 #define GOTCHA_MACRO_VAR(name) gotcha_wrappee_handle_t name##_brahma_handle;
 

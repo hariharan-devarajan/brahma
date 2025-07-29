@@ -13,6 +13,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <utime.h>
+
+#ifdef NDEBUG
+    #error "Assertions are disabled! Remove NDEBUG to enable them."
+#endif
+
 #ifdef BRAHMA_ENABLE_MPI
 #include <mpi.h>
 
@@ -652,12 +657,27 @@ void __attribute__((constructor)) test_init() {
 #endif
 }
 void __attribute__((destructor)) test_finalize() {
+  printf("finalizing test\n");
   auto posix = brahma::POSIXTest::get_instance();
-  posix->unbind();
+  size_t unbindings = posix->unbind();
   printf("POSIX num_bindings: %zu, api_count: %zu\n", posix->num_bindings, posix->api_count);
+  printf("POSIX unbindings: %zu\n", unbindings);
   assert(posix->num_bindings == posix->api_count);
   auto stdio = brahma::STDIOTest::get_instance();
-  stdio->unbind();
+  printf("STDIO num_bindings: %zu, api_count: %zu\n", stdio->num_bindings, stdio->api_count);
+  size_t stdio_unbindings = stdio->unbind();
+  printf("STDIO unbindings: %zu\n", stdio_unbindings);
+  assert(stdio->num_bindings == stdio->api_count);
+  // Make more calls after unbind to ensure that api count isn't getting updated
+  FILE *fi = fopen("test.txt", "w");
+  fwrite("Hello, World!", 1, 13, fi);
+  fclose(fi);
+  fi = fopen("test.txt", "r");
+  char buf[14];
+  fread(buf, 1, 14, fi);
+  printf("buf: %s\n", buf);
+  fclose(fi);
+  assert(strcmp(buf, "Hello, World!") == 0);
   assert(stdio->num_bindings == stdio->api_count);
 #ifdef BRAHMA_ENABLE_MPI
   auto mpiio = brahma::MPIIOTest::get_instance();

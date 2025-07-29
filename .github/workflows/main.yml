@@ -6,7 +6,7 @@ name: cmake
 # events but only for the master branch
 on: 
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main, develop ]
   push:
 
 env:

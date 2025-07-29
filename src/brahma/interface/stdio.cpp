@@ -60,4 +60,16 @@ off_t STDIO::ftello(FILE *stream) {
   BRAHMA_UNWRAPPED_FUNC(ftello, off_t, (stream));
   return result;
 }
+
+size_t brahma::STDIO::unbind() {
+  num_bindings = unbindings.size();
+  if (num_bindings > 0) {
+    gotcha_binding_t *raw_bindings = unbindings.data();
+    char unbind_name[128];
+    sprintf(unbind_name, "%s_stdio_unbind", tool_name);
+    gotcha_wrap(raw_bindings, num_bindings, unbind_name);
+    gotcha_set_priority(unbind_name, bind_priority+1);
+  }
+  return num_bindings;
+}
 }  // namespace brahma

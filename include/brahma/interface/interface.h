@@ -18,12 +18,14 @@ class Interface {
  protected:
   std::shared_ptr<InterfaceUtility> utility;
   std::vector<gotcha_binding_t> bindings;
+  std::vector<gotcha_binding_t> unbindings;
 
  public:
   Interface();
   ~Interface() {}
-  int unbind();
+  char tool_name[64];
   size_t num_bindings;
+  int bind_priority;
 };
 }  // namespace brahma
 #endif  // TAILORFS_INTERFACE_H
