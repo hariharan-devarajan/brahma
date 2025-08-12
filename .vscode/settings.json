@@ -3,7 +3,9 @@
         "-DBRAHMA_BUILD_WITH_MPI=ON",
         "-DBRAHMA_ENABLE_TESTING=ON",
         "-DBRAHMA_BUILD_DEPENDENCIES=OFF",
-        "-DBRAHMA_LOGGER=CPP_LOGGER"
+        "-DBRAHMA_LOGGER=NONE",
+        "-DCMAKE_INSTALL_PREFIX=/workspace/venv/lib/python3.12/site-packages/dftracer",
+        "-DBRAHMA_INSTALL_DEPENDENCIES=ON"
     ],
     "files.associations": {
         "string_view": "cpp",

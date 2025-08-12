@@ -160,6 +160,8 @@ class POSIX : public Interface {
   virtual int fork();
 
   virtual void exit(int status);
+  
+  virtual void _exit(int status);
 
   virtual void *mmap(void *addr, size_t length, int prot, int flags, int fd,
                      off_t offset);
@@ -184,6 +186,8 @@ class POSIX : public Interface {
   virtual int mlockall(int flags);
 
   virtual int munlockall(void);
+
+  virtual void _fini(void);
 
   /* Handler Definitions */
   GOTCHA_MACRO_VAR(open)
@@ -245,6 +249,7 @@ class POSIX : public Interface {
   GOTCHA_MACRO_VAR(execvpe)
   GOTCHA_MACRO_VAR(fork)
   GOTCHA_MACRO_VAR(exit)
+  GOTCHA_MACRO_VAR(_exit)
   GOTCHA_MACRO_VAR(mmap)
   GOTCHA_MACRO_VAR(mmap64)
   GOTCHA_MACRO_VAR(munmap)
@@ -256,6 +261,7 @@ class POSIX : public Interface {
   GOTCHA_MACRO_VAR(munlock)
   GOTCHA_MACRO_VAR(mlockall)
   GOTCHA_MACRO_VAR(munlockall)
+  GOTCHA_MACRO_VAR(_fini)
 };
 
 }  // namespace brahma
@@ -412,6 +418,9 @@ GOTCHA_MACRO_TYPEDEF(fork, int, (), (), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(exit, void,
                      (int status),
                      (status), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(_exit, void,
+                     (int status),
+                     (status), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(mmap, void *,
                      (void *addr, size_t length, int prot, int flags, int fd,
                       off_t offset),
@@ -445,6 +454,7 @@ GOTCHA_MACRO_TYPEDEF(mlockall, int,
                      (int flags),
                      (flags), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(munlockall, int, (), (), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(_fini, void, (void), (), brahma::POSIX)
 
 template <typename C>
 size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
@@ -507,6 +517,7 @@ size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(execvpe, POSIX);
   GOTCHA_BINDING_MACRO(fork, POSIX);
   GOTCHA_BINDING_MACRO(exit, POSIX);
+  GOTCHA_BINDING_MACRO(_exit, POSIX);
   GOTCHA_BINDING_MACRO(mmap, POSIX);
   GOTCHA_BINDING_MACRO(mmap64, POSIX);
   GOTCHA_BINDING_MACRO(munmap, POSIX);
@@ -518,6 +529,7 @@ size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(munlock, POSIX);
   GOTCHA_BINDING_MACRO(mlockall, POSIX);
   GOTCHA_BINDING_MACRO(munlockall, POSIX);
+  GOTCHA_BINDING_MACRO(_fini, POSIX);
   num_bindings = bindings.size();
   if (num_bindings > 0) {
     sprintf(tool_name, "%s_posix", name);

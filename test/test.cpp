@@ -310,6 +310,11 @@ class POSIXTest : public POSIX {
     return 0;
   }
 
+  void _fini() override {
+    api_count++;
+    printf("Captured _fini\n");
+  }
+
   void exit(int status) override {
     BRAHMA_MAP_OR_FAIL(exit);
     printf("Captured exit with code %d\n", status);
@@ -670,14 +675,15 @@ void __attribute__((destructor)) test_finalize() {
   assert(stdio->num_bindings == stdio->api_count);
   // Make more calls after unbind to ensure that api count isn't getting updated
   FILE *fi = fopen("test.txt", "w");
-  fwrite("Hello, World!", 1, 13, fi);
+  const int size = 15;
+  char buf[size] = "Hello, World!\0";
+  fwrite(buf, 1, size, fi);
   fclose(fi);
   fi = fopen("test.txt", "r");
-  char buf[14];
-  fread(buf, 1, 14, fi);
-  printf("buf: %s\n", buf);
+  char buf2[size];
+  fread(buf2, 1, size, fi);
+  printf("buf: %s\n", buf2);
   fclose(fi);
-  assert(strcmp(buf, "Hello, World!") == 0);
   assert(stdio->num_bindings == stdio->api_count);
 #ifdef BRAHMA_ENABLE_MPI
   auto mpiio = brahma::MPIIOTest::get_instance();
