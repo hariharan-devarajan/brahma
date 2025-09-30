@@ -61,6 +61,93 @@ off_t STDIO::ftello(FILE *stream) {
   return result;
 }
 
+
+void STDIO::clearerr(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC_VOID(clearerr, (stream));
+}
+int STDIO::feof(FILE * stream) {
+    BRAHMA_UNWRAPPED_FUNC(feof, int, (stream));
+    return result;
+}
+int STDIO::ferror(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(ferror, int, (stream));
+  return result;
+}
+int STDIO::fflush(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(fflush, int, (stream));
+  return result;
+}
+int STDIO::fgetc(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(fgetc, int, (stream));
+  return result;
+}
+int STDIO::fgetpos(FILE *stream, fpos_t *pos) {
+  BRAHMA_UNWRAPPED_FUNC(fgetpos, int, (stream, pos));
+  return result;
+}
+char* STDIO::fgets(char *s, int size, FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(fgets, char*, (s, size, stream));
+  return result;
+}
+void STDIO::flockfile(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC_VOID(flockfile, (stream));
+}
+int STDIO::fputc(int c, FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(fputc, int, (c, stream));
+  return result;
+}
+int STDIO::fputs(const char *s, FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(fputs, int, (s, stream));
+  return result;
+}
+  FILE* STDIO::freopen(const char *pathname, const char *mode, FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(freopen, FILE*, (pathname, mode, stream));
+  return result;
+}
+int STDIO::fsetpos(FILE *stream, const fpos_t *pos) {
+  BRAHMA_UNWRAPPED_FUNC(fsetpos, int, (stream, pos));
+  return result;
+}
+int STDIO::ftrylockfile(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(ftrylockfile, int, (stream));
+  return result;
+}
+void STDIO::funlockfile(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC_VOID(funlockfile, (stream));
+}
+int STDIO::getc(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(getc, int, (stream));
+  return result;
+}
+int STDIO::getc_unlocked(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(getc_unlocked, int, (stream));
+  return result;
+}
+int STDIO::getw(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(getw, int, (stream));
+  return result;
+}
+int STDIO::pclose(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(pclose, int, (stream));
+  return result;
+}
+int STDIO::putw(int w, FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(putw, int, (w, stream));
+  return result;
+}
+void STDIO::rewind(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC_VOID(rewind, (stream));
+}
+int STDIO::setvbuf(FILE *stream, char *buf, int mode, size_t size) {
+  BRAHMA_UNWRAPPED_FUNC(setvbuf, int, (stream, buf, mode, size));
+  return result;
+}
+int STDIO::ungetc(int c, FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(ungetc, int, (c, stream));
+  return result;
+}
+
+
 size_t brahma::STDIO::unbind() {
   num_bindings = unbindings.size();
   if (num_bindings > 0) {
