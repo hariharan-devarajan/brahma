@@ -71,6 +71,8 @@ class POSIX : public Interface {
 
   virtual int openat(int dirfd, const char *pathname, int flags, ...);
 
+  virtual int openat64(int dirfd, const char *pathname, int flags, ...);
+
   virtual int __xstat(int vers, const char *path, struct stat *buf);
 
   virtual int __xstat64(int vers, const char *path, struct stat64 *buf);
@@ -121,11 +123,15 @@ class POSIX : public Interface {
 
   virtual dirent *readdir(DIR *dir);
 
+  virtual dirent64 *readdir64(DIR *dir);
+
   virtual int closedir(DIR *dir);
 
   virtual void rewinddir(DIR *dir);
 
   virtual int fcntl(int fd, int cmd, ...);
+
+  virtual int fcntl64(int fd, int cmd, ...);
 
   virtual int dup(int oldfd);
 
@@ -145,7 +151,11 @@ class POSIX : public Interface {
 
   virtual int truncate(const char *pathname, off_t length);
 
+  virtual int truncate64(const char *pathname, off64_t length);
+
   virtual int ftruncate(int fd, off_t length);
+
+  virtual int ftruncate64(int fd, off64_t length);
 
   virtual int execl(const char *pathname, const char *arg, ...);
 
@@ -205,6 +215,7 @@ class POSIX : public Interface {
   GOTCHA_MACRO_VAR(fsync)
   GOTCHA_MACRO_VAR(fdatasync)
   GOTCHA_MACRO_VAR(openat)
+  GOTCHA_MACRO_VAR(openat64)
   GOTCHA_MACRO_VAR(__xstat)
   GOTCHA_MACRO_VAR(__xstat64)
   GOTCHA_MACRO_VAR(__lxstat)
@@ -229,9 +240,11 @@ class POSIX : public Interface {
   GOTCHA_MACRO_VAR(utime)
   GOTCHA_MACRO_VAR(opendir)
   GOTCHA_MACRO_VAR(readdir)
+  GOTCHA_MACRO_VAR(readdir64)
   GOTCHA_MACRO_VAR(closedir)
   GOTCHA_MACRO_VAR(rewinddir)
   GOTCHA_MACRO_VAR(fcntl)
+  GOTCHA_MACRO_VAR(fcntl64)
   GOTCHA_MACRO_VAR(dup)
   GOTCHA_MACRO_VAR(dup2)
   GOTCHA_MACRO_VAR(pipe)
@@ -241,7 +254,9 @@ class POSIX : public Interface {
   GOTCHA_MACRO_VAR(faccessat)
   GOTCHA_MACRO_VAR(remove)
   GOTCHA_MACRO_VAR(truncate)
+  GOTCHA_MACRO_VAR(truncate64)
   GOTCHA_MACRO_VAR(ftruncate)
+  GOTCHA_MACRO_VAR(ftruncate64)
   GOTCHA_MACRO_VAR(execl)
   GOTCHA_MACRO_VAR(execlp)
   GOTCHA_MACRO_VAR(execv)
@@ -298,6 +313,9 @@ GOTCHA_MACRO_TYPEDEF(fdatasync, int, (int fd), (fd), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF_OPEN(openat, int,
                           (int dirfd, const char *pathname, int flags, ...),
                           (dirfd, pathname, flags, mode), flags, brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF_OPEN(openat64, int,
+                     (int dirfd, const char *pathname, int flags, ...),
+                     (dirfd, pathname, flags, mode), flags, brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(__xstat, int,
                      (int vers, const char *path, struct stat *buf),
                      (vers, path, buf), brahma::POSIX)
@@ -353,6 +371,8 @@ GOTCHA_MACRO_TYPEDEF(utime, int, (const char *filename, const utimbuf *buf),
 GOTCHA_MACRO_TYPEDEF(opendir, DIR *, (const char *name), (name), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(readdir, struct dirent *, (DIR * dir), (dir),
                      brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(readdir64, struct dirent64 *, (DIR * dir), (dir),
+                     brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(closedir, int, (DIR * dir), (dir), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(rewinddir, void, (DIR * dir), (dir), brahma::POSIX)
 typedef int (*fcntl_fptr)(int fd, int cmd, ...);
@@ -382,6 +402,33 @@ inline int fcntl_wrapper(int fd, int cmd, ...) {
   }
 }
 gotcha_wrappee_handle_t get_fcntl_handle();
+typedef int (*fcntl64_fptr)(int fd, int cmd, ...);
+inline int fcntl64_wrapper(int fd, int cmd, ...) {
+  if (cmd == F_DUPFD || cmd == F_DUPFD_CLOEXEC || cmd == F_SETFD ||
+      cmd == F_SETFL || cmd == F_SETOWN) {  // arg: int
+    va_list arg;
+    va_start(arg, cmd);
+    int val = va_arg(arg, int);
+    va_end(arg);
+    int v = brahma::POSIX::get_instance()->fcntl64(fd, cmd, val);
+    return v;
+  } else if (cmd == F_GETFD || cmd == F_GETFL || cmd == F_GETOWN) {
+    int v = brahma::POSIX::get_instance()->fcntl64(fd, cmd);
+    return v;
+  } else if (cmd == F_SETLK || cmd == F_SETLKW || cmd == F_GETLK) {
+    va_list arg;
+    va_start(arg, cmd);
+    struct flock *lk = va_arg(arg, struct flock *);
+    va_end(arg);
+    int v = brahma::POSIX::get_instance()->fcntl64(fd, cmd, lk);
+    return v;
+  } else {  // assume arg: void, cmd==F_GETOWN_EX || cmd==F_SETOWN_EX
+            // ||cmd==F_GETSIG || cmd==F_SETSIG)
+    int v = brahma::POSIX::get_instance()->fcntl64(fd, cmd);
+    return v;
+  }
+}
+gotcha_wrappee_handle_t get_fcntl64_handle();
 GOTCHA_MACRO_TYPEDEF(dup, int, (int oldfd), (oldfd), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(dup2, int, (int oldfd, int newfd), (oldfd, newfd),
                      brahma::POSIX)
@@ -398,7 +445,11 @@ GOTCHA_MACRO_TYPEDEF(remove, int, (const char *pathname), (pathname),
                      brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(truncate, int, (const char *pathname, off_t length),
                      (pathname, length), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(truncate64, int, (const char *pathname, off64_t length),
+                     (pathname, length), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(ftruncate, int, (int fd, off_t length), (fd, length),
+                     brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(ftruncate64, int, (int fd, off64_t length), (fd, length),
                      brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF_EXECL(execl, int,
                            (const char *pathname, const char *arg, ...),
@@ -473,6 +524,7 @@ size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(fsync, POSIX);
   GOTCHA_BINDING_MACRO(fdatasync, POSIX);
   GOTCHA_BINDING_MACRO(openat, POSIX);
+  GOTCHA_BINDING_MACRO(openat64, POSIX);
   GOTCHA_BINDING_MACRO(__xstat, POSIX);
   GOTCHA_BINDING_MACRO(__xstat64, POSIX);
   GOTCHA_BINDING_MACRO(__lxstat, POSIX);
@@ -497,9 +549,11 @@ size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(utime, POSIX);
   GOTCHA_BINDING_MACRO(opendir, POSIX);
   GOTCHA_BINDING_MACRO(readdir, POSIX);
+  GOTCHA_BINDING_MACRO(readdir64, POSIX);
   GOTCHA_BINDING_MACRO(closedir, POSIX);
   GOTCHA_BINDING_MACRO(rewinddir, POSIX);
   GOTCHA_BINDING_MACRO(fcntl, POSIX);
+  GOTCHA_BINDING_MACRO(fcntl64, POSIX);
   GOTCHA_BINDING_MACRO(dup, POSIX);
   GOTCHA_BINDING_MACRO(dup2, POSIX);
   GOTCHA_BINDING_MACRO(pipe, POSIX);
@@ -509,7 +563,9 @@ size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(faccessat, POSIX);
   GOTCHA_BINDING_MACRO(remove, POSIX);
   GOTCHA_BINDING_MACRO(truncate, POSIX);
+  GOTCHA_BINDING_MACRO(truncate64, POSIX);
   GOTCHA_BINDING_MACRO(ftruncate, POSIX);
+  GOTCHA_BINDING_MACRO(ftruncate64, POSIX);
   GOTCHA_BINDING_MACRO(execl, POSIX);
   GOTCHA_BINDING_MACRO(execlp, POSIX);
   GOTCHA_BINDING_MACRO(execv, POSIX);

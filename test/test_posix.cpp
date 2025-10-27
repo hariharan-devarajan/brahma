@@ -1,9 +1,6 @@
 //
 // Created by hariharan on 8/8/22.
 //
-/* Brahma Header */
-#include <brahma/brahma.h>
-/* External Headers*/
 #include <assert.h>
 #include <brahma/brahma.h>
 #include <fcntl.h>
@@ -13,27 +10,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <utime.h>
+#include <signal.h>
+#include <execinfo.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-#ifdef NDEBUG
-    #error "Assertions are disabled! Remove NDEBUG to enable them."
-#endif
+#include <iostream>
 
-#ifdef BRAHMA_ENABLE_MPI
-#include <mpi.h>
-
-#define LEN 10
-
-#define CHECK_ERR(func)                                              \
-  {                                                                  \
-    if (err != MPI_SUCCESS) {                                        \
-      int errorStringLen;                                            \
-      char errorString[MPI_MAX_ERROR_STRING];                        \
-      MPI_Error_string(err, errorString, &errorStringLen);           \
-      printf("Error at line %d: calling %s (%s)\n", __LINE__, #func, \
-             errorString);                                           \
-    }                                                                \
-  }
-#endif
 namespace brahma {
 class POSIXTest : public POSIX {
  private:
@@ -50,7 +33,7 @@ class POSIXTest : public POSIX {
     return instance;
   }
   size_t api_count;
-
+  
   int open(const char *pathname, int flags, ...) override {
     printf("1 Captured open call\n");
     api_count++;
@@ -139,6 +122,13 @@ class POSIXTest : public POSIX {
 
   int openat(int dirfd, const char *pathname, int flags, ...) override {
     printf("15 Captured openat call\n");
+    api_count++;
+    return 0;
+  }
+
+
+  int openat64(int dirfd, const char *pathname, int flags, ...) override {
+    printf("15 Captured openat64 call\n");
     api_count++;
     return 0;
   }
@@ -251,6 +241,11 @@ class POSIXTest : public POSIX {
     api_count++;
     return 0;
   }
+  dirent64 *readdir64(DIR *dir) override {
+    printf("33 Captured readdir64 call\n");
+    api_count++;
+    return 0;
+  }
   int closedir(DIR *dir) override {
     printf("34 Captured closedir call\n");
     api_count++;
@@ -264,6 +259,12 @@ class POSIXTest : public POSIX {
 
   int fcntl(int fd, int cmd, ...) override {
     printf("36 Captured fcntl call\n");
+    api_count++;
+    return 0;
+  }
+
+  int fcntl64(int fd, int cmd, ...) override {
+    printf("36 Captured fcntl64 call\n");
     api_count++;
     return 0;
   }
@@ -320,9 +321,19 @@ class POSIXTest : public POSIX {
     api_count++;
     return 0;
   }
+  int truncate64(const char *pathname, off64_t length) override {
+    printf("45 Captured truncate64 call\n");
+    api_count++;
+    return 0;
+  }
 
   int ftruncate(int fd, off_t length) override {
     printf("46 Captured ftruncate call\n");
+    api_count++;
+    return 0;
+  }
+  int ftruncate64(int fd, off64_t length) override {
+    printf("46 Captured ftruncate64 call\n");
     api_count++;
     return 0;
   }
@@ -364,14 +375,9 @@ class POSIXTest : public POSIX {
     return 0;
   }
 
-  void _fini() override {
-    printf("53 Captured _fini call\n");
-    api_count++;
-  }
-
   void exit(int status) override {
     BRAHMA_MAP_OR_FAIL(exit);
-    printf("54 Captured exit with code %d\n", status);
+    printf("53 Captured exit with code %d\n", status);
     api_count++;
     __real_exit(0);
   }
@@ -512,13 +518,29 @@ class STDIOTest : public STDIO {
     api_count++;
     return 0;
   }
+  FILE *tmpfile64(void) override {
+    printf("10 Captured tmpfile call\n");
+    api_count++;
+    return 0;
+  }
   int fseeko(FILE *stream, off_t offset, int whence) override {
     printf("11 Captured fseeko call\n");
     api_count++;
     return 0;
   }
+
+  int fseeko64(FILE *stream, off64_t offset, int whence) override {
+    printf("11 Captured fseeko64 call\n");
+    api_count++;
+    return 0;
+  }
   off_t ftello(FILE *stream) override {
     printf("12 Captured ftello call\n");
+    api_count++;
+    return 0;
+  }
+  off64_t ftello64(FILE *stream) override {
+    printf("12 Captured ftello64 call\n");
     api_count++;
     return 0;
   }
@@ -557,6 +579,11 @@ class STDIOTest : public STDIO {
     api_count++;
     return 0;
   }
+  int fgetpos64(FILE *, fpos64_t *) override {
+    printf("18 Captured fgetpos64 call\n");
+    api_count++;
+    return 0;
+  }
   
   char* fgets(char *, int, FILE *) override {
     printf("19 Captured fgets call\n");
@@ -580,15 +607,13 @@ class STDIOTest : public STDIO {
     api_count++;
     return 0;
   }
-  
-  FILE* freopen(const char *, const char *, FILE *) override {
-    printf("23 Captured freopen call\n");
-    api_count++;
-    return nullptr;
-  }
-    
   int fsetpos(FILE *, const fpos_t *) override {
     printf("24 Captured fsetpos call\n");
+    api_count++;
+    return 0;
+  }
+  int fsetpos64(FILE *, const fpos64_t *) override {
+    printf("24 Captured fsetpos64 call\n");
     api_count++;
     return 0;
   }
@@ -651,209 +676,10 @@ class STDIOTest : public STDIO {
     return 0;
   }
 };
-#ifdef BRAHMA_ENABLE_MPI
-class MPIIOTest : public MPIIO {
- private:
-  static std::shared_ptr<MPIIOTest> instance;
-
- public:
-  MPIIOTest() : api_count(0) {}
-
-  ~MPIIOTest() {}
-  static std::shared_ptr<MPIIOTest> get_instance() {
-    if (instance == nullptr) {
-      instance = std::make_shared<MPIIOTest>();
-      MPIIOTest::set_instance(instance);
-    }
-    return instance;
-  }
-  size_t api_count;
-
-  int MPI_File_close(MPI_File *fh) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_set_size(MPI_File fh, MPI_Offset size) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf, int count,
-                        MPI_Datatype datatype, MPI_Request *request) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-                     MPI_Request *request) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_iread_shared(MPI_File fh, void *buf, int count,
-                            MPI_Datatype datatype,
-                            MPI_Request *request) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, const void *buf,
-                         int count, MPI_Datatype datatype,
-                         MPI_Request *request) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_iwrite(MPI_File fh, const void *buf, int count,
-                      MPI_Datatype datatype, MPI_Request *request) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_iwrite_shared(MPI_File fh, const void *buf, int count,
-                             MPI_Datatype datatype,
-                             MPI_Request *request) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_open(MPI_Comm comm, const char *filename, int amode,
-                    MPI_Info info, MPI_File *fh) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_read_all_begin(MPI_File fh, void *buf, int count,
-                              MPI_Datatype datatype) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_read_all(MPI_File fh, void *buf, int count,
-                        MPI_Datatype datatype, MPI_Status *status) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_read_at_all(MPI_File fh, MPI_Offset offset, void *buf, int count,
-                           MPI_Datatype datatype, MPI_Status *status) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_read_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf,
-                                 int count, MPI_Datatype datatype) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_read_at(MPI_File fh, MPI_Offset offset, void *buf, int count,
-                       MPI_Datatype datatype, MPI_Status *status) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-                    MPI_Status *status) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_read_ordered_begin(MPI_File fh, void *buf, int count,
-                                  MPI_Datatype datatype) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_read_ordered(MPI_File fh, void *buf, int count,
-                            MPI_Datatype datatype,
-                            MPI_Status *status) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_read_shared(MPI_File fh, void *buf, int count,
-                           MPI_Datatype datatype, MPI_Status *status) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_sync(MPI_File fh) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_write_all_begin(MPI_File fh, const void *buf, int count,
-                               MPI_Datatype datatype) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_write_all(MPI_File fh, const void *buf, int count,
-                         MPI_Datatype datatype, MPI_Status *status) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset,
-                                  const void *buf, int count,
-                                  MPI_Datatype datatype) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_write_at_all(MPI_File fh, MPI_Offset offset, const void *buf,
-                            int count, MPI_Datatype datatype,
-                            MPI_Status *status) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_write_at(MPI_File fh, MPI_Offset offset, const void *buf,
-                        int count, MPI_Datatype datatype,
-                        MPI_Status *status) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_write(MPI_File fh, const void *buf, int count,
-                     MPI_Datatype datatype, MPI_Status *status) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_write_ordered_begin(MPI_File fh, const void *buf, int count,
-                                   MPI_Datatype datatype) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_write_ordered(MPI_File fh, const void *buf, int count,
-                             MPI_Datatype datatype,
-                             MPI_Status *status) override {
-    api_count++;
-    return 0;
-  }
-
-  int MPI_File_write_shared(MPI_File fh, const void *buf, int count,
-                            MPI_Datatype datatype,
-                            MPI_Status *status) override {
-    api_count++;
-    return 0;
-  }
-  int MPI_File_delete(const char *filename, MPI_Info info) override {
-    api_count++;
-    return 0;
-  }
-};
-#endif
 
 std::shared_ptr<POSIXTest> POSIXTest::instance = nullptr;
 std::shared_ptr<STDIOTest> STDIOTest::instance = nullptr;
-#ifdef BRAHMA_ENABLE_MPI
-std::shared_ptr<MPIIOTest> MPIIOTest::instance = nullptr;
-#endif
+
 }  // namespace brahma
 
 void __attribute__((constructor)) test_init() {
@@ -861,21 +687,18 @@ void __attribute__((constructor)) test_init() {
   posix->bind<brahma::POSIXTest>("tool", 1);
   auto stdio = brahma::STDIOTest::get_instance();
   stdio->bind<brahma::STDIOTest>("tool", 1);
-#ifdef BRAHMA_ENABLE_MPI
-  auto mpiio = brahma::MPIIOTest::get_instance();
-  mpiio->bind<brahma::MPIIOTest>("tool", 1);
-#endif
 }
 void __attribute__((destructor)) test_finalize() {
   printf("finalizing test\n");
   auto posix = brahma::POSIXTest::get_instance();
   size_t unbindings = posix->unbind();
-  printf("POSIX num_bindings: %zu, api_count: %zu\n", posix->num_bindings, posix->api_count);
-  printf("POSIX unbindings: %zu\n", unbindings);
-  assert(posix->num_bindings == posix->api_count);
   auto stdio = brahma::STDIOTest::get_instance();
   printf("STDIO num_bindings: %zu, api_count: %zu\n", stdio->num_bindings, stdio->api_count);
   size_t stdio_unbindings = stdio->unbind();
+  printf("POSIX num_bindings: %zu, api_count: %zu\n", posix->num_bindings, posix->api_count);
+  printf("POSIX unbindings: %zu\n", unbindings);
+  fflush(stdout);
+  assert(posix->num_bindings == posix->api_count);
   printf("STDIO unbindings: %zu\n", stdio_unbindings);
   assert(stdio->num_bindings == stdio->api_count);
   // Make more calls after unbind to ensure that api count isn't getting updated
@@ -890,16 +713,7 @@ void __attribute__((destructor)) test_finalize() {
   printf("buf: %s\n", buf2);
   fclose(fi);
   assert(stdio->num_bindings == stdio->api_count);
-#ifdef BRAHMA_ENABLE_MPI
-  auto mpiio = brahma::MPIIOTest::get_instance();
-  mpiio->unbind();
-  assert(mpiio->num_bindings == mpiio->api_count);
-#endif
 }
-#include <signal.h>
-#include <execinfo.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 void print_stacktrace(int sig) {
   void *array[32];
@@ -909,10 +723,10 @@ void print_stacktrace(int sig) {
   exit(sig);
 }
 
-
 int main(int argc, char *argv[]) {
   signal(SIGSEGV, print_stacktrace);
   signal(SIGABRT, print_stacktrace);
+  
   open("", 0);
 
   creat64("", 0);
@@ -942,6 +756,7 @@ int main(int argc, char *argv[]) {
   fdatasync(0);
 
   openat(0, "", 0);
+  openat64(0, "", 0);
 
   stat("", NULL);
 
@@ -981,11 +796,14 @@ int main(int argc, char *argv[]) {
 
   readdir(NULL);
 
-  closedir(NULL);
+  readdir64(NULL);
 
+  closedir(NULL);
   rewinddir(NULL);
 
   fcntl(0, 0);
+
+  fcntl64(0, 0);
 
   dup(0);
 
@@ -1005,7 +823,11 @@ int main(int argc, char *argv[]) {
 
   truncate("", 0);
 
+  truncate64("", 0);
+
   ftruncate(0, 0);
+
+  ftruncate64(0, 0);
 
   execl("", "");
 
@@ -1019,6 +841,28 @@ int main(int argc, char *argv[]) {
 
   fork();
 
+  mmap(NULL, 0, 0, 0, 0, 0);
+  
+  mmap64(NULL, 0, 0, 0, 0, 0);
+  
+  munmap(NULL, 0);
+
+  msync(NULL, 0, 0);
+
+  sysconf(0);
+
+  madvise(NULL, 0, 0);
+
+  mprotect(NULL, 0, 0);
+
+  mlock(NULL, 0);
+
+  munlock(NULL, 0);
+
+  mlockall(0);
+
+  munlockall();
+
   fopen("", "");
   fopen64("", "");
   fclose(NULL);
@@ -1029,8 +873,11 @@ int main(int argc, char *argv[]) {
   fdopen(0, "");
   fileno(NULL);
   tmpfile();
+  tmpfile64();
   fseeko(NULL, 0, 0);
+  fseeko64(NULL, 0, 0);
   ftello(NULL);
+  ftello64(NULL);
 
   clearerr(NULL);  
   feof(NULL);  
@@ -1038,11 +885,12 @@ int main(int argc, char *argv[]) {
   fflush(NULL);
   fgetc(NULL);
   fgetpos(NULL, 0);
-  fgets(NULL, 0, NULL);
+  fgetpos64(NULL, 0);
+  fgets(NULL, 1024, NULL);
   fputc(0, NULL);
   fputs(NULL, NULL);
-  freopen(NULL, NULL, NULL);
   fsetpos(NULL, NULL);
+  fsetpos64(NULL, NULL);
   flockfile(NULL);
   ftrylockfile(NULL);
   funlockfile(NULL);
@@ -1054,66 +902,6 @@ int main(int argc, char *argv[]) {
   rewind(NULL);
   setvbuf(NULL, NULL, 0, 0);
   ungetc(0, NULL);
-
-#ifdef BRAHMA_ENABLE_MPI
-
-  MPI_File_close(NULL);
-
-  MPI_File_set_size(NULL, 0);
-
-  MPI_File_iread_at(NULL, 0, NULL, 0, 0, NULL);
-
-  MPI_File_iread(NULL, NULL, 0, 0, NULL);
-
-  MPI_File_iread_shared(NULL, NULL, 0, 0, NULL);
-
-  MPI_File_iwrite_at(NULL, 0, NULL, 0, 0, NULL);
-
-  MPI_File_iwrite(NULL, NULL, 0, 0, NULL);
-
-  MPI_File_iwrite_shared(NULL, NULL, 0, 0, NULL);
-
-  MPI_File_open(NULL, NULL, 0, 0, NULL);
-
-  MPI_File_read_all_begin(NULL, NULL, 0, 0);
-
-  MPI_File_read_all(NULL, NULL, 0, 0, NULL);
-
-  MPI_File_read_at_all(NULL, 0, NULL, 0, 0, NULL);
-
-  MPI_File_read_at_all_begin(NULL, 0, NULL, 0, 0);
-
-  MPI_File_read_at(NULL, 0, NULL, 0, 0, NULL);
-
-  MPI_File_read(NULL, NULL, 0, 0, NULL);
-
-  MPI_File_read_ordered_begin(NULL, NULL, 0, 0);
-
-  MPI_File_read_ordered(NULL, NULL, 0, 0, NULL);
-
-  MPI_File_read_shared(NULL, NULL, 0, 0, NULL);
-
-  MPI_File_sync(NULL);
-
-  MPI_File_write_all_begin(NULL, NULL, 0, 0);
-
-  MPI_File_write_all(NULL, NULL, 0, 0, NULL);
-
-  MPI_File_write_at_all_begin(NULL, 0, NULL, 0, 0);
-
-  MPI_File_write_at_all(NULL, 0, NULL, 0, 0, NULL);
-
-  MPI_File_write_at(NULL, 0, NULL, 0, 0, NULL);
-
-  MPI_File_write(NULL, NULL, 0, 0, NULL);
-
-  MPI_File_write_ordered_begin(NULL, NULL, 0, 0);
-
-  MPI_File_write_ordered(NULL, NULL, 0, 0, NULL);
-
-  MPI_File_write_shared(NULL, NULL, 0, 0, NULL);
-  MPI_File_delete(NULL, 0);
-#endif
   exit(100);
   return 0;
 }

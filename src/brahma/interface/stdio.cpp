@@ -52,12 +52,24 @@ FILE *STDIO::tmpfile(void) {
   BRAHMA_UNWRAPPED_FUNC(tmpfile, FILE *, ());
   return result;
 }
+FILE *STDIO::tmpfile64(void) {
+  BRAHMA_UNWRAPPED_FUNC(tmpfile64, FILE *, ());
+  return result;
+}
 int STDIO::fseeko(FILE *stream, off_t offset, int whence) {
   BRAHMA_UNWRAPPED_FUNC(fseeko, int, (stream, offset, whence));
   return result;
 }
+int STDIO::fseeko64(FILE *stream, off64_t offset, int whence) {
+  BRAHMA_UNWRAPPED_FUNC(fseeko64, int, (stream, offset, whence));
+  return result;
+}
 off_t STDIO::ftello(FILE *stream) {
   BRAHMA_UNWRAPPED_FUNC(ftello, off_t, (stream));
+  return result;
+}
+off64_t STDIO::ftello64(FILE *stream) {
+  BRAHMA_UNWRAPPED_FUNC(ftello64, off64_t, (stream));
   return result;
 }
 
@@ -85,6 +97,10 @@ int STDIO::fgetpos(FILE *stream, fpos_t *pos) {
   BRAHMA_UNWRAPPED_FUNC(fgetpos, int, (stream, pos));
   return result;
 }
+int STDIO::fgetpos64(FILE *stream, fpos64_t *pos) {
+  BRAHMA_UNWRAPPED_FUNC(fgetpos64, int, (stream, pos));
+  return result;
+}
 char* STDIO::fgets(char *s, int size, FILE *stream) {
   BRAHMA_UNWRAPPED_FUNC(fgets, char*, (s, size, stream));
   return result;
@@ -106,6 +122,10 @@ int STDIO::fputs(const char *s, FILE *stream) {
 }
 int STDIO::fsetpos(FILE *stream, const fpos_t *pos) {
   BRAHMA_UNWRAPPED_FUNC(fsetpos, int, (stream, pos));
+  return result;
+}
+int STDIO::fsetpos64(FILE *stream, const fpos64_t *pos) {
+  BRAHMA_UNWRAPPED_FUNC(fsetpos64, int, (stream, pos));
   return result;
 }
 int STDIO::ftrylockfile(FILE *stream) {

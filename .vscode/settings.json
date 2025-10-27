@@ -4,8 +4,12 @@
         "-DBRAHMA_ENABLE_TESTING=ON",
         "-DBRAHMA_BUILD_DEPENDENCIES=OFF",
         "-DBRAHMA_LOGGER=NONE",
-        "-DCMAKE_INSTALL_PREFIX=/workspace/venv/lib/python3.12/site-packages/dftracer",
-        "-DBRAHMA_INSTALL_DEPENDENCIES=ON"
+        "-DCMAKE_INSTALL_PREFIX=/usr/WS2/haridev/brahma/venv",
+        "-DBRAHMA_INSTALL_DEPENDENCIES=ON",
+        "-DBRAHMA_GENERATE_INTERFACES=OFF",
+        "-DPython_EXECUTABLE=/usr/WS2/haridev/brahma/venv/bin/python",
+        "-DBRAHMA_BUILD_WITH_HDF5=ON",
+        "-DHDF5_ROOT=/usr/tce/packages/hdf5/hdf5-1.14.0-mvapich2-2.3.7-gcc-11.2.1"
     ],
     "files.associations": {
         "string_view": "cpp",

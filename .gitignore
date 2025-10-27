@@ -40,3 +40,6 @@
 *.core
 install
 .vscode
+
+# VENV
+venv*
