@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.10.2)
 #------------------------------------------------------------------------------
 
 
-set(BRAHMA_VERSION_MAJOR "2")
-set(BRAHMA_VERSION_MINOR "3")
+set(BRAHMA_VERSION_MAJOR "3")
+set(BRAHMA_VERSION_MINOR "0")
 set(BRAHMA_VERSION_PATCH "0")
 set(BRAHMA_PACKAGE ${PROJECT_NAME})
 set(BRAHMA_PACKAGE_NAME ${PROJECT_NAME})
@@ -273,11 +273,10 @@ set(BRAHMA_HDF5_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/hdf5.cpp)
 set(BRAHMA_HDF5_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/hdf5.h)
 
 set(BRAHMA_MPI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/mpiio.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/mpi.cpp)
+                    ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/mpi.cpp)
 set(BRAHMA_MPI_INCLUDE
         ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/mpiio.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/mpi.h)
-
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/mpi.h)   
 set(BRAHMA_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/brahma.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/posix.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/stdio.cpp
@@ -335,11 +334,13 @@ if(BRAHMA_BUILD_WITH_HDF5)
     # find HDF5
     find_package(HDF5 REQUIRED)
     if (HDF5_FOUND)
+        add_definitions(-DH5_DOXYGEN=1 -DH5O_MODULE=1 -DH5A_MODULE=1 -DH5T_MODULE=1 -DH5D_MODULE=1 -DH5F_MODULE=1)
+        add_definitions(-DH5L_MODULE=1 -DH5G_MODULE=1  -DH5R_MODULE=1 -DH5VL_MODULE=1 -DH5P_MODULE=1)
         convert_version_to_number("${HDF5_VERSION}" BRAHMA_HDF5_VERSION)
         message(STATUS "[${PROJECT_NAME}] found hdf5.h at ${HDF5_INCLUDE_DIRS}")
         message(STATUS "[${PROJECT_NAME}] HDF5 version: ${HDF5_VERSION} (${BRAHMA_HDF5_VERSION})")
-        include_directories(${HDF5_INCLUDE_DIRS})
-        set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${HDF5_LIBRARIES})
+        # include_directories(${HDF5_INCLUDE_DIRS})
+        set(DEPENDENCY_LIB ${DEPENDENCY_LIB} HDF5::HDF5)
     else ()
         message(FATAL_ERROR "-- [${PROJECT_NAME}] HDF5 is needed for ${PROJECT_NAME} build")
     endif ()
@@ -349,7 +350,9 @@ if(BRAHMA_BUILD_WITH_MPI)
     # find MPI
     find_package(MPI COMPONENTS C REQUIRED)
     if (MPI_FOUND)
-      message(STATUS "[${PROJECT_NAME}] found mpi.h at ${MPI_C_INCLUDE_DIRS}")
+      convert_version_to_number("${MPI_C_VERSION}" BRAHMA_MPI_VERSION)
+      message(STATUS "[${PROJECT_NAME}] MPI version: ${MPI_C_VERSION} (${BRAHMA_MPI_VERSION})")
+      message(STATUS "[${PROJECT_NAME}] found mpi.h at ${MPI_C_INCLUDE_DIRS} ${MPI_C_LIBRARIES}")
       include_directories(${MPI_C_INCLUDE_DIRS})
       target_link_libraries(${PROJECT_NAME} ${MPI_C_LIBRARIES})
     else ()
@@ -539,6 +542,8 @@ string(APPEND _str
 if(BRAHMA_BUILD_WITH_MPI)
   string(APPEND _str
   "  MPIEXEC_EXECUTABLE:                ${MPIEXEC_EXECUTABLE}\n")
+  string(APPEND _str
+    "  BRAHMA_MPI_VERSION:         ${BRAHMA_MPI_VERSION}\n")
 endif()
 string(APPEND _str
   "  BRAHMA_PROFILER:               ${BRAHMA_PROFILER}\n")

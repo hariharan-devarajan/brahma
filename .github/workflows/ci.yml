@@ -2,7 +2,7 @@ name: Build and Test
 
 on:
   pull_request:
-    branches: [main, dev]
+    branches: [develop, main, dev]
   push:
 
 env:
@@ -12,366 +12,78 @@ env:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    steps:
-      - name: Push checkout
-        if: github.event_name == 'push'
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
-      - name: PR checkout
-        if: github.event_name == 'pull_request'
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 2
-      - name: Cache APT packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            /var/cache/apt/archives
-            /var/lib/apt/lists
-          key: apt-cache-${{ runner.os }}-${{ hashFiles('.github/workflows/scripts/os.sh') }}
-          restore-keys: |
-            apt-cache-${{ runner.os }}-
-            apt-cache-
-      - name: Install Dependencies
-        run: |
-          . .github/workflows/scripts/os.sh
-      - name: Set up Spack
-        uses: spack/setup-spack@v2
-      - name: Install Spack Packages
-        shell: spack-bash {0}
-        run: |
-          GCC_VERSION="12.4.0"
-          cat > /home/runner/work/brahma/brahma/spack/etc/spack/packages.yaml <<EOF
-          packages:
-            all:
-              target: [x86_64]
-              providers:
-                mpi: [openmpi]
-            python:
-              buildable: False
-              externals:
-              - spec: "python@3.12.3"
-                prefix: /usr
-            czmq:
-              buildable: False
-              externals:
-              - spec: "czmq@4.2.1"
-                prefix: /usr
-            sqlite:
-              buildable: False
-              externals:
-              - spec: "sqlite@3.45.1"
-                prefix: /usr
-            libzmq:
-              buildable: False
-              externals:
-              - spec: "libzmq@4.3.5"
-                prefix: /usr
-            lua:
-              buildable: False
-              externals:
-              - spec: "lua@5.3.6"
-                prefix: /usr
-            lua-luaposix:
-              buildable: False
-              externals:
-              - spec: "lua-luaposix@36.2.1"
-                prefix: /usr
-            lz4:
-              buildable: False
-              externals:
-              - spec: "lz4@1.9.4"
-                prefix: /usr
-            ncurses:
-              buildable: False
-              externals:
-              - spec: "ncurses@6.4"
-                prefix: /usr
-            pkgconf:
-              buildable: False
-              externals:
-              - spec: "pkgconf@1.8.1"
-                prefix: /usr
-            hwloc:
-              buildable: False
-              externals:
-              - spec: "hwloc@2.10.0"
-                prefix: /usr
-            libarchive:
-              buildable: False
-              externals:
-              - spec: "libarchive@3.7.2"
-                prefix: /usr
-            autoconf:
-              buildable: False
-              externals:
-              - spec: "autoconf@2.71"
-                prefix: /usr
-            automake:
-              buildable: False
-              externals:
-              - spec: "automake@1.16.5"
-                prefix: /usr
-            libtool:
-              buildable: False
-              externals:
-              - spec: "libtool@2.4.7"
-                prefix: /usr
-            m4:
-              buildable: False
-              externals:
-              - spec: "m4@1.4.19"
-                prefix: /usr
-            openmpi:
-              buildable: False
-              externals:
-              - spec: "openmpi@4.1.6"
-                prefix: /usr
-            openssl:
-              buildable: False
-              externals:
-              - spec: "openssl@2.1.7"
-                prefix: /usr
-            cmake:
-              buildable: False
-              externals:
-              - spec: "cmake@3.28.3"
-                prefix: /usr
-            libfabric:
-              buildable: False
-              externals:
-              - spec: "libfabric@1.17.0"
-                prefix: /usr
-            libpciaccess:
-              buildable: False
-              externals:
-              - spec: "libpciaccess@0.17"
-                prefix: /usr
-            libxml2:
-              buildable: False
-              externals:
-              - spec: "libxml2@2.9.14"
-                prefix: /usr
-            findutils:
-              buildable: False
-              externals:
-              - spec: "findutils@4.9.0"
-                prefix: /usr
-            make:
-              buildable: False
-              externals:
-              - spec: "make@4.3"
-                prefix: /usr         
-          EOF
-          echo "-------------------------------"
-          cat /home/runner/work/brahma/brahma/spack/etc/spack/packages.yaml
-          echo "-------------------------------"
-          spack compiler find
-          for compiler in llvm@18.1.3 llvm@17.0.6 llvm@16.0.6 gcc@14.2.0 gcc@13.3.0; do
-            spack compiler remove $compiler
-          done
-          spack compiler list
-          spack external find
-          spack install -j4 gcc@12.4.0 gcc-runtime@12.4.0 zlib-ng@2.2.4
-          if [[ "${{ matrix.hdf5 }}" == "ON" ]]; then 
-            spack install -j4 openmpi@4.1.6 
-          fi
-          spack find
-      - name: Cache Spack Environment
-        uses: actions/cache@v3
-        with:
-          path: |
-            /home/runner/work/brahma/brahma/spack
-          key: spack-env-${{ runner.os }}-${{ hashFiles('.github/workflows/ci.yml') }}-build
-          restore-keys: |
-            spack-env-${{ runner.os }}-
-  
-  test:
-    needs: build
-    runs-on: ubuntu-24.04
+    # Only run on PR events, or on push events that are not from a PR
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && !contains(github.event.head_commit.message, 'Merge pull request'))
+    container:
+      image: hdevarajan92/brahma-ci:latest
     strategy:
       fail-fast: false
+      
       matrix:
         include:
-          # Case 1: Both MPI and HDF5 OFF
-          - hdf5: "OFF"
-            mpi: "OFF"
-            hdf5_version: ""
-            mpi_version: ""
-          # Case 2: Only MPI ON with different versions
-          - hdf5: "OFF"
-            mpi: "ON"
-            hdf5_version: ""
-            mpi_version: "3"
-          - hdf5: "OFF"
-            mpi: "ON"
-            hdf5_version: ""
-            mpi_version: "4"
-          # Case 3: Only HDF5 ON with different versions
-          - hdf5: "ON"
-            mpi: "OFF"
-            hdf5_version: "1.8"
-            mpi_version: ""
-          - hdf5: "ON"
-            mpi: "OFF"
-            hdf5_version: "1.12"
-            mpi_version: ""
-          - hdf5: "ON"
-            mpi: "OFF"
-            hdf5_version: "1.14"
-            mpi_version: ""
+          - hdf5: "hdf5@1.8.23"
+            mpi: "mpich@3.4.3"
+          - hdf5: "hdf5@1.10.11"
+            mpi: "openmpi@4.1.6"
+          - hdf5: "hdf5@1.12.3"
+            mpi: "mpich@4.2.3"
+          - hdf5: "hdf5@1.14.5"
+            mpi: "openmpi@5.0.6"
     steps:
-      - name: Push checkout
-        if: github.event_name == 'push'
+      - name: Checkout code
         uses: actions/checkout@v3
         with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
-      - name: PR checkout
-        if: github.event_name == 'pull_request'
-        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 2
-      - name: Cache APT packages
-        uses: actions/cache@v3
-        with:
-          path: |
-           x /var/cache/apt/archives
-            /var/lib/apt/lists
-          key: apt-cache-${{ runner.os }}-${{ hashFiles('.github/workflows/scripts/os.sh') }}
-          restore-keys: |
-            apt-cache-${{ runner.os }}-
-            apt-cache-
-      - name: Install Dependencies
-        run: |
-          . .github/workflows/scripts/os.sh
-      - name: Set up Spack
-        uses: spack/setup-spack@v2
-      - name: Restore Spack Environment
-        uses: actions/cache/restore@v3
-        with:
-          path: |
-            /home/runner/work/brahma/brahma/spack
-          key: spack-env-${{ runner.os }}-${{ hashFiles('.github/workflows/ci.yml') }}-build
-          restore-keys: |
-            spack-env-${{ runner.os }}-
-      - name: Install Matrix-specific Packages
-        shell: spack-bash {0}
-        run: |
-          if [[ "${{ matrix.hdf5 }}" == "ON" ]]; then 
-            echo "Installing HDF5 ${{ matrix.hdf5_version }}..."
-            spack spec hdf5@${{ matrix.hdf5_version }} ^openmpi@4.1.6;
-            spack install -j4 hdf5@${{ matrix.hdf5_version }} ^openmpi@4.1.6; 
-            spack load hdf5@${{ matrix.hdf5_version }} ^openmpi@4.1.6;
-
-            export CC=$(which mpicc)
-            export CXX=$(which mpic++)
-            export HDF5_DIR=$(spack location -i hdf5)
-            echo "HDF5_DIR: $HDF5_DIR"
-            echo "CC: $CC"
-            echo "CXX: $CXX"
-            echo "CC=$CC" >> $GITHUB_ENV
-            echo "CXX=$CXX" >> $GITHUB_ENV
-            echo "HDF5_DIR=$HDF5_DIR" >> $GITHUB_ENV
-
-          fi
-          if [[ "${{ matrix.mpi }}" == "ON" ]]; then 
-            echo "Installing MPI ${{ matrix.mpi_version }}..."
-            spack spec mpich@${{ matrix.mpi_version }} ^libfabric@1.17.0 ^libpciaccess@0.17 ^findutils@4.9.0 ^hwloc@2.10.0;
-            spack install -j4 mpich@${{ matrix.mpi_version }} ^libfabric@1.17.0 ^libpciaccess@0.17 ^findutils@4.9.0 ^hwloc@2.10.0;
-            spack load mpich@${{ matrix.mpi_version }};
-            export CC=$(which mpicc)
-            export CXX=$(which mpic++)
-            export MPI_DIR=$(dirname $(dirname $CC))
-            echo "MPI_DIR: $MPI_DIR"
-            echo "CC=$CC" >> $GITHUB_ENV
-            echo "CXX=$CXX" >> $GITHUB_ENV
-            echo "MPI_DIR=$MPI_DIR" >> $GITHUB_ENV
-          fi
-      - name: Create Build Directory
-        run: mkdir build
+          python-version: "3.11"
       - name: Generate Interfaces
-        shell: spack-bash {0}
-        if: matrix.hdf5 == 'ON' || matrix.mpi == 'ON'
+        shell: bash
         run: |
-          python -m pip install -r tools/requirements.txt
-          CMAKE_ARGS=(
-            -DBRAHMA_BUILD_DEPENDENCIES=OFF
-            -DBRAHMA_ENABLE_TESTING=ON
-            -DBRAHMA_GENERATE_INTERFACES=ON
-          )
-
-          if [[ "${{ matrix.mpi }}" == "ON" ]]; then
-            CMAKE_ARGS+=(
-              -DMPI_ROOT=$MPI_DIR
-              -DBRAHMA_BUILD_WITH_MPI=ON
-            )
-          fi
-
-          if [[ "${{ matrix.hdf5 }}" == "ON" ]]; then
-            CMAKE_ARGS+=(
-              -DBRAHMA_BUILD_WITH_HDF5=ON
-              -DHDF5_ROOT=$HDF5_DIR
-            )
-          fi
-          echo "CMAKE_ARGS: ${CMAKE_ARGS[@]}"
-          cmake -Bbuild "${CMAKE_ARGS[@]}"
-          make -C build -j
-      - name: Build Dependencies
-        shell: spack-bash {0}
+          source .github/workflows/scripts/load_env.sh ${{ matrix.hdf5 }} ${{ matrix.mpi }}
+          python -m venv ./venv
+          source venv/bin/activate
+          pip install -r tools/requirements.txt
+          source ./tools/discover_and_generate.sh --spack-only --quiet --select-all
+      - name: Install Dependency
+        shell: bash
         run: |
+          source .github/workflows/scripts/load_env.sh ${{ matrix.hdf5 }} ${{ matrix.mpi }}
+          mkdir -p build
           CMAKE_ARGS=(
-            -DBRAHMA_BUILD_DEPENDENCIES=ON
-            -DBRAHMA_ENABLE_TESTING=ON
-            -DBRAHMA_GENERATE_INTERFACES=OFF
+            "-DCMAKE_BUILD_TYPE=Debug"
+            "-DBRAHMA_ENABLE_TESTING=ON"
+            "-DBRAHMA_GENERATE_INTERFACES=OFF"
+            "-DBRAHMA_BUILD_WITH_HDF5=ON"
+            "-DBRAHMA_BUILD_WITH_MPI=ON"
+            "-DHDF5_ROOT=$HDF5_DIR"
+            "-DMPI_ROOT=$MPI_DIR"
           )
-
-          if [[ "${{ matrix.mpi }}" == "ON" ]]; then
-            CMAKE_ARGS+=(
-              -DMPI_ROOT=$MPI_DIR
-              -DBRAHMA_BUILD_WITH_MPI=ON
-            )
-          fi
-
-          if [[ "${{ matrix.hdf5 }}" == "ON" ]]; then
-            CMAKE_ARGS+=(
-              -DBRAHMA_BUILD_WITH_HDF5=ON
-              -DHDF5_ROOT=$HDF5_DIR
-            )
-          fi
-          echo "CMAKE_ARGS: ${CMAKE_ARGS[@]}"
-          cmake -Bbuild "${CMAKE_ARGS[@]}"
+          cmake -Bbuild "${CMAKE_ARGS[@]}" -DBRAHMA_BUILD_DEPENDENCIES=ON
           make -C build -j
       - name: Build
-        shell: spack-bash {0}
+        shell: bash
         run: |
-         CMAKE_ARGS=(
-            -DBRAHMA_BUILD_DEPENDENCIES=OFF
-            -DBRAHMA_ENABLE_TESTING=ON
-            -DBRAHMA_GENERATE_INTERFACES=OFF
+          source .github/workflows/scripts/load_env.sh ${{ matrix.hdf5 }} ${{ matrix.mpi }}
+          mkdir -p build
+
+          CMAKE_ARGS=(
+            "-DCMAKE_BUILD_TYPE=Debug"
+            "-DBRAHMA_ENABLE_TESTING=ON"
+            "-DBRAHMA_GENERATE_INTERFACES=OFF"
+            "-DBRAHMA_BUILD_WITH_HDF5=ON"
+            "-DBRAHMA_BUILD_WITH_MPI=ON"
+            "-DHDF5_ROOT=$HDF5_DIR"
+            "-DMPI_ROOT=$MPI_DIR"
           )
 
-          if [[ "${{ matrix.mpi }}" == "ON" ]]; then
-            CMAKE_ARGS+=(
-              -DMPI_ROOT=$MPI_DIR
-              -DBRAHMA_BUILD_WITH_MPI=ON
-            )
-          fi
-
-          if [[ "${{ matrix.hdf5 }}" == "ON" ]]; then
-            CMAKE_ARGS+=(
-              -DBRAHMA_BUILD_WITH_HDF5=ON
-              -DHDF5_ROOT=$HDF5_DIR
-            )
-          fi
-          echo "CMAKE_ARGS: ${CMAKE_ARGS[@]}"
-          cmake -Bbuild "${CMAKE_ARGS[@]}"
+          cmake -Bbuild "${CMAKE_ARGS[@]}" -DBRAHMA_BUILD_DEPENDENCIES=OFF
           make -C build -j
       - name: Test
-        shell: spack-bash {0}
+        shell: bash
         run: |
-          if [[ "${{ matrix.hdf5 }}" == "ON" ]]; then spack load hdf5; fi
-          if [[ "${{ matrix.mpi }}" == "ON" ]]; then spack load openmpi; fi
+          source .github/workflows/scripts/load_env.sh ${{ matrix.hdf5 }} ${{ matrix.mpi }}
           ctest --test-dir build -VV
+

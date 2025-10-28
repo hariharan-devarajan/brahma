@@ -147,13 +147,14 @@ Enable auto-generation during the build process:
 You can also run the script manually with the following command:
 
 ```bash
-python3 generate_interfaces.py --libclang-path <path_to_libclang> --hdf5-header-path <path_to_hdf5_header> --hdf5-version <version_of_hdf5> --mpio-header-path <path_to_mpio_header>[--with-tests] [--verbose]
+python3 generate_interfaces.py --libclang-path <path_to_libclang> --hdf5-header-path <path_to_hdf5_header> --hdf5-version <version_of_hdf5> --mpi-header-path <path_to_mpi_header> --mpi-version <version_of_mpi> [--with-tests] [--verbose]
 ```
 
 * `--libclang-path`: Path to the libclang library
 * `--hdf5-header-path`: Path to the HDF5 library header file
 * `--hdf5-version`: Version of the HDF5 library
-* `--mpio-header-path`: Path to the MPI-IO header file
+* `--mpi-header-path`: Path to the MPI header file (generates both MPI and MPIIO interfaces)
+* `--mpi-version`: Version of the MPI library
 * `--with-tests`: Generate test cases during generation
 * `--verbose`: Print verbose output (optional)
 

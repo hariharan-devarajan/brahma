@@ -23,18 +23,19 @@
     gotcha_binding_t binding = {#fname, (void*)fname##_wrapper,       \
                                 &fname##_brahma_handle};              \
     bindings.push_back(binding);                                      \
-    if(::fname){                                                      \
-      gotcha_binding_t unbinding = {#fname, (void*)::fname,           \
+    fname##_fptr fn = &::fname;                                     \
+    if(fn){                                                 \
+      gotcha_binding_t unbinding = {#fname, (void*)fn,      \
                                     &fname##_brahma_handle};          \
       unbindings.push_back(unbinding);                                \
       }                                                               \
 }
-#define GOTCHA_MACRO_TYPEDEF(name, ret, args, args_val, class_name)         \
-  typedef ret(*name##_fptr) args;                                           \
-  inline ret name##_wrapper args {                                          \
-    return class_name::get_instance()->name args_val;                       \
+#define GOTCHA_MACRO_TYPEDEF(macroname, macroret, macroargs, macro2args_val, macroclass_name)         \
+  typedef macroret(*macroname##_fptr) macroargs;                                           \
+  inline macroret macroname##_wrapper macroargs {                                          \
+    return macroclass_name::get_instance()->macroname macro2args_val;                       \
   }                                                                         \
-  ret __attribute__((weak)) name args;
+  macroret __attribute__((weak)) macroname macroargs;
 #define GOTCHA_MACRO_TYPEDEF_OPEN(name, ret, args, args_val, start, \
                                   class_name)                       \
   typedef ret(*name##_fptr) args;                                   \
@@ -65,19 +66,19 @@
 
 #define BRAHMA_WRAPPER(name) name##_wrapper;
 
-#define BRAHMA_UNWRAPPED_FUNC(name, ret, args)                                \
+#define BRAHMA_UNWRAPPED_FUNC(macroname, ret, macroargs)                                \
   BRAHMA_LOG_INFO("[BRAHMA]\tFunction %s() not wrapped. Calling Original.\n", \
-                  #name);                                                     \
-  name##_fptr name##_wrappee =                                                \
-      (name##_fptr)gotcha_get_wrappee(name##_brahma_handle);                  \
-  ret result = name##_wrappee args;
+                  #macroname);                                                     \
+  macroname##_fptr macroname##_wrappee =                                                \
+      (macroname##_fptr)gotcha_get_wrappee(macroname##_brahma_handle);                  \
+  ret result = macroname##_wrappee macroargs;
 
-#define BRAHMA_UNWRAPPED_FUNC_VOID(name, args)                                \
+#define BRAHMA_UNWRAPPED_FUNC_VOID(macroname, macroargs)                                \
   BRAHMA_LOG_INFO("[BRAHMA]\tFunction %s() not wrapped. Calling Original.\n", \
-                  #name);                                                     \
-  name##_fptr name##_wrappee =                                                \
-      (name##_fptr)gotcha_get_wrappee(name##_brahma_handle);                  \
-  name##_wrappee args;
+                  #macroname);                                                     \
+  macroname##_fptr macroname##_wrappee =                                                \
+      (macroname##_fptr)gotcha_get_wrappee(macroname##_brahma_handle);                  \
+  macroname##_wrappee macroargs;
 #define BRAHMA_MAP_OR_FAIL(func_)                                      \
   auto __real_##func_ =                                                \
       (func_##_fptr)gotcha_get_wrappee(func_##_brahma_handle); \

@@ -46,6 +46,10 @@
 #cmakedefine BRAHMA_LOGGER_LEVEL_DEBUG 1
 #cmakedefine BRAHMA_LOGGER_LEVEL_TRACE 1
 
+// versions
+#cmakedefine BRAHMA_HDF5_VERSION @BRAHMA_HDF5_VERSION@
+#cmakedefine BRAHMA_MPI_VERSION @BRAHMA_MPI_VERSION@
+
 
 //==========================
 // Common macro definitions

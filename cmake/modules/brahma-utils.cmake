@@ -38,17 +38,33 @@ endmacro ()
 
 # Define the function to convert version to the required format
 function(convert_version_to_number VERSION OUTPUT_VAR)
-    # Extract major, minor, and patch versions using regex
-    string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${VERSION})
+  # Initialize default values
+  set(MAJOR 0)
+  set(MINOR 0)
+  set(PATCH 0)
+  
+  # Try to match full version (major.minor.patch)
+  if(VERSION MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)")
     set(MAJOR ${CMAKE_MATCH_1})
     set(MINOR ${CMAKE_MATCH_2})
     set(PATCH ${CMAKE_MATCH_3})
+  # Try to match major.minor
+  elseif(VERSION MATCHES "^([0-9]+)\\.([0-9]+)")
+    set(MAJOR ${CMAKE_MATCH_1})
+    set(MINOR ${CMAKE_MATCH_2})
+    set(PATCH 0)
+  # Try to match just major
+  elseif(VERSION MATCHES "^([0-9]+)")
+    set(MAJOR ${CMAKE_MATCH_1})
+    set(MINOR 0)
+    set(PATCH 0)
+  endif()
 
-    # Compute the formatted version using the given formula
-    math(EXPR FORMATTED_VERSION "${MAJOR} * 100000 + ${MINOR} * 100 + ${PATCH}")
+  # Compute the formatted version using the given formula
+  math(EXPR FORMATTED_VERSION "${MAJOR} * 100000 + ${MINOR} * 100 + ${PATCH}")
 
-    # Set the computed version as an output variable
-    set(${OUTPUT_VAR} ${FORMATTED_VERSION} PARENT_SCOPE)
+  # Set the computed version as an output variable
+  set(${OUTPUT_VAR} ${FORMATTED_VERSION} PARENT_SCOPE)
 endfunction()
 
 # Check to see if we are in a git repo
