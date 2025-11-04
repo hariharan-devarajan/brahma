@@ -1,6 +1,7 @@
 import argparse
 import clang.cindex as cix
 import os
+import re
 import shutil
 from datetime import datetime
 from string import Template
@@ -45,6 +46,13 @@ parser.add_argument(
 parser.add_argument(
     "--ignore-mpi-version", action="store_true", help="Ignore version macros for MPI interfaces", default=False
 )
+parser.add_argument(
+    "--mpi-implementation",
+    action="extend",
+    nargs="+",
+    type=str,
+    help="MPI implementation name for each header (openmpi, mpich, mvapich, craympich)",
+)
 cli_args = parser.parse_args()
 
 cix.Config.set_library_file(cli_args.libclang_path)
@@ -56,6 +64,7 @@ print(f"  hdf5-header-path: {cli_args.hdf5_header_path}")
 print(f"  hdf5-version: {cli_args.hdf5_version}")
 print(f"  mpi-header-path: {cli_args.mpi_header_path}")
 print(f"  mpi-version: {cli_args.mpi_version}")
+print(f"  mpi-implementation: {cli_args.mpi_implementation}")
 print(f"  verbose: {cli_args.verbose}")
 print(f"  with-tests: {cli_args.with_tests}")
 print(f"  ignore-mpi-version: {cli_args.ignore_mpi_version}")
@@ -353,13 +362,18 @@ def build_test_function(function_name, function_args, underlying_types):
                 return val
             else:
                 return "false"
-        elif "MPI_Datatype" in orig_arg_type or "MPI_Comm" in orig_arg_type or "MPI_Info" in orig_arg_type or "MPI_Op" in orig_arg_type or "MPI_Win" in orig_arg_type or "MPI_Errhandler" in orig_arg_type or "MPI_Request" in orig_arg_type or "MPI_Group" in orig_arg_type:
+        elif ("MPI_Datatype" in orig_arg_type or "MPI_Comm" in orig_arg_type or 
+              "MPI_Info" in orig_arg_type or "MPI_Op" in orig_arg_type or 
+              "MPI_Win" in orig_arg_type or "MPI_Errhandler" in orig_arg_type or 
+              "MPI_Request" in orig_arg_type or "MPI_Group" in orig_arg_type or
+              "MPI_Message" in orig_arg_type):
             # For specific MPI types like MPI_Datatype, MPI_Comm, use 0 instead of NULL
             val = handle_pointer(arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array)
             if val is not None:
                 return val
             else:
-                return f"({arg_type})0"
+                # For MPI_Comm, MPI_Info, etc., cast 0 to the appropriate type
+                return f"({orig_arg_type})0"
         else:
             val = handle_pointer(arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array)
             if val is not None:
@@ -442,6 +456,38 @@ def is_integer_type(underlying_type):
     ]
 
 
+def get_mpi_impl_macro(impl_name):
+    """
+    Convert MPI implementation name to macro name.
+    Supports: openmpi, mpich, mvapich, craympich
+    """
+    if not impl_name:
+        return None
+    
+    impl_lower = impl_name.lower().replace('-', '').replace('_', '')
+    
+    if impl_lower == "openmpi":
+        return "BRAHMA_MPI_IMPL_OPENMPI"
+    elif impl_lower == "mpich":
+        return "BRAHMA_MPI_IMPL_MPICH"
+    elif impl_lower == "mvapich" or impl_lower == "mvapich2":
+        return "BRAHMA_MPI_IMPL_MVAPICH"
+    elif impl_lower == "craympich" or impl_lower == "craympi":
+        return "BRAHMA_MPI_IMPL_CRAYMPICH"
+    else:
+        # Try to auto-detect from implementation name
+        if "openmpi" in impl_lower or "open-mpi" in impl_lower:
+            return "BRAHMA_MPI_IMPL_OPENMPI"
+        elif "cray" in impl_lower:
+            return "BRAHMA_MPI_IMPL_CRAYMPICH"
+        elif "mvapich" in impl_lower:
+            return "BRAHMA_MPI_IMPL_MVAPICH"
+        elif "mpich" in impl_lower:
+            return "BRAHMA_MPI_IMPL_MPICH"
+    
+    return None
+
+
 def version_number(version_string: str):
     version_parts = version_string.split(".")
     while len(version_parts) < 3:
@@ -505,15 +551,54 @@ def process_type(cursor):
     return None
 
 
-def wrap_with_version_condition(version_condition, function):
-    if version_condition is None or version_condition == "":
+def wrap_with_version_condition(version_condition, function, impl_condition=None):
+    """
+    Wrap function with version and/or implementation condition.
+    Args:
+        version_condition: Version macro condition (e.g., "BRAHMA_HDF5_VERSION >= 101203")
+        function: Function code to wrap
+        impl_condition: Implementation macro condition. Can be:
+            - A single macro name (e.g., "BRAHMA_MPI_IMPL_OPENMPI")
+            - A complex condition string already formatted (e.g., "(defined(X) || defined(Y))")
+    """
+    if impl_condition and version_condition:
+        # Both implementation and version conditions
+        # Check if impl_condition is already a formatted condition (contains "defined(")
+        if "defined(" in impl_condition:
+            combined_condition = f"({impl_condition} && {version_condition})"
+        else:
+            combined_condition = f"(defined({impl_condition}) && {version_condition})"
+        return TEMPLATE_VERSION_CONDITION.substitute(
+            {
+                "version_condition": combined_condition,
+                "function": function,
+            }
+        )
+    elif impl_condition:
+        # Only implementation condition
+        if "defined(" in impl_condition:
+            # Already formatted
+            condition_str = impl_condition
+        else:
+            # Single macro name
+            condition_str = f"defined({impl_condition})"
+        return TEMPLATE_VERSION_CONDITION.substitute(
+            {
+                "version_condition": condition_str,
+                "function": function,
+            }
+        )
+    elif version_condition:
+        # Only version condition
+        return TEMPLATE_VERSION_CONDITION.substitute(
+            {
+                "version_condition": version_condition,
+                "function": function,
+            }
+        )
+    else:
+        # No conditions
         return function
-    return TEMPLATE_VERSION_CONDITION.substitute(
-        {
-            "version_condition": version_condition,
-            "function": function,
-        }
-    )
 
 
 def normalize_function_signature(return_type, function_name, args):
@@ -579,6 +664,78 @@ def merge_version_ranges(version_ranges):
             merged.append((current_min, current_max))
     
     return merged
+
+
+def create_coupled_mpi_condition(version_impl_pairs, version_macro_name, ignore_version=False):
+    """
+    Create a coupled condition that combines MPI implementation and version checks.
+    
+    Args:
+        version_impl_pairs: List of (version, implementation) tuples
+        version_macro_name: Name of the version macro to use
+        ignore_version: If True, only use implementation conditions
+    
+    Returns:
+        A condition string that couples implementation and version checks
+    
+    Examples:
+    - Single impl/version: "(defined(BRAHMA_MPI_IMPL_OPENMPI) && BRAHMA_MPI_VERSION >= 300000)"
+    - Multiple impls, same version: "(BRAHMA_MPI_VERSION >= 300000 && (defined(BRAHMA_MPI_IMPL_OPENMPI) || defined(BRAHMA_MPI_IMPL_MPICH)))"
+    - Mixed impl/version pairs: "((defined(BRAHMA_MPI_IMPL_OPENMPI) && BRAHMA_MPI_VERSION >= 300000) || (defined(BRAHMA_MPI_IMPL_MPICH) && BRAHMA_MPI_VERSION >= 301000))"
+    """
+    if not version_impl_pairs:
+        return None
+    
+    if ignore_version:
+        # Only use implementation conditions
+        unique_implementations = list(set(impl for _, impl in version_impl_pairs if impl))
+        impl_macros = [get_mpi_impl_macro(impl) for impl in unique_implementations if impl]
+        impl_macros = [m for m in impl_macros if m]  # Filter out None values
+        
+        if not impl_macros:
+            return None
+        elif len(impl_macros) == 1:
+            return f"defined({impl_macros[0]})"
+        else:
+            return " || ".join([f"defined({m})" for m in impl_macros])
+    
+    # Group by implementation to optimize conditions
+    impl_to_versions = {}
+    for version, impl in version_impl_pairs:
+        if impl:  # Only process if implementation is provided
+            if impl not in impl_to_versions:
+                impl_to_versions[impl] = []
+            impl_to_versions[impl].append(version)
+    
+    if not impl_to_versions:
+        return None
+    
+    # Create conditions for each implementation
+    impl_conditions = []
+    for impl, versions in impl_to_versions.items():
+        impl_macro = get_mpi_impl_macro(impl)
+        if not impl_macro:
+            continue
+            
+        version_numbers = [version_number(v) for v in versions]
+        version_condition = optimize_version_condition(version_numbers, version_macro_name)
+        
+        if version_condition:
+            # Couple implementation and version: (defined(IMPL) && VERSION_CONDITION)
+            coupled_condition = f"(defined({impl_macro}) && {version_condition})"
+        else:
+            # Just implementation condition
+            coupled_condition = f"defined({impl_macro})"
+            
+        impl_conditions.append(coupled_condition)
+    
+    if not impl_conditions:
+        return None
+    elif len(impl_conditions) == 1:
+        return impl_conditions[0]
+    else:
+        # Multiple implementations: (IMPL1_CONDITION || IMPL2_CONDITION)
+        return f"({' || '.join(impl_conditions)})"
 
 
 def optimize_version_condition(version_numbers, version_macro_name, max_version_limit=None):
@@ -671,6 +828,7 @@ timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 # library header file name
 # library header file path
 # library version
+# library implementation (for MPI)
 # function prefix
 # enable macro name
 # version macro name
@@ -683,6 +841,7 @@ if cli_args.hdf5_header_path and any(cli_args.hdf5_header_path):
             "hdf5.h",
             cli_args.hdf5_header_path,
             cli_args.hdf5_version,
+            None,  # No implementation for HDF5
             "H5",
             "BRAHMA_ENABLE_HDF5",
             "BRAHMA_HDF5_VERSION",
@@ -697,6 +856,7 @@ if cli_args.mpi_header_path and any(cli_args.mpi_header_path):
             "mpi.h",
             cli_args.mpi_header_path,
             cli_args.mpi_version,
+            cli_args.mpi_implementation,  # MPI implementation
             "MPI_File_",
             "BRAHMA_ENABLE_MPI",
             "BRAHMA_MPI_VERSION",
@@ -710,6 +870,7 @@ if cli_args.mpi_header_path and any(cli_args.mpi_header_path):
             "mpi.h",
             cli_args.mpi_header_path,
             cli_args.mpi_version,
+            cli_args.mpi_implementation,  # MPI implementation
             "MPI_",
             "BRAHMA_ENABLE_MPI",
             "BRAHMA_MPI_VERSION",
@@ -728,6 +889,7 @@ for (
     lib_header_file_name,
     lib_header_file_paths,
     lib_versions,
+    lib_implementations,
     function_prefix,
     enable_macro_name,
     version_macro_name,
@@ -750,6 +912,7 @@ for (
     function_return_kinds = {}
     function_return_types = {}
     function_versions = {}
+    function_implementations = {}  # Track which implementation each function comes from
     macro_bindings = {}
     macro_typedefs = {}
     macro_vars = {}
@@ -807,22 +970,21 @@ for (
             
             # TODO: Check this and fix these APIs
             # For MPI interface, exclude MPI_File_ functions to avoid duplication with MPIIO
-            if brahma_name == "mpi" and (cursor.spelling.startswith("MPI_Aint") or cursor.spelling.startswith("MPI_File_") or cursor.spelling.startswith("MPI_T_")):
+            if brahma_name == "mpi" and (cursor.spelling.startswith("MPI_File_") or cursor.spelling.startswith("MPI_T_")):
                 continue
             
             # # TODO: Check this and fix these APIs
-            if "f2c" in cursor.spelling or "c2f" in cursor.spelling:
-                continue
+            # if "f2c" in cursor.spelling or "c2f" in cursor.spelling:
+            #     continue
             
             # TODO: Check this and fix these APIs
             if brahma_name == "hdf5" and (cursor.spelling in ["H5Tget_size", "H5Tget_ebias","H5Tget_precision","H5Tget_member_offset",
-                                                              "H5Pget_buffer", "H5get_free_list_sizes", "H5allocate_memory","H5resize_memory",
-                                                              "H5Pget_mpi_params", "H5Pset_mpi_params"]):
+                                                              "H5Pget_buffer", "H5get_free_list_sizes", "H5allocate_memory","H5resize_memory"]):
                 # For HDF5 interface, only include property list functions (H5P*)
                 continue
             
-            if brahma_name == "hdf5" and ("mpio"  in cursor.spelling or cursor.spelling.startswith("H5VL")):
-                # For HDF5 interface, only include property list functions (H5P*)
+            if brahma_name == "hdf5" and ("H5VL" in cursor.spelling):
+                # For HDF5 interface, only include Vol functions (H5VL*)
                 continue
 
             # Skip variadic functions (functions with ... parameters)
@@ -920,7 +1082,33 @@ for (
                         else:
                             args.append(f"{type_spelling} {param_name}")
                     else:
-                        args.append(f"{type_spelling} {param_name}")
+                        # Special handling for HDF5 parallel functions that should use MPI types
+                        if (brahma_name == "hdf5" and (
+                            cursor.spelling.startswith("H5P") and (
+                                "mpi" in cursor.spelling.lower() or 
+                                "fapl_mpio" in cursor.spelling or
+                                cursor.spelling in ["H5Pget_mpi_params", "H5Pset_mpi_params"]
+                            )
+                        )):
+                            # Handle MPI types for HDF5 parallel functions
+                            if param_name == "comm":
+                                if type_spelling == "int":
+                                    args.append(f"MPI_Comm {param_name}")
+                                elif type_spelling == "int *":
+                                    args.append(f"MPI_Comm *{param_name}")
+                                else:
+                                    args.append(f"{type_spelling} {param_name}")
+                            elif param_name == "info":
+                                if type_spelling == "int":
+                                    args.append(f"MPI_Info {param_name}")
+                                elif type_spelling == "int *":
+                                    args.append(f"MPI_Info *{param_name}")
+                                else:
+                                    args.append(f"{type_spelling} {param_name}")
+                            else:
+                                args.append(f"{type_spelling} {param_name}")
+                        else:
+                            args.append(f"{type_spelling} {param_name}")
                 arg_names.append(param_name)
 
             if len(args) == 0:
@@ -948,6 +1136,8 @@ for (
             
             # Check if this function already exists for the same version
             current_version = lib_versions[i]
+            current_implementation = lib_implementations[i] if lib_implementations and i < len(lib_implementations) else None
+            
             if function_hash in function_versions:
                 # If the same function signature exists and has the same version, skip it
                 if current_version in function_versions[function_hash]:
@@ -968,10 +1158,24 @@ for (
 
             if function_hash in function_versions:
                 function_versions[function_hash].append(lib_versions[i])
+                if current_implementation:
+                    function_implementations[function_hash].append(current_implementation)
+                else:
+                    # For non-MPI interfaces, maintain alignment by adding None
+                    if not is_mpi_interface:
+                        function_implementations[function_hash].append(None)
                 if cli_args.verbose:
                     print(f"DEBUG: Added version {lib_versions[i]} to existing function {cursor.spelling}")
             else:
                 function_versions[function_hash] = [lib_versions[i]]
+                if current_implementation:
+                    function_implementations[function_hash] = [current_implementation]
+                else:
+                    # For non-MPI interfaces, maintain alignment by adding None
+                    if not is_mpi_interface:
+                        function_implementations[function_hash] = [None]
+                    else:
+                        function_implementations[function_hash] = []
                 if cli_args.verbose:
                     print(f"DEBUG: New function {cursor.spelling} with version {lib_versions[i]}")
 
@@ -1000,6 +1204,7 @@ for (
         function_name_groups[func_name].append({
             'hash': function_hash,
             'versions': versions,
+            'implementations': function_implementations.get(function_hash, []),
             'function_name': func_name,
             'args': function_args[function_hash],
             'arg_names': function_arg_names[function_hash],
@@ -1096,50 +1301,108 @@ for (
     # Generate merged functions
     api_counter = 1
     for normalized_sig, func_variants in signature_groups.items():
-        # Collect all versions from all variants of this function
+        # Collect all version-implementation pairs from all variants of this function
+        version_impl_pairs = []
         all_versions = []
+        
         for variant in func_variants:
-            all_versions.extend(variant['versions'])
+            variant_versions = variant['versions']
+            variant_implementations = variant.get('implementations', [])
+            
+            all_versions.extend(variant_versions)
+            
+            # Create paired tuples of (version, implementation)
+            # Handle cases where implementation list might be shorter or missing
+            for i, version in enumerate(variant_versions):
+                if i < len(variant_implementations) and variant_implementations[i]:
+                    impl = variant_implementations[i]
+                else:
+                    impl = None  # No implementation for this version
+                version_impl_pairs.append((version, impl))
 
         # Use the first variant as the canonical one (they should all be functionally identical)
         canonical_variant = func_variants[0]
         function_hash = canonical_variant['hash']  # Keep original hash for mapping
         
         version_condition = None
+        impl_condition = None
+        
         # Skip version conditions for MPI if ignore flag is set
         is_mpi_interface = brahma_name in ["mpi", "mpiio"]
+        
+        # For MPI interfaces, create coupled implementation-version conditions
+        if is_mpi_interface:
+            # Filter to only pairs with implementations
+            mpi_pairs = [(v, i) for v, i in version_impl_pairs if i]
+            
+            if mpi_pairs:
+                impl_condition = create_coupled_mpi_condition(
+                    mpi_pairs, version_macro_name, cli_args.ignore_mpi_version
+                )
+                
+                if cli_args.verbose:
+                    print(f"DEBUG: Function {canonical_variant['function_name']} has version-impl pairs: {mpi_pairs}")
+                    print(f"DEBUG: Coupled condition: {impl_condition}")
+        else:
+            # For non-MPI interfaces, generate implementation condition (should be None)
+            # This is kept for consistency but shouldn't be used for non-MPI interfaces
+            if any(impl for _, impl in version_impl_pairs):
+                unique_implementations = list(set(impl for _, impl in version_impl_pairs if impl))
+                impl_macros = [get_mpi_impl_macro(impl) for impl in unique_implementations if impl]
+                impl_macros = [m for m in impl_macros if m]  # Filter out None values
+                
+                if impl_macros:
+                    if len(impl_macros) == 1:
+                        impl_condition = impl_macros[0]
+                    else:
+                        impl_condition = " || ".join([f"defined({m})" for m in impl_macros])
+        
+        # Generate version condition only if not MPI or not ignoring MPI version
         if all(all_versions) and not (is_mpi_interface and cli_args.ignore_mpi_version):
-            version_numbers = [version_number(version) for version in all_versions]
-            
-            # Check if any variant has a max version limit
-            max_version_limit = None
-            for variant in func_variants:
-                if 'max_version_limit' in variant:
-                    max_version_limit = variant['max_version_limit']
-                    break
-            
-            version_condition = optimize_version_condition(version_numbers, version_macro_name, max_version_limit)
-            
-            if cli_args.verbose and len(func_variants) > 1:
-                print(f"DEBUG: Merged {len(func_variants)} variants of {canonical_variant['function_name']}")
-                print(f"DEBUG: Versions: {all_versions}")
-                print(f"DEBUG: Version numbers: {version_numbers}")
-                if max_version_limit:
-                    print(f"DEBUG: Max version limit: {max_version_limit}")
-                print(f"DEBUG: Optimized condition: {version_condition}")
+            # Only generate separate version condition for non-MPI interfaces
+            # For MPI interfaces, version is already coupled with implementation
+            if not is_mpi_interface:
+                version_numbers = [version_number(version) for version in all_versions]
+                
+                # Check if any variant has a max version limit
+                max_version_limit = None
+                for variant in func_variants:
+                    if 'max_version_limit' in variant:
+                        max_version_limit = variant['max_version_limit']
+                        break
+                
+                version_condition = optimize_version_condition(version_numbers, version_macro_name, max_version_limit)
+                
+                if cli_args.verbose and len(func_variants) > 1:
+                    print(f"DEBUG: Merged {len(func_variants)} variants of {canonical_variant['function_name']}")
+                    print(f"DEBUG: Versions: {all_versions}")
+                    print(f"DEBUG: Version numbers: {version_numbers}")
+                    if max_version_limit:
+                        print(f"DEBUG: Max version limit: {max_version_limit}")
+                    print(f"DEBUG: Optimized condition: {version_condition}")
+
+        # For MPI interfaces, use only the coupled condition (impl_condition contains both)
+        # For non-MPI interfaces, use separate version and implementation conditions
+        if is_mpi_interface:
+            final_version_condition = None  # Version is coupled with implementation
+            final_impl_condition = impl_condition  # Contains both version and implementation
+        else:
+            final_version_condition = version_condition
+            final_impl_condition = impl_condition
 
         macro_bindings[function_hash] = wrap_with_version_condition(
-            version_condition,
+            final_version_condition,
             TEMPLATE_MACRO_BINDING.substitute(
                 {
                     "function_name": canonical_variant['function_name'],
                     "namespace": namespace,
                 }
             ),
+            final_impl_condition,
         )
 
         macro_typedefs[function_hash] = wrap_with_version_condition(
-            version_condition,
+            final_version_condition,
             TEMPLATE_MACRO_TYPEDEF.substitute(
                 {
                     "arg_names": ", ".join(canonical_variant['arg_names']),
@@ -1149,25 +1412,28 @@ for (
                     "return_type": canonical_variant['return_type'],
                 }
             ),
+            final_impl_condition,
         )
 
         macro_vars[function_hash] = wrap_with_version_condition(
-            version_condition,
+            final_version_condition,
             TEMPLATE_MACRO_VAR.substitute(
                 {
                     "function_name": canonical_variant['function_name'],
                 }
             ),
+            final_impl_condition,
         )
 
         if cli_args.with_tests:
             test_functions[function_hash] = wrap_with_version_condition(
-                version_condition,
+                final_version_condition,
                 build_test_function(
                     canonical_variant['function_name'],
                     canonical_variant['args'],
                     underlying_types,
                 ),
+                final_impl_condition,
             )
 
             test_function_return_kind = canonical_variant['return_kind']
@@ -1187,7 +1453,7 @@ for (
             else:
                 test_function_return_value = "return NULL;"
             test_function_overrides[function_hash] = wrap_with_version_condition(
-                version_condition,
+                final_version_condition,
                 TEMPLATE_TEST_FUNCTION_OVERRIDE.substitute(
                     {
                         "api_number": api_counter,
@@ -1197,10 +1463,11 @@ for (
                         "return_value": test_function_return_value,
                     }
                 ),
+                final_impl_condition,
             )
 
         virtual_functions[function_hash] = wrap_with_version_condition(
-            version_condition,
+            final_version_condition,
             TEMPLATE_VIRTUAL_FUNCTION.substitute(
                 {
                     "args": ", ".join(canonical_variant['args']),
@@ -1209,11 +1476,12 @@ for (
                     "return_type": canonical_variant['return_type'],
                 }
             ),
+            final_impl_condition,
         )
 
         if canonical_variant['return_kind'] == cix.TypeKind.VOID:
             wrapper_functions[function_hash] = wrap_with_version_condition(
-                version_condition,
+                final_version_condition,
                 TEMPLATE_WRAPPER_FUNCTION_VOID.substitute(
                     {
                         "arg_names": ", ".join(canonical_variant['arg_names']),
@@ -1222,10 +1490,11 @@ for (
                         "namespace": namespace,
                     }
                 ),
+                final_impl_condition,
             )
         else:
             wrapper_functions[function_hash] = wrap_with_version_condition(
-                version_condition,
+                final_version_condition,
                 TEMPLATE_WRAPPER_FUNCTION.substitute(
                     {
                         "arg_names": ", ".join(canonical_variant['arg_names']),
@@ -1235,6 +1504,7 @@ for (
                         "return_type": canonical_variant['return_type'],
                     }
                 ),
+                final_impl_condition,
             )
 
         api_counter += 1

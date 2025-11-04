@@ -39,14 +39,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-      - name: Generate Interfaces
-        shell: bash
-        run: |
-          source .github/workflows/scripts/load_env.sh ${{ matrix.hdf5 }} ${{ matrix.mpi }}
-          python -m venv ./venv
-          source venv/bin/activate
-          pip install -r tools/requirements.txt
-          source ./tools/discover_and_generate.sh --spack-only --quiet --select-all
       - name: Install Dependency
         shell: bash
         run: |

@@ -17,15 +17,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     clang \
     clang-format \
     curl \
+    gdb \
+    gfortran \
     git \
+    htop \
+    nano \
     python3 \
     python3-pip \
     python3-venv \
+    strace \
+    sudo \
+    valgrind \
+    vim \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user for spack
+# Create a non-root user for spack with sudo privileges
 RUN useradd -m -s /bin/bash spack && \
+    usermod -aG sudo spack && \
     echo "spack ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Switch to spack user

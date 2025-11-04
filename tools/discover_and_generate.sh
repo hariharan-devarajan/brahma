@@ -18,6 +18,7 @@ declare -a MPI_NAMES
 declare -a MPI_VERSIONS
 declare -a MPI_PREFIXES
 declare -a MPI_HEADER_PATHS
+declare -a MPI_IMPLEMENTATIONS  # Store detected MPI implementation type
 DRY_RUN=false
 QUIET_MODE=false
 SELECT_ALL=false
@@ -608,6 +609,160 @@ find_hdf5_system() {
     fi
 }
 
+# Function to detect MPI implementation type from various sources
+detect_mpi_implementation() {
+    local mpi_name="$1"
+    local mpi_prefix="$2"
+    local header_path="$3"
+    
+    # Method 1: Direct name mapping for known implementations
+    case "$mpi_name" in
+        openmpi*)
+            echo "openmpi"
+            return
+            ;;
+        mpich*)
+            echo "mpich"
+            return
+            ;;
+        mvapich*|mvapich2*)
+            echo "mvapich"
+            return
+            ;;
+        intel-mpi*|intelmpi*)
+            echo "mpich"  # Intel MPI is MPICH-based
+            return
+            ;;
+        cray-mpich*|craympich*)
+            echo "craympich"
+            return
+            ;;
+    esac
+    
+    # Method 2: Check for implementation-specific binaries
+    if [[ -n "$mpi_prefix" ]]; then
+        # Check for OpenMPI-specific binaries
+        if [[ -x "$mpi_prefix/bin/ompi_info" ]] || [[ -x "$mpi_prefix/bin/orterun" ]]; then
+            debug "Detected OpenMPI via ompi_info/orterun"
+            echo "openmpi"
+            return
+        fi
+        
+        # Check for MPICH-specific binaries
+        if [[ -x "$mpi_prefix/bin/mpichversion" ]]; then
+            debug "Detected MPICH via mpichversion"
+            echo "mpich"
+            return
+        fi
+        
+        # Check for MVAPICH-specific patterns
+        if [[ -x "$mpi_prefix/bin/mpiname" ]]; then
+            local mpiname_output
+            mpiname_output=$("$mpi_prefix/bin/mpiname" 2>/dev/null || echo "")
+            if [[ "$mpiname_output" == *"MVAPICH"* ]]; then
+                debug "Detected MVAPICH via mpiname"
+                echo "mvapich"
+                return
+            fi
+        fi
+    fi
+    
+    # Method 3: Check mpi.h header for implementation-specific defines
+    if [[ -f "$header_path/mpi.h" ]]; then
+        # Check for OpenMPI
+        if grep -q "OMPI_MAJOR_VERSION\|Open MPI" "$header_path/mpi.h" 2>/dev/null; then
+            debug "Detected OpenMPI via mpi.h defines"
+            echo "openmpi"
+            return
+        fi
+        
+        # Check for MPICH
+        if grep -q "MPICH_VERSION\|MPICH_NAME" "$header_path/mpi.h" 2>/dev/null; then
+            # Further check if it's Cray MPICH
+            if grep -q "CRAY\|cray" "$header_path/mpi.h" 2>/dev/null; then
+                debug "Detected Cray-MPICH via mpi.h defines"
+                echo "craympich"
+                return
+            fi
+            # Check if it's MVAPICH
+            if grep -q "MVAPICH" "$header_path/mpi.h" 2>/dev/null; then
+                debug "Detected MVAPICH via mpi.h defines"
+                echo "mvapich"
+                return
+            fi
+            debug "Detected MPICH via mpi.h defines"
+            echo "mpich"
+            return
+        fi
+        
+        # Check for MVAPICH
+        if grep -q "MVAPICH" "$header_path/mpi.h" 2>/dev/null; then
+            debug "Detected MVAPICH via mpi.h defines"
+            echo "mvapich"
+            return
+        fi
+    fi
+    
+    # Method 4: Check mpirun/mpiexec output
+    if [[ -n "$mpi_prefix" ]]; then
+        for cmd in "mpirun" "mpiexec"; do
+            if [[ -x "$mpi_prefix/bin/$cmd" ]]; then
+                local version_output
+                version_output=$("$mpi_prefix/bin/$cmd" --version 2>&1 || echo "")
+                
+                if [[ "$version_output" == *"Open MPI"* ]]; then
+                    debug "Detected OpenMPI via $cmd --version"
+                    echo "openmpi"
+                    return
+                elif [[ "$version_output" == *"MPICH"* ]]; then
+                    if [[ "$version_output" == *"Cray"* ]] || [[ "$version_output" == *"cray"* ]]; then
+                        debug "Detected Cray-MPICH via $cmd --version"
+                        echo "craympich"
+                        return
+                    elif [[ "$version_output" == *"MVAPICH"* ]]; then
+                        debug "Detected MVAPICH via $cmd --version"
+                        echo "mvapich"
+                        return
+                    else
+                        debug "Detected MPICH via $cmd --version"
+                        echo "mpich"
+                        return
+                    fi
+                elif [[ "$version_output" == *"MVAPICH"* ]]; then
+                    debug "Detected MVAPICH via $cmd --version"
+                    echo "mvapich"
+                    return
+                fi
+            fi
+        done
+    fi
+    
+    # Method 5: Check prefix path patterns
+    if [[ -n "$mpi_prefix" ]]; then
+        if [[ "$mpi_prefix" == *"openmpi"* ]] || [[ "$mpi_prefix" == *"open-mpi"* ]]; then
+            debug "Detected OpenMPI via path pattern"
+            echo "openmpi"
+            return
+        elif [[ "$mpi_prefix" == *"cray"* ]] && [[ "$mpi_prefix" == *"mpich"* ]]; then
+            debug "Detected Cray-MPICH via path pattern"
+            echo "craympich"
+            return
+        elif [[ "$mpi_prefix" == *"mvapich"* ]]; then
+            debug "Detected MVAPICH via path pattern"
+            echo "mvapich"
+            return
+        elif [[ "$mpi_prefix" == *"mpich"* ]]; then
+            debug "Detected MPICH via path pattern"
+            echo "mpich"
+            return
+        fi
+    fi
+    
+    # Default: return generic MPI (will not generate implementation-specific macros)
+    debug "Could not detect specific MPI implementation, using generic 'mpi'"
+    echo "mpi"
+}
+
 # Function to find MPI packages
 find_mpi_packages() {
     update_step_progress "Spack MPI"
@@ -681,7 +836,9 @@ find_mpi_packages() {
                 MPI_VERSIONS[index]="$version"
                 MPI_PREFIXES[index]="$prefix"
                 MPI_HEADER_PATHS[index]="$header_path"
-                debug "Found unique MPI package: $name@$version at $prefix (headers: $header_path)"
+                # Detect MPI implementation
+                MPI_IMPLEMENTATIONS[index]=$(detect_mpi_implementation "$name" "$prefix" "$header_path")
+                debug "Found unique MPI package: $name@$version at $prefix (headers: $header_path, impl: ${MPI_IMPLEMENTATIONS[index]})"
                 index=$((index+1))
             fi
         done
@@ -883,7 +1040,9 @@ find_mpi_modules() {
                 MPI_VERSIONS[index]="$module_version"
                 MPI_PREFIXES[index]="$prefix"
                 MPI_HEADER_PATHS[index]="$header_path"
-                debug "Found unique MPI module: $module_name (${module_mpi_name}@${module_version}) at $prefix (headers: $header_path)"
+                # Detect MPI implementation
+                MPI_IMPLEMENTATIONS[index]=$(detect_mpi_implementation "$module_mpi_name" "$prefix" "$header_path")
+                debug "Found unique MPI module: $module_name (${module_mpi_name}@${module_version}) at $prefix (headers: $header_path, impl: ${MPI_IMPLEMENTATIONS[index]})"
                 index=$((index+1))
                 
             done <<< "$modules"
@@ -1108,7 +1267,9 @@ find_mpi_system() {
             MPI_VERSIONS[index]="$version"
             MPI_PREFIXES[index]="$prefix"
             MPI_HEADER_PATHS[index]="$header_path"
-            debug "Found unique MPI system package: ${mpi_name}@${version} at $prefix (headers: $header_path)"
+            # Detect MPI implementation
+            MPI_IMPLEMENTATIONS[index]=$(detect_mpi_implementation "$mpi_name" "$prefix" "$header_path")
+            debug "Found unique MPI system package: ${mpi_name}@${version} at $prefix (headers: $header_path, impl: ${MPI_IMPLEMENTATIONS[index]})"
             index=$((index+1))
             break  # Found valid installation at this prefix, no need to check other header paths
         done
@@ -1190,7 +1351,10 @@ display_packages() {
                 source="Module"
             fi
             
-            printf "%3d. %s@%s %s [%s]\n" $((i+1)) "${MPI_NAMES[i]}" "${MPI_VERSIONS[i]}" "$status" "$source"
+            # Get implementation
+            local impl="${MPI_IMPLEMENTATIONS[i]:-unknown}"
+            
+            printf "%3d. %s@%s %s [%s] (impl: %s)\n" $((i+1)) "${MPI_NAMES[i]}" "${MPI_VERSIONS[i]}" "$status" "$source" "$impl"
             printf "     Path: %s\n" "${MPI_PREFIXES[i]}"
             printf "     Headers: %s\n" "${MPI_HEADER_PATHS[i]}"
         done
@@ -1686,7 +1850,8 @@ display_selected_packages() {
     if [[ ${#SELECTED_MPI_INDICES[@]} -gt 0 ]]; then
         echo "MPI:"
         for i in "${SELECTED_MPI_INDICES[@]}"; do
-            echo "  - ${MPI_NAMES[i]}@${MPI_VERSIONS[i]} (${MPI_HEADER_PATHS[i]})"
+            local impl="${MPI_IMPLEMENTATIONS[i]:-unknown}"
+            echo "  - ${MPI_NAMES[i]}@${MPI_VERSIONS[i]} (${MPI_HEADER_PATHS[i]}) [impl: $impl]"
         done
     fi
 }
@@ -1731,24 +1896,19 @@ build_and_execute_command() {
         
         cmd+=("--mpi-version")
         for i in "${SELECTED_MPI_INDICES[@]}"; do
-            # Get dynamic MPI version using compiled program
-            if [[ "$VERBOSE_MODE" == true ]] || [[ "$QUIET_MODE" != true ]]; then
-                echo "Detecting MPI version for ${MPI_NAMES[i]}@${MPI_VERSIONS[i]}..."
+            # Use package version instead of detected library version
+            debug "Using package MPI version: ${MPI_VERSIONS[i]} for ${MPI_NAMES[i]}@${MPI_VERSIONS[i]}"
+            cmd+=("${MPI_VERSIONS[i]}")
+        done
+        
+        # Add MPI implementation information
+        cmd+=("--mpi-implementation")
+        for i in "${SELECTED_MPI_INDICES[@]}"; do
+            local impl="${MPI_IMPLEMENTATIONS[i]:-mpi}"
+            if [[ "$VERBOSE_MODE" == true ]]; then
+                echo "Adding MPI implementation: $impl for ${MPI_NAMES[i]}@${MPI_VERSIONS[i]}"
             fi
-            local dynamic_version
-            dynamic_version=$(get_dynamic_mpi_version "${MPI_PREFIXES[i]}" "${MPI_HEADER_PATHS[i]}")
-            
-            if [[ -n "$dynamic_version" ]]; then
-                if [[ "$VERBOSE_MODE" == true ]] || [[ "$QUIET_MODE" != true ]]; then
-                    echo "  Dynamic MPI version detected: $dynamic_version (was: ${MPI_VERSIONS[i]})"
-                fi
-                cmd+=("$dynamic_version")
-            else
-                if [[ "$VERBOSE_MODE" == true ]] || [[ "$QUIET_MODE" != true ]]; then
-                    echo "  Failed to detect dynamic MPI version, using discovered version: ${MPI_VERSIONS[i]}"
-                fi
-                cmd+=("${MPI_VERSIONS[i]}")
-            fi
+            cmd+=("$impl")
         done
     fi
     

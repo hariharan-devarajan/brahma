@@ -21,6 +21,27 @@ This Docker image provides a complete CI environment for building and testing Br
 docker build -f infrastructure/docker/Dockerfile.ci -t brahma-ci:latest .
 ```
 
+## Multi-Architecture Build and Push
+
+```bash
+# Build and push for multiple architectures (requires Docker Buildx)
+docker buildx create --name multiarch --use
+docker buildx build \
+   --platform linux/amd64,linux/arm64 \
+   -f infrastructure/docker/Dockerfile.ci \
+   --push \
+   -t brahma-ci:latest \
+   .
+
+# Push to a specific registry
+docker buildx build \
+   --platform linux/amd64,linux/arm64 \
+   -f infrastructure/docker/Dockerfile.ci \
+   --push \
+   -t hdevarajan92/brahma-ci:latest \
+   .
+```
+
 ## Using the Image
 
 ### Basic Usage
@@ -30,7 +51,7 @@ docker build -f infrastructure/docker/Dockerfile.ci -t brahma-ci:latest .
 docker run -it --rm brahma-ci:latest
 
 # Mount your source code
-docker run -it --rm -v $(pwd):/workspace brahma-ci:latest
+docker run -it --rm -v $PWD:/workspace brahma-ci:latest
 source .github/workflows/scripts/load_env.sh "hdf5@1.14.5" "openmpi@5.0.6"
 
 ```
