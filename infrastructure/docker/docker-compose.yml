@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  brahma-ci:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.ci
+    image: brahma-ci:latest
+    container_name: brahma-ci-dev
+    volumes:
+      - ../..:/workspace:rw
+      - spack-cache:/home/spack/.spack
+    working_dir: /workspace
+    tty: true
+    stdin_open: true
+    environment:
+      - SPACK_ROOT=/home/spack/spack
+      - PATH=/home/spack/spack/bin:$PATH
+    command: /bin/bash
+
+  # Service for testing different configurations
+  brahma-test-mpi-only:
+    extends: brahma-ci
+    container_name: brahma-test-mpi
+    environment:
+      - SPACK_ROOT=/home/spack/spack
+      - PATH=/home/spack/spack/bin:$PATH
+      - TEST_CONFIG=mpi_only
+    command: >
+      bash -c "
+        source /home/spack/load_env.sh mpich 3.4.3 && 
+        echo 'Environment loaded for MPI-only testing' &&
+        /bin/bash
+      "
+
+  brahma-test-hdf5-only:
+    extends: brahma-ci
+    container_name: brahma-test-hdf5
+    environment:
+      - SPACK_ROOT=/home/spack/spack
+      - PATH=/home/spack/spack/bin:$PATH
+      - TEST_CONFIG=hdf5_only
+    command: >
+      bash -c "
+        source \$SPACK_ROOT/share/spack/setup-env.sh &&
+        spack load gcc@12.4.0 &&
+        spack load hdf5@1.14.5 &&
+        echo 'Environment loaded for HDF5-only testing' &&
+        /bin/bash
+      "
+
+  brahma-test-full:
+    extends: brahma-ci
+    container_name: brahma-test-full
+    environment:
+      - SPACK_ROOT=/home/spack/spack
+      - PATH=/home/spack/spack/bin:$PATH
+      - TEST_CONFIG=full
+    command: >
+      bash -c "
+        source /home/spack/load_env.sh openmpi 4.1.6 1.14.5 && 
+        echo 'Environment loaded for full MPI+HDF5 testing' &&
+        /bin/bash
+      "
+
+volumes:
+  spack-cache:
+    driver: local

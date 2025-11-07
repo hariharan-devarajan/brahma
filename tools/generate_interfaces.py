@@ -1,6 +1,7 @@
 import argparse
 import clang.cindex as cix
 import os
+import re
 import shutil
 from datetime import datetime
 from string import Template
@@ -23,15 +24,34 @@ parser.add_argument(
     help="Version of HDF5 related to header file",
 )
 parser.add_argument(
-    "--mpio-header-path",
+    "--mpi-header-path",
+    action="extend",
+    nargs="+",
     type=str,
-    help="Path to MPIO library header file",
+    help="Path to MPI library header file",
+)
+parser.add_argument(
+    "--mpi-version",
+    action="extend",
+    nargs="+",
+    type=str,
+    help="Version of MPI related to header file",
 )
 parser.add_argument(
     "--verbose", action="store_true", help="Print verbose output", default=False
 )
 parser.add_argument(
     "--with-tests", action="store_true", help="Generate tests", default=False
+)
+parser.add_argument(
+    "--ignore-mpi-version", action="store_true", help="Ignore version macros for MPI interfaces", default=False
+)
+parser.add_argument(
+    "--mpi-implementation",
+    action="extend",
+    nargs="+",
+    type=str,
+    help="MPI implementation name for each header (openmpi, mpich, mvapich, craympich)",
 )
 cli_args = parser.parse_args()
 
@@ -42,9 +62,12 @@ print("Command-line arguments:")
 print(f"  libclang-path: {cli_args.libclang_path}")
 print(f"  hdf5-header-path: {cli_args.hdf5_header_path}")
 print(f"  hdf5-version: {cli_args.hdf5_version}")
-print(f"  mpio-header-path: {cli_args.mpio_header_path}")
+print(f"  mpi-header-path: {cli_args.mpi_header_path}")
+print(f"  mpi-version: {cli_args.mpi_version}")
+print(f"  mpi-implementation: {cli_args.mpi_implementation}")
 print(f"  verbose: {cli_args.verbose}")
 print(f"  with-tests: {cli_args.with_tests}")
+print(f"  ignore-mpi-version: {cli_args.ignore_mpi_version}")
 
 TEMPLATE_IMPLEMENTATION = Template("""
 ///
@@ -108,6 +131,7 @@ TEMPLATE_INTERFACE = Template("""
 #ifdef ${enable_macro_name}
 #include <brahma/interceptor.h>
 #include <brahma/interface/interface.h>
+#define H5_DOXYGEN 1
 #include <${lib_header_file_name}>
 
 namespace brahma {
@@ -175,6 +199,10 @@ TEMPLATE_TEST = Template("""
 ///
 
 #include <brahma/brahma.h>
+#include <signal.h>
+#include <execinfo.h>
+#include <stdlib.h>
+#include <stdio.h>
 #ifdef ${enable_macro_name}
 #include <${lib_header_file_name}>
 
@@ -210,19 +238,34 @@ std::shared_ptr<${namespace}Test> ${namespace}Test::my_instance = nullptr;
 void __attribute__((constructor)) test_init() {
 #ifdef ${enable_macro_name}
   auto test_instance = brahma::${namespace}Test::get_instance();
-  test_instance->bind<brahma::${namespace}Test>("${namespace}Test", 0);
+  auto num_bindings = test_instance->bind<brahma::${namespace}Test>("${namespace}Test", 0);
+  printf("${namespace} num_bindings: %zu\\n", num_bindings);
 #endif
 }
 
 void __attribute__((destructor)) test_finalize() {
 #ifdef ${enable_macro_name}
   auto test_instance = brahma::${namespace}Test::get_instance();
-  test_instance->unbind();
+  printf("${namespace} num_bindings: %zu, api_count: %zu\\n", test_instance->num_bindings, test_instance->api_count);
+  fflush(stdout);
   assert(test_instance->num_bindings == test_instance->api_count);
+  size_t unbindings = test_instance->unbind();
+  printf("${namespace} unbindings: %zu\\n", unbindings);
+  printf("finalizing test\\n");
 #endif
 }
 
+void print_stacktrace(int sig) {
+  void *array[32];
+  size_t size = backtrace(array, 32);
+  fprintf(stderr, "Error: signal %d\\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(sig);
+}
+
 int main(int argc, char* argv[]) {
+  signal(SIGSEGV, print_stacktrace);
+  signal(SIGABRT, print_stacktrace);
     #ifdef ${enable_macro_name}
 
     ${test_functions}
@@ -237,6 +280,8 @@ int main(int argc, char* argv[]) {
 
 TEMPLATE_TEST_FUNCTION_OVERRIDE = Template("""
 ${return_type} ${function_name}(${args}) override {
+    printf("${api_number} Captured ${function_name} call\\n");
+    fflush(stdout);
     api_count++;
     ${return_value}
 }
@@ -272,38 +317,109 @@ def build_test_function(function_name, function_args, underlying_types):
         test_function += ");\n"
         return test_function
 
+    def handle_pointer(arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array):
+        if is_double_array or (is_array and is_numeric_array):
+            return f"NULL"
+        elif is_pointer and is_array and "*" not in arg_type:
+            return f"({arg_type}*)NULL"
+        elif is_double_pointer or is_pointer or is_array:
+            return f"({arg_type})NULL"
+        return None
+
+    def handle_arg(arg, arg_type, orig_arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array):
+        if "H5O_token_t" in arg_type:
+            val = handle_pointer(arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array)
+            if val is not None:
+                return val
+            else:
+                return f"({arg_type}){{0}}"
+        elif arg_type == "enum":
+            if is_pointer:
+                return f"({arg_type})NULL"
+            else:
+                return f"static_cast<{orig_arg_type}>(0)"
+        elif is_integer_type(arg_type):
+            val = handle_pointer(arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array)
+            if val is not None:
+                return val
+            else:
+                return f"({arg_type})0"
+        elif arg_type in ["float", "double"]:
+            val = handle_pointer(arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array)
+            if val is not None:
+                return val
+            else:
+                return f"({arg_type})0.0"
+        elif arg_type == "char":
+            val = handle_pointer(arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array)
+            if val is not None:
+                return val
+            else:
+                return "'\\0'"
+        elif arg_type == "bool":
+            val = handle_pointer(arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array)
+            if val is not None:
+                return val
+            else:
+                return "false"
+        elif ("MPI_Datatype" in orig_arg_type or "MPI_Comm" in orig_arg_type or 
+              "MPI_Info" in orig_arg_type or "MPI_Op" in orig_arg_type or 
+              "MPI_Win" in orig_arg_type or "MPI_Errhandler" in orig_arg_type or 
+              "MPI_Request" in orig_arg_type or "MPI_Group" in orig_arg_type or
+              "MPI_Message" in orig_arg_type):
+            # For specific MPI types like MPI_Datatype, MPI_Comm, use 0 instead of NULL
+            val = handle_pointer(arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array)
+            if val is not None:
+                return val
+            else:
+                # For MPI_Comm, MPI_Info, etc., cast 0 to the appropriate type
+                return f"({orig_arg_type})0"
+        else:
+            val = handle_pointer(arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array)
+            if val is not None:
+                return val
+            else:
+                return None
+            
     for i, arg in enumerate(function_args):
-        arg_type = arg.split(" ")[0].strip()
+        # Extract main_type by searching from the end for first '*' or space
+        arg_str = arg.strip()
+        idx_star = arg_str.rfind('*')
+        idx_space = arg_str.rfind(' ')
+        # Find the rightmost of '*' or space
+        split_idx = max(idx_star, idx_space)
+        if split_idx != -1:
+            main_type = arg_str[:split_idx + 1].strip()
+        else:
+            main_type = arg_str
+        arg_type = main_type
         orig_arg_type = arg_type
         is_array = "[]" in arg
+        
+        # Detect pointer and various array syntaxes ([N], [], multiple brackets)
         is_pointer = "*" in arg
+        bracket_matches = re.findall(r'\[.*?\]', arg)
+        is_double_array = len(bracket_matches) > 1
+        # Detect numeric-sized array like [NUM]
+        is_numeric_array = any(re.search(r'\d+', bm) for bm in bracket_matches)
         is_double_pointer = "**" in arg
-        if is_pointer:
+        if is_array:
+            arg_type += "*"
+        if cli_args.verbose and is_pointer:
             print(arg)
-        if arg_type in underlying_types:
-            arg_type = underlying_types[arg_type]
         if i > 0:
             test_function += ", "
-        if arg_type == "enum":
-            if is_pointer:
-                test_function += "NULL"
-            else:
-                test_function += f"static_cast<{orig_arg_type}>(0)"
-        elif is_integer_type(arg_type) and not is_pointer:
-            test_function += "0"
-        elif arg_type in ["float", "double"] and not is_pointer:
-            test_function += "0.0"
-        elif arg_type == "char":
-            if is_double_pointer:
-                test_function += "NULL"
-            elif is_pointer or is_array:
-                test_function += 'const_cast<char*>("")'
-            else:
-                test_function += "'\\0'"
-        elif arg_type == "bool" and not is_pointer:
-            test_function += "false"
+        val = handle_arg(arg, arg_type, orig_arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array)
+        if val is not None:
+            test_function += val
         else:
-            test_function += "NULL"
+            if arg_type in underlying_types:
+                arg_type = underlying_types[arg_type]
+            val = handle_arg(arg, arg_type, orig_arg_type, is_pointer, is_double_pointer, is_array, is_double_array, is_numeric_array)
+            if val is not None:
+                test_function += val
+            else:
+                test_function += f"({arg_type})0"
 
     test_function += ");\n"
     return test_function
@@ -338,6 +454,38 @@ def is_integer_type(underlying_type):
         "unsigned long",
         "unsigned long long",
     ]
+
+
+def get_mpi_impl_macro(impl_name):
+    """
+    Convert MPI implementation name to macro name.
+    Supports: openmpi, mpich, mvapich, craympich
+    """
+    if not impl_name:
+        return None
+    
+    impl_lower = impl_name.lower().replace('-', '').replace('_', '')
+    
+    if impl_lower == "openmpi":
+        return "BRAHMA_MPI_IMPL_OPENMPI"
+    elif impl_lower == "mpich":
+        return "BRAHMA_MPI_IMPL_MPICH"
+    elif impl_lower == "mvapich" or impl_lower == "mvapich2":
+        return "BRAHMA_MPI_IMPL_MVAPICH"
+    elif impl_lower == "craympich" or impl_lower == "craympi":
+        return "BRAHMA_MPI_IMPL_CRAYMPICH"
+    else:
+        # Try to auto-detect from implementation name
+        if "openmpi" in impl_lower or "open-mpi" in impl_lower:
+            return "BRAHMA_MPI_IMPL_OPENMPI"
+        elif "cray" in impl_lower:
+            return "BRAHMA_MPI_IMPL_CRAYMPICH"
+        elif "mvapich" in impl_lower:
+            return "BRAHMA_MPI_IMPL_MVAPICH"
+        elif "mpich" in impl_lower:
+            return "BRAHMA_MPI_IMPL_MPICH"
+    
+    return None
 
 
 def version_number(version_string: str):
@@ -403,15 +551,265 @@ def process_type(cursor):
     return None
 
 
-def wrap_with_version_condition(version_condition, function):
-    if version_condition is None or version_condition == "":
+def wrap_with_version_condition(version_condition, function, impl_condition=None):
+    """
+    Wrap function with version and/or implementation condition.
+    Args:
+        version_condition: Version macro condition (e.g., "BRAHMA_HDF5_VERSION >= 101203")
+        function: Function code to wrap
+        impl_condition: Implementation macro condition. Can be:
+            - A single macro name (e.g., "BRAHMA_MPI_IMPL_OPENMPI")
+            - A complex condition string already formatted (e.g., "(defined(X) || defined(Y))")
+    """
+    if impl_condition and version_condition:
+        # Both implementation and version conditions
+        # Check if impl_condition is already a formatted condition (contains "defined(")
+        if "defined(" in impl_condition:
+            combined_condition = f"({impl_condition} && {version_condition})"
+        else:
+            combined_condition = f"(defined({impl_condition}) && {version_condition})"
+        return TEMPLATE_VERSION_CONDITION.substitute(
+            {
+                "version_condition": combined_condition,
+                "function": function,
+            }
+        )
+    elif impl_condition:
+        # Only implementation condition
+        if "defined(" in impl_condition:
+            # Already formatted
+            condition_str = impl_condition
+        else:
+            # Single macro name
+            condition_str = f"defined({impl_condition})"
+        return TEMPLATE_VERSION_CONDITION.substitute(
+            {
+                "version_condition": condition_str,
+                "function": function,
+            }
+        )
+    elif version_condition:
+        # Only version condition
+        return TEMPLATE_VERSION_CONDITION.substitute(
+            {
+                "version_condition": version_condition,
+                "function": function,
+            }
+        )
+    else:
+        # No conditions
         return function
-    return TEMPLATE_VERSION_CONDITION.substitute(
-        {
-            "version_condition": version_condition,
-            "function": function,
-        }
-    )
+
+
+def normalize_function_signature(return_type, function_name, args):
+    """
+    Create a normalized signature that ignores parameter names but keeps types.
+    This allows us to identify functionally identical signatures.
+    """
+    normalized_args = []
+    for arg in args:
+        if arg == "void":
+            normalized_args.append("void")
+            continue
+        # Extract type by removing parameter name
+        # Handle cases like "const void *ref" -> "const void *"
+        parts = arg.strip().split()
+        if len(parts) >= 2:
+            # Find the last identifier (parameter name) and remove it
+            # Handle array syntax like "int param[3]" 
+            arg_str = arg.strip()
+            if '[' in arg_str and ']' in arg_str:
+                # For arrays, remove the parameter name but keep the array syntax
+                import re
+                match = re.match(r'^(.+?)\s+(\w+)(\[.*\])$', arg_str)
+                if match:
+                    type_part = match.group(1)
+                    array_part = match.group(3)
+                    normalized_args.append(f"{type_part}{array_part}")
+                else:
+                    # Fallback: just remove the last word
+                    normalized_args.append(' '.join(parts[:-1]))
+            else:
+                # Regular case: remove the last word (parameter name)
+                normalized_args.append(' '.join(parts[:-1]))
+        else:
+            # Single word, might be just a type
+            normalized_args.append(arg.strip())
+    
+    return f"{return_type} {function_name}({', '.join(normalized_args)})"
+
+
+def merge_version_ranges(version_ranges):
+    """
+    Merge overlapping or adjacent version ranges.
+    Input: List of (min_version, max_version) tuples
+    Output: List of merged (min_version, max_version) tuples
+    """
+    if not version_ranges:
+        return []
+    
+    # Sort ranges by min_version
+    sorted_ranges = sorted(version_ranges)
+    merged = [sorted_ranges[0]]
+    
+    for current_min, current_max in sorted_ranges[1:]:
+        last_min, last_max = merged[-1]
+        
+        # Check if ranges overlap or are adjacent
+        if current_min <= last_max + 1:  # +1 for adjacent ranges
+            # Merge ranges
+            merged[-1] = (last_min, max(last_max, current_max))
+        else:
+            # No overlap, add as separate range
+            merged.append((current_min, current_max))
+    
+    return merged
+
+
+def create_coupled_mpi_condition(version_impl_pairs, version_macro_name, ignore_version=False):
+    """
+    Create a coupled condition that combines MPI implementation and version checks.
+    
+    Args:
+        version_impl_pairs: List of (version, implementation) tuples
+        version_macro_name: Name of the version macro to use
+        ignore_version: If True, only use implementation conditions
+    
+    Returns:
+        A condition string that couples implementation and version checks
+    
+    Examples:
+    - Single impl/version: "(defined(BRAHMA_MPI_IMPL_OPENMPI) && BRAHMA_MPI_VERSION >= 300000)"
+    - Multiple impls, same version: "(BRAHMA_MPI_VERSION >= 300000 && (defined(BRAHMA_MPI_IMPL_OPENMPI) || defined(BRAHMA_MPI_IMPL_MPICH)))"
+    - Mixed impl/version pairs: "((defined(BRAHMA_MPI_IMPL_OPENMPI) && BRAHMA_MPI_VERSION >= 300000) || (defined(BRAHMA_MPI_IMPL_MPICH) && BRAHMA_MPI_VERSION >= 301000))"
+    """
+    if not version_impl_pairs:
+        return None
+    
+    if ignore_version:
+        # Only use implementation conditions
+        unique_implementations = list(set(impl for _, impl in version_impl_pairs if impl))
+        impl_macros = [get_mpi_impl_macro(impl) for impl in unique_implementations if impl]
+        impl_macros = [m for m in impl_macros if m]  # Filter out None values
+        
+        if not impl_macros:
+            return None
+        elif len(impl_macros) == 1:
+            return f"defined({impl_macros[0]})"
+        else:
+            return " || ".join([f"defined({m})" for m in impl_macros])
+    
+    # Group by implementation to optimize conditions
+    impl_to_versions = {}
+    for version, impl in version_impl_pairs:
+        if impl:  # Only process if implementation is provided
+            if impl not in impl_to_versions:
+                impl_to_versions[impl] = []
+            impl_to_versions[impl].append(version)
+    
+    if not impl_to_versions:
+        return None
+    
+    # Create conditions for each implementation
+    impl_conditions = []
+    for impl, versions in impl_to_versions.items():
+        impl_macro = get_mpi_impl_macro(impl)
+        if not impl_macro:
+            continue
+            
+        version_numbers = [version_number(v) for v in versions]
+        version_condition = optimize_version_condition(version_numbers, version_macro_name)
+        
+        if version_condition:
+            # Couple implementation and version: (defined(IMPL) && VERSION_CONDITION)
+            coupled_condition = f"(defined({impl_macro}) && {version_condition})"
+        else:
+            # Just implementation condition
+            coupled_condition = f"defined({impl_macro})"
+            
+        impl_conditions.append(coupled_condition)
+    
+    if not impl_conditions:
+        return None
+    elif len(impl_conditions) == 1:
+        return impl_conditions[0]
+    else:
+        # Multiple implementations: (IMPL1_CONDITION || IMPL2_CONDITION)
+        return f"({' || '.join(impl_conditions)})"
+
+
+def optimize_version_condition(version_numbers, version_macro_name, max_version_limit=None):
+    """
+    Create a version condition based on minor version ranges.
+    For each version MajorMinorPatch, create range >= MajorMinorPatch && < Major(Minor+1)Patch
+    Then merge adjacent ranges.
+    
+    Args:
+        version_numbers: List of version numbers to include
+        version_macro_name: Name of the version macro to use
+        max_version_limit: Optional maximum version (ignored in this simplified logic)
+    
+    Examples:
+    - [101203] -> >= 101203 && < 101300
+    - [101203, 101300, 101400] -> >= 101203 && < 101500 (merged adjacent ranges)
+    """
+    if not version_numbers:
+        return None
+    
+    version_numbers = sorted(set(version_numbers))  # Remove duplicates and sort
+    
+    # Create individual ranges for each version
+    ranges = []
+    for version in version_numbers:
+        # Calculate the next minor version
+        # Version format: MajorMinorPatch where Major*100000 + Minor*100 + Patch
+        major = version // 100000
+        minor = (version % 100000) // 100
+        next_minor_version = major * 100000 + (minor + 1) * 100
+        ranges.append((version, next_minor_version))
+    
+    # Merge adjacent ranges
+    merged_ranges = []
+    for start, end in ranges:
+        if not merged_ranges:
+            merged_ranges.append((start, end))
+        else:
+            last_start, last_end = merged_ranges[-1]
+            # If this range starts where the last one ended, merge them
+            if start == last_end:
+                merged_ranges[-1] = (last_start, end)
+            else:
+                merged_ranges.append((start, end))
+    
+    # Generate condition strings
+    conditions = []
+    for start, end in merged_ranges:
+        conditions.append(f"({version_macro_name} >= {start} && {version_macro_name} < {end})")
+    
+    if len(conditions) == 1:
+        return conditions[0]
+    else:
+        return f"({' || '.join(conditions)})"
+
+
+def test_version_optimization():
+    """Test function to demonstrate version condition optimization"""
+    test_cases = [
+        ([101203], "Single version 1.12.3 -> up to 1.13.0"),
+        ([101406], "Single version 1.14.6 -> up to 1.15.0"),  
+        ([101203, 101300, 101400], "Adjacent versions -> merged range 1.12.3 to 1.15.0"),
+        ([101203, 101406], "Non-adjacent versions -> separate ranges"),
+        ([100823], "Version 1.8.23 -> up to 1.9.0"),
+        ([110000, 110100, 110200], "Adjacent versions -> merged range 1.10.0 to 1.13.0"),
+    ]
+    
+    if cli_args.verbose:
+        print("\n=== Version Optimization Test Cases ===")
+        for versions, description in test_cases:
+            condition = optimize_version_condition(versions, "BRAHMA_TEST_VERSION")
+            print(f"Versions {versions}: {condition}")
+            print(f"  -> {description}")
+        print("=== End Test Cases ===\n")
 
 
 # Define interface and implementation file paths
@@ -430,6 +828,7 @@ timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 # library header file name
 # library header file path
 # library version
+# library implementation (for MPI)
 # function prefix
 # enable macro name
 # version macro name
@@ -442,26 +841,46 @@ if cli_args.hdf5_header_path and any(cli_args.hdf5_header_path):
             "hdf5.h",
             cli_args.hdf5_header_path,
             cli_args.hdf5_version,
+            None,  # No implementation for HDF5
             "H5",
             "BRAHMA_ENABLE_HDF5",
             "BRAHMA_HDF5_VERSION",
         )
     )
-if cli_args.mpio_header_path:
+if cli_args.mpi_header_path and any(cli_args.mpi_header_path):
+    # Generate MPIIO interface for MPI_File_ functions
     interfaces.append(
         (
             "mpiio",
             "mpiio",
             "mpi.h",
-            [cli_args.mpio_header_path],
-            [""],
+            cli_args.mpi_header_path,
+            cli_args.mpi_version,
+            cli_args.mpi_implementation,  # MPI implementation
             "MPI_File_",
             "BRAHMA_ENABLE_MPI",
-            None,
+            "BRAHMA_MPI_VERSION",
+        )
+    )
+    # Generate MPI interface for MPI_ functions (excluding MPI_File_)
+    interfaces.append(
+        (
+            "mpi",
+            "mpi",
+            "mpi.h",
+            cli_args.mpi_header_path,
+            cli_args.mpi_version,
+            cli_args.mpi_implementation,  # MPI implementation
+            "MPI_",
+            "BRAHMA_ENABLE_MPI",
+            "BRAHMA_MPI_VERSION",
         )
     )
 
 index = cix.Index.create()
+
+# When --ignore-mpi-version is set, we still keep separate mpi and mpiio interfaces
+# but we deduplicate functions across multiple MPI versions/libraries within each interface
 
 # Generate interfaces
 for (
@@ -470,6 +889,7 @@ for (
     lib_header_file_name,
     lib_header_file_paths,
     lib_versions,
+    lib_implementations,
     function_prefix,
     enable_macro_name,
     version_macro_name,
@@ -481,6 +901,10 @@ for (
     test_path = f"{test_dir}/test_{brahma_file_name}.cpp"
 
     namespace = brahma_name.upper()
+    
+    # Track deduplication statistics
+    total_functions_found = 0
+    duplicate_functions_skipped = 0
 
     function_arg_names = {}
     function_args = {}
@@ -488,6 +912,7 @@ for (
     function_return_kinds = {}
     function_return_types = {}
     function_versions = {}
+    function_implementations = {}  # Track which implementation each function comes from
     macro_bindings = {}
     macro_typedefs = {}
     macro_vars = {}
@@ -501,7 +926,8 @@ for (
     type_defs = {}
 
     for i, header_file_path in enumerate(lib_header_file_paths):
-        translation_unit = index.parse(header_file_path + "/" + lib_header_file_name)
+        macro_args = ["-DH5_DOXYGEN=1"] if brahma_name == "hdf5" else []
+        translation_unit = index.parse(header_file_path + "/" + lib_header_file_name, args=macro_args)
 
         for cursor in translation_unit.cursor.get_children():
             if cursor.kind == cix.CursorKind.TYPEDEF_DECL:
@@ -539,18 +965,151 @@ for (
             if not cursor.spelling.startswith(function_prefix):
                 continue
 
+            # Determine if this is an MPI interface
+            is_mpi_interface = brahma_name in ["mpi", "mpiio"]
+            
+            # TODO: Check this and fix these APIs
+            # For MPI interface, exclude MPI_File_ functions to avoid duplication with MPIIO
+            if brahma_name == "mpi" and (cursor.spelling.startswith("MPI_File_") or cursor.spelling.startswith("MPI_T_")):
+                continue
+            
+            # # TODO: Check this and fix these APIs
+            # if "f2c" in cursor.spelling or "c2f" in cursor.spelling:
+            #     continue
+            
+            # TODO: Check this and fix these APIs
+            if brahma_name == "hdf5" and (cursor.spelling in ["H5Tget_size", "H5Tget_ebias","H5Tget_precision","H5Tget_member_offset",
+                                                              "H5Pget_buffer", "H5get_free_list_sizes", "H5allocate_memory","H5resize_memory"]):
+                # For HDF5 interface, only include property list functions (H5P*)
+                continue
+            
+            if brahma_name == "hdf5" and ("H5VL" in cursor.spelling):
+                # For HDF5 interface, only include Vol functions (H5VL*)
+                continue
+
+            # Skip variadic functions (functions with ... parameters)
+            if cursor.type.is_function_variadic():
+                if cli_args.verbose:
+                    print(f"DEBUG: Skipping variadic function: {cursor.spelling}")
+                continue
+            
+            total_functions_found += 1
+            
+            invalid_arg = False
+            for arg in cursor.get_arguments():
+                if "MPI_Session" in arg.type.spelling or "F08" in arg.type.spelling:
+                    invalid_arg = True
+                    break
+            
+            if invalid_arg:
+                continue
+
             args = []
             arg_names = []
             for arg in cursor.get_arguments():
+                # TODO: Check this and fix these APIs
+                if "va_list" in arg.type.spelling:
+                    continue
+                # Debug output for problematic parameters
+                if cli_args.verbose and 'ranges' in arg.spelling:
+                    print(f"DEBUG: Parameter '{arg.spelling}' - Type kind: {arg.type.kind}, Type spelling: '{arg.type.spelling}'")
+                    if hasattr(arg.type, 'element_type'):
+                        print(f"DEBUG: Element type: {arg.type.element_type.spelling if arg.type.element_type else 'None'}")
+                    if arg.type.kind == cix.TypeKind.CONSTANTARRAY:
+                        try:
+                            print(f"DEBUG: Element count: {arg.type.element_count}")
+                        except:
+                            print("DEBUG: Element count not available")
+                    elif arg.type.kind == cix.TypeKind.INCOMPLETEARRAY:
+                        print("DEBUG: Incomplete array - no element count")
+                
+                # Rename parameter name if it's "result" to avoid conflicts
+                param_name = arg.spelling
+                if param_name == "result":
+                    param_name = "result2"
+                    if cli_args.verbose:
+                        print(f"DEBUG: Renamed parameter 'result' to 'result2'")
+                
                 if arg.type.kind == cix.TypeKind.INCOMPLETEARRAY:
-                    args.append(f"{arg.type.element_type.spelling} {arg.spelling}[]")
+                    element_type = arg.type.element_type.spelling
+                    # Handle cases where element type is already an array like "int[3]"
+                    if '[' in element_type and ']' in element_type:
+                        # Extract base type and dimensions
+                        import re
+                        match = re.match(r'^([^[]+)(.*)$', element_type)
+                        if match:
+                            base_type = match.group(1).strip()
+                            dimensions = match.group(2)
+                            args.append(f"{base_type} {param_name}[]{dimensions}")
+                            if cli_args.verbose:
+                                print(f"DEBUG: Fixed incomplete array with complex element: '{element_type} {param_name}[]' -> '{base_type} {param_name}[]{dimensions}'")
+                        else:
+                            args.append(f"{element_type} {param_name}[]")
+                    else:
+                        args.append(f"{element_type} {param_name}[]")
                 elif arg.type.kind == cix.TypeKind.CONSTANTARRAY:
+                    # Handle constant arrays properly: int ranges[3] not int[3] ranges[]
                     args.append(
-                        f"{arg.type.element_type.spelling} {arg.spelling}[{arg.type.element_count}]"
+                        f"{arg.type.element_type.spelling} {param_name}[{arg.type.element_count}]"
                     )
                 else:
-                    args.append(f"{arg.type.spelling} {arg.spelling}")
-                arg_names.append(arg.spelling)
+                    # For regular types, clean up any malformed array syntax
+                    type_spelling = arg.type.spelling
+                    import re
+                    
+                    # Fix cases like "int[3]" to "int" and put array size after parameter name
+                    if re.match(r'.*\[\d+\]$', type_spelling):
+                        # Extract base type and array size
+                        match = re.match(r'(.+?)\[(\d+)\]$', type_spelling)
+                        if match:
+                            base_type = match.group(1)
+                            array_size = match.group(2)
+                            args.append(f"{base_type} {param_name}[{array_size}]")
+                            if cli_args.verbose:
+                                print(f"DEBUG: Fixed array syntax: '{type_spelling}' -> '{base_type} {param_name}[{array_size}]'")
+                        else:
+                            args.append(f"{type_spelling} {param_name}")
+                    # Also handle cases like "int (*)[3]" or "int[3] *" 
+                    elif re.search(r'\[\d+\]', type_spelling):
+                        # More comprehensive array syntax fixing
+                        if 'int[3]' in type_spelling:
+                            # Handle specific case of int[3] appearing anywhere in the type
+                            fixed_type = re.sub(r'int\[(\d+)\]', r'int', type_spelling) 
+                            array_size = re.search(r'int\[(\d+)\]', type_spelling).group(1)
+                            args.append(f"int {param_name}[{array_size}]")
+                            if cli_args.verbose:
+                                print(f"DEBUG: Fixed int[N] syntax: '{type_spelling}' -> 'int {param_name}[{array_size}]'")
+                        else:
+                            args.append(f"{type_spelling} {param_name}")
+                    else:
+                        # Special handling for HDF5 parallel functions that should use MPI types
+                        if (brahma_name == "hdf5" and (
+                            cursor.spelling.startswith("H5P") and (
+                                "mpi" in cursor.spelling.lower() or 
+                                "fapl_mpio" in cursor.spelling or
+                                cursor.spelling in ["H5Pget_mpi_params", "H5Pset_mpi_params"]
+                            )
+                        )):
+                            # Handle MPI types for HDF5 parallel functions
+                            if param_name == "comm":
+                                if type_spelling == "int":
+                                    args.append(f"MPI_Comm {param_name}")
+                                elif type_spelling == "int *":
+                                    args.append(f"MPI_Comm *{param_name}")
+                                else:
+                                    args.append(f"{type_spelling} {param_name}")
+                            elif param_name == "info":
+                                if type_spelling == "int":
+                                    args.append(f"MPI_Info {param_name}")
+                                elif type_spelling == "int *":
+                                    args.append(f"MPI_Info *{param_name}")
+                                else:
+                                    args.append(f"{type_spelling} {param_name}")
+                            else:
+                                args.append(f"{type_spelling} {param_name}")
+                        else:
+                            args.append(f"{type_spelling} {param_name}")
+                arg_names.append(param_name)
 
             if len(args) == 0:
                 args.append("void")
@@ -566,18 +1125,59 @@ for (
             )
             function_hash = hash(function_signature)
 
+            # When --ignore-mpi-version is set for MPI interfaces, use function name as hash
+            # to deduplicate identical functions from different MPI versions/libraries
+            is_mpi_interface = brahma_name in ["mpi", "mpiio"]
+            if is_mpi_interface and cli_args.ignore_mpi_version:
+                # Use function name as key for deduplication
+                # TODO: Consider using normalized signature instead of just name
+                
+                function_hash = hash(cursor.spelling)
+            
+            # Check if this function already exists for the same version
+            current_version = lib_versions[i]
+            current_implementation = lib_implementations[i] if lib_implementations and i < len(lib_implementations) else None
+            
+            if function_hash in function_versions:
+                # If the same function signature exists and has the same version, skip it
+                if current_version in function_versions[function_hash]:
+                    if cli_args.verbose:
+                        print(f"DEBUG: Skipping duplicate function {cursor.spelling} for version {current_version}")
+                    duplicate_functions_skipped += 1
+                    continue
+
+            # Store function information only if it's not a duplicate
             function_arg_names[function_hash] = arg_names
             function_args[function_hash] = args
             function_names[function_hash] = cursor.spelling
             function_return_kinds[function_hash] = cursor.result_type.kind
             function_return_types[function_hash] = cursor.result_type.spelling
 
-            print_function(cursor, function_hash)
+            if cli_args.verbose:
+                print_function(cursor, function_hash)
 
             if function_hash in function_versions:
                 function_versions[function_hash].append(lib_versions[i])
+                if current_implementation:
+                    function_implementations[function_hash].append(current_implementation)
+                else:
+                    # For non-MPI interfaces, maintain alignment by adding None
+                    if not is_mpi_interface:
+                        function_implementations[function_hash].append(None)
+                if cli_args.verbose:
+                    print(f"DEBUG: Added version {lib_versions[i]} to existing function {cursor.spelling}")
             else:
                 function_versions[function_hash] = [lib_versions[i]]
+                if current_implementation:
+                    function_implementations[function_hash] = [current_implementation]
+                else:
+                    # For non-MPI interfaces, maintain alignment by adding None
+                    if not is_mpi_interface:
+                        function_implementations[function_hash] = [None]
+                    else:
+                        function_implementations[function_hash] = []
+                if cli_args.verbose:
+                    print(f"DEBUG: New function {cursor.spelling} with version {lib_versions[i]}")
 
     # print(function_return_kinds)
     # print(underlying_types)
@@ -593,66 +1193,251 @@ for (
     #     print(f"{type_def}: {', '.join(versions)} {suffix}")
     # exit(1)
 
+    # Group functions by function name first, then handle signature differences
+    function_name_groups = {}
     for function_hash, versions in function_versions.items():
-        version_condition = None
-        if all(versions):
-            version_numbers = [version_number(version) for version in versions]
-            min_version = min(version_numbers)
-            max_version = max(version_numbers)
-            if min_version == max_version:
-                version_condition = f"{version_macro_name} >= {min_version}"
+        func_name = function_names[function_hash]
+        
+        if func_name not in function_name_groups:
+            function_name_groups[func_name] = []
+        
+        function_name_groups[func_name].append({
+            'hash': function_hash,
+            'versions': versions,
+            'implementations': function_implementations.get(function_hash, []),
+            'function_name': func_name,
+            'args': function_args[function_hash],
+            'arg_names': function_arg_names[function_hash],
+            'return_type': function_return_types[function_hash],
+            'return_kind': function_return_kinds[function_hash],
+            'normalized_sig': normalize_function_signature(
+                function_return_types[function_hash], func_name, function_args[function_hash]
+            )
+        })
+
+    # Now process each function name group to handle signature changes
+    signature_groups = {}
+    
+    for func_name, func_variants in function_name_groups.items():
+        if len(func_variants) == 1:
+            # Single variant, just add it
+            variant = func_variants[0]
+            signature_groups[variant['normalized_sig']] = [variant]
+        else:
+            # Multiple variants of the same function name - need to handle version ranges
+            # Group by normalized signature
+            sig_to_variants = {}
+            for variant in func_variants:
+                norm_sig = variant['normalized_sig']
+                if norm_sig not in sig_to_variants:
+                    sig_to_variants[norm_sig] = []
+                sig_to_variants[norm_sig].append(variant)
+            
+            if len(sig_to_variants) == 1:
+                # Same signature, just merge versions
+                norm_sig = list(sig_to_variants.keys())[0]
+                signature_groups[norm_sig] = sig_to_variants[norm_sig]
             else:
-                version_condition = " && ".join(
-                    [
-                        f"{version_macro_name} >= {min_version}",
-                        f"{version_macro_name} <= {max_version}",
-                    ]
+                # Different signatures for same function name - need to calculate version ranges
+                if cli_args.verbose:
+                    print(f"DEBUG: Function {func_name} has {len(sig_to_variants)} different signatures")
+                
+                # Sort variants by their minimum version
+                all_variants_with_min_version = []
+                for norm_sig, variants in sig_to_variants.items():
+                    # Collect all versions for this signature
+                    all_versions_for_sig = []
+                    for variant in variants:
+                        all_versions_for_sig.extend(variant['versions'])
+                    
+                    version_numbers = [version_number(v) for v in all_versions_for_sig]
+                    min_version = min(version_numbers)
+                    max_version = max(version_numbers)
+                    
+                    all_variants_with_min_version.append({
+                        'norm_sig': norm_sig,
+                        'variants': variants,
+                        'min_version': min_version,
+                        'max_version': max_version,
+                        'all_versions': sorted(set(all_versions_for_sig))
+                    })
+                
+                # Sort by minimum version
+                all_variants_with_min_version.sort(key=lambda x: x['min_version'])
+                
+                # Now assign non-overlapping version ranges
+                for i, sig_info in enumerate(all_variants_with_min_version):
+                    # Calculate the upper bound for this signature
+                    if i < len(all_variants_with_min_version) - 1:
+                        # Not the last signature, limit to next signature's min version
+                        next_min = all_variants_with_min_version[i + 1]['min_version']
+                        # Create modified variants with limited version range
+                        modified_variants = []
+                        for variant in sig_info['variants']:
+                            # Filter versions that are below the next signature's min version
+                            filtered_versions = [v for v in variant['versions'] 
+                                               if version_number(v) < next_min]
+                            if filtered_versions:
+                                modified_variant = variant.copy()
+                                modified_variant['versions'] = filtered_versions
+                                modified_variant['max_version_limit'] = next_min - 1
+                                modified_variants.append(modified_variant)
+                        
+                        if modified_variants:
+                            signature_groups[sig_info['norm_sig']] = modified_variants
+                    else:
+                        # Last signature, no upper limit
+                        signature_groups[sig_info['norm_sig']] = sig_info['variants']
+
+    if cli_args.verbose:
+        print(f"DEBUG: Found {len(signature_groups)} unique function signatures")
+        for sig, funcs in signature_groups.items():
+            if len(funcs) > 1:
+                print(f"DEBUG: Signature '{sig}' has {len(funcs)} variants")
+        
+        # Show version optimization examples
+        test_version_optimization()
+
+    # Generate merged functions
+    api_counter = 1
+    for normalized_sig, func_variants in signature_groups.items():
+        # Collect all version-implementation pairs from all variants of this function
+        version_impl_pairs = []
+        all_versions = []
+        
+        for variant in func_variants:
+            variant_versions = variant['versions']
+            variant_implementations = variant.get('implementations', [])
+            
+            all_versions.extend(variant_versions)
+            
+            # Create paired tuples of (version, implementation)
+            # Handle cases where implementation list might be shorter or missing
+            for i, version in enumerate(variant_versions):
+                if i < len(variant_implementations) and variant_implementations[i]:
+                    impl = variant_implementations[i]
+                else:
+                    impl = None  # No implementation for this version
+                version_impl_pairs.append((version, impl))
+
+        # Use the first variant as the canonical one (they should all be functionally identical)
+        canonical_variant = func_variants[0]
+        function_hash = canonical_variant['hash']  # Keep original hash for mapping
+        
+        version_condition = None
+        impl_condition = None
+        
+        # Skip version conditions for MPI if ignore flag is set
+        is_mpi_interface = brahma_name in ["mpi", "mpiio"]
+        
+        # For MPI interfaces, create coupled implementation-version conditions
+        if is_mpi_interface:
+            # Filter to only pairs with implementations
+            mpi_pairs = [(v, i) for v, i in version_impl_pairs if i]
+            
+            if mpi_pairs:
+                impl_condition = create_coupled_mpi_condition(
+                    mpi_pairs, version_macro_name, cli_args.ignore_mpi_version
                 )
+                
+                if cli_args.verbose:
+                    print(f"DEBUG: Function {canonical_variant['function_name']} has version-impl pairs: {mpi_pairs}")
+                    print(f"DEBUG: Coupled condition: {impl_condition}")
+        else:
+            # For non-MPI interfaces, generate implementation condition (should be None)
+            # This is kept for consistency but shouldn't be used for non-MPI interfaces
+            if any(impl for _, impl in version_impl_pairs):
+                unique_implementations = list(set(impl for _, impl in version_impl_pairs if impl))
+                impl_macros = [get_mpi_impl_macro(impl) for impl in unique_implementations if impl]
+                impl_macros = [m for m in impl_macros if m]  # Filter out None values
+                
+                if impl_macros:
+                    if len(impl_macros) == 1:
+                        impl_condition = impl_macros[0]
+                    else:
+                        impl_condition = " || ".join([f"defined({m})" for m in impl_macros])
+        
+        # Generate version condition only if not MPI or not ignoring MPI version
+        if all(all_versions) and not (is_mpi_interface and cli_args.ignore_mpi_version):
+            # Only generate separate version condition for non-MPI interfaces
+            # For MPI interfaces, version is already coupled with implementation
+            if not is_mpi_interface:
+                version_numbers = [version_number(version) for version in all_versions]
+                
+                # Check if any variant has a max version limit
+                max_version_limit = None
+                for variant in func_variants:
+                    if 'max_version_limit' in variant:
+                        max_version_limit = variant['max_version_limit']
+                        break
+                
+                version_condition = optimize_version_condition(version_numbers, version_macro_name, max_version_limit)
+                
+                if cli_args.verbose and len(func_variants) > 1:
+                    print(f"DEBUG: Merged {len(func_variants)} variants of {canonical_variant['function_name']}")
+                    print(f"DEBUG: Versions: {all_versions}")
+                    print(f"DEBUG: Version numbers: {version_numbers}")
+                    if max_version_limit:
+                        print(f"DEBUG: Max version limit: {max_version_limit}")
+                    print(f"DEBUG: Optimized condition: {version_condition}")
+
+        # For MPI interfaces, use only the coupled condition (impl_condition contains both)
+        # For non-MPI interfaces, use separate version and implementation conditions
+        if is_mpi_interface:
+            final_version_condition = None  # Version is coupled with implementation
+            final_impl_condition = impl_condition  # Contains both version and implementation
+        else:
+            final_version_condition = version_condition
+            final_impl_condition = impl_condition
 
         macro_bindings[function_hash] = wrap_with_version_condition(
-            version_condition,
+            final_version_condition,
             TEMPLATE_MACRO_BINDING.substitute(
                 {
-                    "function_name": function_names[function_hash],
+                    "function_name": canonical_variant['function_name'],
                     "namespace": namespace,
                 }
             ),
+            final_impl_condition,
         )
 
         macro_typedefs[function_hash] = wrap_with_version_condition(
-            version_condition,
+            final_version_condition,
             TEMPLATE_MACRO_TYPEDEF.substitute(
                 {
-                    "arg_names": ", ".join(function_arg_names[function_hash]),
-                    "args": ", ".join(function_args[function_hash]),
-                    "function_name": function_names[function_hash],
+                    "arg_names": ", ".join(canonical_variant['arg_names']),
+                    "args": ", ".join(canonical_variant['args']),
+                    "function_name": canonical_variant['function_name'],
                     "namespace": namespace,
-                    "return_type": function_return_types[function_hash],
+                    "return_type": canonical_variant['return_type'],
                 }
             ),
+            final_impl_condition,
         )
 
         macro_vars[function_hash] = wrap_with_version_condition(
-            version_condition,
+            final_version_condition,
             TEMPLATE_MACRO_VAR.substitute(
                 {
-                    "function_name": function_names[function_hash],
+                    "function_name": canonical_variant['function_name'],
                 }
             ),
+            final_impl_condition,
         )
 
         if cli_args.with_tests:
             test_functions[function_hash] = wrap_with_version_condition(
-                version_condition,
+                final_version_condition,
                 build_test_function(
-                    function_names[function_hash],
-                    function_args[function_hash],
+                    canonical_variant['function_name'],
+                    canonical_variant['args'],
                     underlying_types,
                 ),
+                final_impl_condition,
             )
 
-            test_function_return_kind = function_return_kinds[function_hash]
-            test_function_return_type = function_return_types[function_hash]
+            test_function_return_kind = canonical_variant['return_kind']
+            test_function_return_type = canonical_variant['return_type']
             test_function_orig_return_type = test_function_return_type
             if test_function_return_type in underlying_types:
                 test_function_return_type = underlying_types[test_function_return_type]
@@ -668,54 +1453,61 @@ for (
             else:
                 test_function_return_value = "return NULL;"
             test_function_overrides[function_hash] = wrap_with_version_condition(
-                version_condition,
+                final_version_condition,
                 TEMPLATE_TEST_FUNCTION_OVERRIDE.substitute(
                     {
-                        "args": ", ".join(function_args[function_hash]),
-                        "function_name": function_names[function_hash],
-                        "return_type": function_return_types[function_hash],
+                        "api_number": api_counter,
+                        "args": ", ".join(canonical_variant['args']),
+                        "function_name": canonical_variant['function_name'],
+                        "return_type": canonical_variant['return_type'],
                         "return_value": test_function_return_value,
                     }
                 ),
+                final_impl_condition,
             )
 
         virtual_functions[function_hash] = wrap_with_version_condition(
-            version_condition,
+            final_version_condition,
             TEMPLATE_VIRTUAL_FUNCTION.substitute(
                 {
-                    "args": ", ".join(function_args[function_hash]),
-                    "function_name": function_names[function_hash],
+                    "args": ", ".join(canonical_variant['args']),
+                    "function_name": canonical_variant['function_name'],
                     "namespace": namespace,
-                    "return_type": function_return_types[function_hash],
+                    "return_type": canonical_variant['return_type'],
                 }
             ),
+            final_impl_condition,
         )
 
-        if function_return_kinds[function_hash] == cix.TypeKind.VOID:
+        if canonical_variant['return_kind'] == cix.TypeKind.VOID:
             wrapper_functions[function_hash] = wrap_with_version_condition(
-                version_condition,
+                final_version_condition,
                 TEMPLATE_WRAPPER_FUNCTION_VOID.substitute(
                     {
-                        "arg_names": ", ".join(function_arg_names[function_hash]),
-                        "args": ", ".join(function_args[function_hash]),
-                        "function_name": function_names[function_hash],
+                        "arg_names": ", ".join(canonical_variant['arg_names']),
+                        "args": ", ".join(canonical_variant['args']),
+                        "function_name": canonical_variant['function_name'],
                         "namespace": namespace,
                     }
                 ),
+                final_impl_condition,
             )
         else:
             wrapper_functions[function_hash] = wrap_with_version_condition(
-                version_condition,
+                final_version_condition,
                 TEMPLATE_WRAPPER_FUNCTION.substitute(
                     {
-                        "arg_names": ", ".join(function_arg_names[function_hash]),
-                        "args": ", ".join(function_args[function_hash]),
-                        "function_name": function_names[function_hash],
+                        "arg_names": ", ".join(canonical_variant['arg_names']),
+                        "args": ", ".join(canonical_variant['args']),
+                        "function_name": canonical_variant['function_name'],
                         "namespace": namespace,
-                        "return_type": function_return_types[function_hash],
+                        "return_type": canonical_variant['return_type'],
                     }
                 ),
+                final_impl_condition,
             )
+
+        api_counter += 1
 
     with open(interface_path, "w+") as interface_file:
         interface_file.write(
@@ -763,7 +1555,13 @@ for (
                 )
             )
 
-    print(f"[{brahma_name}] Generated {len(macro_vars)} functions")
+    print(f"[{brahma_name}] Generated {len(signature_groups)} unique function signatures")
+    print(f"[{brahma_name}] Found {total_functions_found} total functions, skipped {duplicate_functions_skipped} duplicates")
+    
+    # Report version merging statistics
+    merged_count = sum(1 for funcs in signature_groups.values() if len(funcs) > 1)
+    if merged_count > 0:
+        print(f"[{brahma_name}] Merged {merged_count} functions with multiple versions/variants")
 
     if shutil.which("clang-format") is None:
         print(f"[{brahma_name}] clang-format not found, skipping formatting")

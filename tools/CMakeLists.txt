@@ -96,12 +96,23 @@ if(BRAHMA_BUILD_WITH_MPI)
         if(NOT MPI_HEADER_PATH)
             message(FATAL_ERROR "mpi.h not found in ${MPI_C_INCLUDE_PATH}")
         endif()
+        # Try to detect MPI version
+        set(MPI_VERSION "unknown")
+        if(MPI_C_VERSION_MAJOR AND MPI_C_VERSION_MINOR)
+            set(MPI_VERSION "${MPI_C_VERSION_MAJOR}.${MPI_C_VERSION_MINOR}")
+        elseif(MPI_VERSION_MAJOR AND MPI_VERSION_MINOR)
+            set(MPI_VERSION "${MPI_VERSION_MAJOR}.${MPI_VERSION_MINOR}")
+        endif()
+        
         list(APPEND COMMAND_ARGS
-            --mpio-header-path ${MPI_HEADER_PATH}
+            --mpi-header-path ${MPI_HEADER_PATH}
+            --mpi-version ${MPI_VERSION}
         )
         list(APPEND GENERATED_FILES
             ${CMAKE_SOURCE_DIR}/include/brahma/interface/mpiio.h
             ${CMAKE_SOURCE_DIR}/src/brahma/interface/mpiio.cpp
+            ${CMAKE_SOURCE_DIR}/include/brahma/interface/mpi.h
+            ${CMAKE_SOURCE_DIR}/src/brahma/interface/mpi.cpp
         )
     endif()
 endif()

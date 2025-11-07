@@ -1,0 +1,65 @@
+# Build artifacts
+build/
+install/
+*.core
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation (keep essential docs)
+*.md
+!README.md
+!infrastructure/docker/README.md
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Logs
+*.log
+logs/
+
+# Cache directories
+.cache/
+__pycache__/
+*.pyc
+*.pyo
+
+# Backup files
+*.bak
+*.backup
+
+# Test results
+Testing/
+CTestTestfile.cmake
+
+# CMake generated files (except essential ones)
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# Spack cache (will be built in container)
+.spack/
+spack/
+
+# Development containers
+.devcontainer/
+
+# CI artifacts
+corona*

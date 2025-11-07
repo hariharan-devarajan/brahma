@@ -1,0 +1,93 @@
+FROM ubuntu:24.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Set environment variables for build
+ENV BUILD_TYPE=Debug
+ENV LOCAL=local
+# Remove default Ubuntu repositories
+
+
+# Update package lists and install minimal base dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    clang \
+    clang-format \
+    curl \
+    gdb \
+    gfortran \
+    git \
+    htop \
+    nano \
+    python3 \
+    python3-pip \
+    python3-venv \
+    strace \
+    sudo \
+    valgrind \
+    vim \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user for spack with sudo privileges
+RUN useradd -m -s /bin/bash spack && \
+    usermod -aG sudo spack && \
+    echo "spack ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Switch to spack user
+USER spack
+WORKDIR /home/spack
+
+# Install latest Spack
+RUN git clone --depth=2 https://github.com/spack/spack.git 
+
+# Add Spack to PATH
+ENV SPACK_ROOT=/home/spack/spack
+ENV PATH=$SPACK_ROOT/bin:$PATH
+
+# Initialize Spack shell support
+RUN echo "source $SPACK_ROOT/share/spack/setup-env.sh" >> ~/.bashrc
+
+# Skip external packages configuration - let Spack build everything from source
+
+# Source spack environment for subsequent commands
+SHELL ["/bin/bash", "-c"]
+
+# Find compilers only
+RUN source $SPACK_ROOT/share/spack/setup-env.sh && \
+    spack compiler find && \
+    spack compiler list
+
+# List available compilers
+RUN source $SPACK_ROOT/share/spack/setup-env.sh && \
+    spack compiler list
+
+# Install HDF5 versions (1.8, 1.10, 1.12, 1.14) with MPI support mpich 3, 4 and openmpi 4, 5
+RUN source $SPACK_ROOT/share/spack/setup-env.sh && \
+  spack install -j$(nproc) --reuse  hdf5@1.8.23+mpi ^mpich@3.4.3
+
+RUN source $SPACK_ROOT/share/spack/setup-env.sh && \
+  spack install -j$(nproc) --reuse hdf5@1.10.11+mpi  ^openmpi@4.1.6
+
+RUN source $SPACK_ROOT/share/spack/setup-env.sh && \
+  spack install -j$(nproc) --reuse hdf5@1.12.3+mpi  ^mpich@4.2.3
+RUN source $SPACK_ROOT/share/spack/setup-env.sh && \
+  spack install -j$(nproc) --reuse hdf5@1.14.5+mpi  ^openmpi@5.0.6
+
+# Clean up spack build cache to reduce image size
+RUN source $SPACK_ROOT/share/spack/setup-env.sh && \
+    spack clean -a
+
+# Set default working directory
+WORKDIR /workspace
+
+# Add helpful aliases to bashrc
+RUN echo 'alias ll="ls -la"' >> ~/.bashrc && \
+    echo 'alias spack-env="source $SPACK_ROOT/share/spack/setup-env.sh"' >> ~/.bashrc && \
+    echo 'source $SPACK_ROOT/share/spack/setup-env.sh' >> ~/.bashrc
+
+# Default command
+CMD ["/bin/bash"]
