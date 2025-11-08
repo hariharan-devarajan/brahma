@@ -10,7 +10,6 @@ list(APPEND CMAKE_MODULE_PATH "@EXTRA_CMAKE_MODULE_DIR@")
 
 #include(GNUInstallDirs)
 include(ExternalProject)
-include(brahma-utils)
 include(CMakePackageConfigHelpers)
 
 
