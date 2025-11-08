@@ -23,44 +23,57 @@
     gotcha_binding_t binding = {#fname, (void*)fname##_wrapper,       \
                                 &fname##_brahma_handle};              \
     bindings.push_back(binding);                                      \
-    fname##_fptr fn = &::fname;                                     \
-    if(fn){                                                 \
-      gotcha_binding_t unbinding = {#fname, (void*)fn,      \
+    fname##_fptr fn = &::fname;                                       \
+    if(fn){                                                           \
+      gotcha_binding_t unbinding = {#fname, (void*)fn,                \
                                     &fname##_brahma_handle};          \
       unbindings.push_back(unbinding);                                \
       }                                                               \
 }
 #define GOTCHA_MACRO_TYPEDEF(macroname, macroret, macroargs, macro2args_val, macroclass_name)         \
-  typedef macroret(*macroname##_fptr) macroargs;                                           \
-  inline macroret macroname##_wrapper macroargs {                                          \
-    return macroclass_name::get_instance()->macroname macro2args_val;                       \
-  }                                                                         \
-  macroret __attribute__((weak)) macroname macroargs;
+  typedef macroret(*macroname##_fptr) macroargs;                                                      \
+  macroret __attribute__((weak)) macroname macroargs;                                                 \
+  inline macroret macroname##_wrapper macroargs {                                                     \
+    auto instance = macroclass_name::get_instance();                                                  \
+    if (instance == nullptr) {                                                                        \
+      macroname##_fptr fn = &::macroname;                                                             \
+      return fn macro2args_val;                                                                       \
+    }                                                                                                 \
+    return instance->macroname macro2args_val;                                                        \
+  }                                                                         
+  
 #define GOTCHA_MACRO_TYPEDEF_OPEN(name, ret, args, args_val, start, \
                                   class_name)                       \
   typedef ret(*name##_fptr) args;                                   \
+  ret __attribute__((weak)) name args;                              \
   inline ret name##_wrapper args {                                  \
     va_list _args;                                                  \
     va_start(_args, start);                                         \
     int mode = va_arg(_args, int);                                  \
     va_end(_args);                                                  \
-    ret v = class_name::get_instance()->name args_val;              \
-    return v;                                                       \
-  }                                                                 \
-  ret __attribute__((weak)) name args;
+    auto instance = class_name::get_instance();                     \
+    if (instance == nullptr) {                                      \
+      name##_fptr fn = &::name;                                     \
+      return fn args_val;                                           \
+    }                                                               \
+    return instance->name args_val;                                 \
+  }                                                                 
 
 #define GOTCHA_MACRO_TYPEDEF_EXECL(name, ret, args, args_val, start, \
                                    class_name)                       \
   typedef ret(*name##_fptr) args;                                    \
+  ret __attribute__((weak)) name args;                               \
   inline ret name##_wrapper args {                                   \
     va_list _args;                                                   \
     va_start(_args, start);                                          \
     char* val = va_arg(_args, char*);                                \
     va_end(_args);                                                   \
-    ret v = class_name::get_instance()->name args_val;              \
-    return v;                                                       \
-  }                                                                 \
-  ret __attribute__((weak)) name args; 
+    auto instance = class_name::get_instance();                      \
+    if (instance == nullptr) {                                       \
+      return ::name args_val;                                        \
+    }                                                                \
+    return instance->name args_val;                                  \
+  }                                                                  
 
 #define GOTCHA_MACRO_VAR(name) gotcha_wrappee_handle_t name##_brahma_handle;
 
