@@ -355,9 +355,9 @@ if(BRAHMA_BUILD_WITH_MPI)
       if (MPI_C_COMPILER)
         message(STATUS "[${PROJECT_NAME}] MPI C compiler: ${MPI_C_COMPILER}")
         
-        # Try to get version information from mpicc
+        # Try -v first (works for MPICH - shows "mpicc for MPICH version X.Y.Z")
         execute_process(
-          COMMAND ${MPI_C_COMPILER} --version
+          COMMAND ${MPI_C_COMPILER} -v
           OUTPUT_VARIABLE MPI_COMPILER_VERSION_OUTPUT
           ERROR_VARIABLE MPI_COMPILER_VERSION_ERROR
           OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -367,21 +367,38 @@ if(BRAHMA_BUILD_WITH_MPI)
         set(MPI_VERSION_INFO "${MPI_COMPILER_VERSION_OUTPUT} ${MPI_COMPILER_VERSION_ERROR}")
         
         # Extract package version from compiler output
-        if (MPI_VERSION_INFO MATCHES "Open MPI")
+        if (MPI_VERSION_INFO MATCHES "MPICH version ([0-9]+\\.[0-9]+\\.[0-9]+)")
+          # MPICH -v output: "mpicc for MPICH version 4.2.3"
+          set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
+        elseif (MPI_VERSION_INFO MATCHES "Open MPI")
           # OpenMPI: Extract version like "mpicc (Open MPI) 4.1.6"
           if (MPI_VERSION_INFO MATCHES "Open MPI\\) ([0-9]+\\.[0-9]+\\.[0-9]+)")
-            set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
-          endif()
-        elseif (MPI_VERSION_INFO MATCHES "MPICH" OR MPI_VERSION_INFO MATCHES "mpich")
-          # MPICH: Extract version like "mpich version 4.2.3" or similar patterns
-          if (MPI_VERSION_INFO MATCHES "mpich[^0-9]*([0-9]+\\.[0-9]+\\.[0-9]+)")
-            set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
-          elseif (MPI_VERSION_INFO MATCHES "version[^0-9]*([0-9]+\\.[0-9]+\\.[0-9]+)")
             set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
           endif()
         elseif (MPI_VERSION_INFO MATCHES "MVAPICH")
           # MVAPICH: Extract version 
           if (MPI_VERSION_INFO MATCHES "MVAPICH[^0-9]*([0-9]+\\.[0-9]+\\.[0-9]+)")
+            set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
+          endif()
+        else()
+          # Fallback to --version if -v didn't give version
+          execute_process(
+            COMMAND ${MPI_C_COMPILER} --version
+            OUTPUT_VARIABLE MPI_COMPILER_VERSION_OUTPUT2
+            ERROR_VARIABLE MPI_COMPILER_VERSION_ERROR2
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_STRIP_TRAILING_WHITESPACE
+          )
+          set(MPI_VERSION_INFO "${MPI_COMPILER_VERSION_OUTPUT2} ${MPI_COMPILER_VERSION_ERROR2}")
+          
+          if (MPI_VERSION_INFO MATCHES "Open MPI")
+            # OpenMPI: Extract version like "mpicc (Open MPI) 4.1.6"
+            if (MPI_VERSION_INFO MATCHES "Open MPI\\) ([0-9]+\\.[0-9]+\\.[0-9]+)")
+              set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
+            endif()
+          elseif (MPI_VERSION_INFO MATCHES "mpich[^0-9]*([0-9]+\\.[0-9]+\\.[0-9]+)")
+            set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
+          elseif (MPI_VERSION_INFO MATCHES "version[^0-9]*([0-9]+\\.[0-9]+\\.[0-9]+)")
             set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
           endif()
         endif()
