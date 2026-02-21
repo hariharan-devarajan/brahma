@@ -149,7 +149,11 @@ function(install_external_project name url tag install_dir)
             GIT_SUBMODULES ""
             UPDATE_COMMAND ""
             PATCH_COMMAND git submodule update --init
-            CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${install_dir}" ${configure_args}
+            CMAKE_ARGS 
+                "-DCMAKE_INSTALL_PREFIX=${install_dir}"
+                "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
+                "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+                ${configure_args}
             BUILD_COMMAND make -j
             INSTALL_COMMAND make install  -j
             LOG_DOWNLOAD ON
