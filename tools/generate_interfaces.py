@@ -741,8 +741,8 @@ def create_coupled_mpi_condition(version_impl_pairs, version_macro_name, ignore_
 def optimize_version_condition(version_numbers, version_macro_name, max_version_limit=None):
     """
     Create a version condition based on minor version ranges.
-    For each version MajorMinorPatch, create range >= MajorMinorPatch && < Major(Minor+1)Patch
-    Then merge adjacent ranges.
+    For each unique (major, minor) pair, create range >= min_patch && < next_minor
+    Then merge overlapping AND adjacent ranges.
     
     Args:
         version_numbers: List of version numbers to include
@@ -752,32 +752,39 @@ def optimize_version_condition(version_numbers, version_macro_name, max_version_
     Examples:
     - [101203] -> >= 101203 && < 101300
     - [101203, 101300, 101400] -> >= 101203 && < 101500 (merged adjacent ranges)
+    - [800108, 800109, 800111] -> >= 800108 && < 800200 (consolidated same minor versions)
     """
     if not version_numbers:
         return None
     
     version_numbers = sorted(set(version_numbers))  # Remove duplicates and sort
     
-    # Create individual ranges for each version
-    ranges = []
+    # Group by (major, minor) and find minimum patch for each group
+    # This consolidates versions like 800108, 800109, 800111 -> 800108
+    minor_groups = {}
     for version in version_numbers:
-        # Calculate the next minor version
-        # Version format: MajorMinorPatch where Major*100000 + Minor*100 + Patch
         major = version // 100000
         minor = (version % 100000) // 100
-        next_minor_version = major * 100000 + (minor + 1) * 100
-        ranges.append((version, next_minor_version))
+        key = (major, minor)
+        if key not in minor_groups or version < minor_groups[key]:
+            minor_groups[key] = version
     
-    # Merge adjacent ranges
+    # Create ranges for each minor version group
+    ranges = []
+    for (major, minor), min_version in sorted(minor_groups.items()):
+        next_minor_version = major * 100000 + (minor + 1) * 100
+        ranges.append((min_version, next_minor_version))
+    
+    # Merge overlapping AND adjacent ranges
     merged_ranges = []
     for start, end in ranges:
         if not merged_ranges:
             merged_ranges.append((start, end))
         else:
             last_start, last_end = merged_ranges[-1]
-            # If this range starts where the last one ended, merge them
-            if start == last_end:
-                merged_ranges[-1] = (last_start, end)
+            # Merge if overlapping (start < last_end) or adjacent (start == last_end)
+            if start <= last_end:
+                merged_ranges[-1] = (last_start, max(last_end, end))
             else:
                 merged_ranges.append((start, end))
     
@@ -801,6 +808,9 @@ def test_version_optimization():
         ([101203, 101406], "Non-adjacent versions -> separate ranges"),
         ([100823], "Version 1.8.23 -> up to 1.9.0"),
         ([110000, 110100, 110200], "Adjacent versions -> merged range 1.10.0 to 1.13.0"),
+        ([800108, 800109, 800111, 800112, 800124], "Same minor versions -> consolidated to 8.0.8"),
+        ([900001], "Version 9.0.1 -> up to 9.1.0"),
+        ([800108, 800109, 900001, 900102], "Mixed minors -> consolidated separately"),
     ]
     
     if cli_args.verbose:

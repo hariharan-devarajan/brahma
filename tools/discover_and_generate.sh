@@ -552,7 +552,7 @@ find_hdf5_system() {
             # Method 2: Parse version from hdf5.h header file
             if [[ -z "$version" && -f "$header_path/H5public.h" ]]; then
                 version=$(grep -E "H5_VERS_(MAJOR|MINOR|RELEASE)" "$header_path/H5public.h" 2>/dev/null | \
-                         awk '/H5_VERS_MAJOR/ {major=$3} /H5_VERS_MINOR/ {minor=$3} /H5_VERS_RELEASE/ {release=$3} END {print major"."minor"."release}' | \
+                         awk '/^#define H5_VERS_MAJOR/ {major=$3} /^#define H5_VERS_MINOR/ {minor=$3} /^#define H5_VERS_RELEASE/ {release=$3} END {print major"."minor"."release}' | \
                          tr -d '[:space:]' || echo "")
             fi
             
@@ -873,7 +873,7 @@ find_mpi_modules() {
     done
     
     # Common MPI module patterns
-    local mpi_patterns=("openmpi" "mpich" "intel-mpi" "mvapich2" "mpi")
+    local mpi_patterns=("openmpi" "mpich" "intel-mpi" "mvapich2" "mpi" "cray-mpich")
     
     for pattern in "${mpi_patterns[@]}"; do
         debug "Checking for $pattern modules..."
@@ -908,7 +908,15 @@ find_mpi_modules() {
                 local mpi_name="$pattern"
                 local version=""
                 
-                if [[ "$module_name" =~ ${pattern}[/-]([0-9]+\.[0-9]+(\.[0-9]+)?) ]]; then
+                # For cray-mpich, extract version from module name first
+                # The module name format is cray-mpich/VERSION (e.g., cray-mpich/9.0.1)
+                if [[ "$pattern" == "cray-mpich" ]]; then
+                    if [[ "$module_name" =~ cray-mpich[/-]([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+                        version="${BASH_REMATCH[1]}"
+                    elif [[ "$module_name" =~ cray-mpich[/-]([0-9]+\.[0-9]+) ]]; then
+                        version="${BASH_REMATCH[1]}"
+                    fi
+                elif [[ "$module_name" =~ ${pattern}[/-]([0-9]+\.[0-9]+(\.[0-9]+)?) ]]; then
                     version="${BASH_REMATCH[1]}"
                 elif [[ "$module_name" =~ ${pattern}[/-]([0-9]+\.[0-9]+) ]]; then
                     version="${BASH_REMATCH[1]}"
@@ -942,7 +950,13 @@ find_mpi_modules() {
                 local prefix=""
                 if module load "$module_name" 2>/dev/null; then
                     # Try different environment variables that might contain the prefix
-                    if [[ -n "${MPI_ROOT:-}" ]]; then
+                    # For cray-mpich, check CRAY_MPICH_DIR first
+                    if [[ "$mpi_name" == "cray-mpich" && -n "${CRAY_MPICH_DIR:-}" ]]; then
+                        prefix="$CRAY_MPICH_DIR"
+                    # Also check CRAY_MPICH_DIR for mpich pattern (cray-mpich can be exposed as mpich)
+                    elif [[ "$mpi_name" == "mpich" && -n "${CRAY_MPICH_DIR:-}" ]]; then
+                        prefix="$CRAY_MPICH_DIR"
+                    elif [[ -n "${MPI_ROOT:-}" ]]; then
                         prefix="$MPI_ROOT"
                     elif [[ -n "${MPI_DIR:-}" ]]; then
                         prefix="$MPI_DIR"
@@ -972,6 +986,35 @@ find_mpi_modules() {
                 if [[ ! -f "$prefix/include/mpi.h" ]]; then
                     debug "mpi.h not found in $prefix/include for module: $module_name"
                     continue
+                fi
+                
+                # Validate that the detected prefix matches the expected MPI implementation
+                # This prevents picking up wrong installations from environment views
+                local detected_impl
+                detected_impl=$(detect_mpi_implementation "$mpi_name" "$prefix" "$prefix/include")
+                
+                # Skip mpich modules that are actually cray-mpich (detected via path or implementation)
+                # These will be found via the cray-mpich pattern instead
+                if [[ "$mpi_name" == "mpich" ]]; then
+                    if [[ "$prefix" == *"/cray/pe/mpich/"* ]] || [[ "$detected_impl" == "craympich" ]]; then
+                        debug "Skipping $module_name: appears to be cray-mpich (will be found via cray-mpich pattern)"
+                        continue
+                    fi
+                fi
+                
+                if [[ "$mpi_name" == "cray-mpich" && "$detected_impl" != "craympich" ]]; then
+                    debug "Skipping $module_name: detected implementation '$detected_impl' at $prefix does not match expected 'craympich'"
+                    continue
+                fi
+                
+                # For cray-mpich, also validate that the version in the path matches the module version
+                # This prevents picking up wrong installations from environment views
+                if [[ "$mpi_name" == "cray-mpich" && "$prefix" =~ /cray/pe/mpich/([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+                    local path_version="${BASH_REMATCH[1]}"
+                    if [[ "$version" != "$path_version" ]]; then
+                        debug "Skipping $module_name: module version '$version' does not match path version '$path_version' at $prefix"
+                        continue
+                    fi
                 fi
                 
                 # For modules, trust the module name and version rather than probing the installation
@@ -1089,6 +1132,16 @@ find_mpi_system() {
         "/usr/lib64/mpich"
     )
     
+    # Add Cray MPICH paths if available
+    if [[ -d "/opt/cray/pe/mpich" ]]; then
+        # Add all cray-mpich version directories
+        for cray_mpich_dir in /opt/cray/pe/mpich/*/ofi/crayclang/*; do
+            if [[ -d "$cray_mpich_dir" ]]; then
+                system_prefixes+=("$cray_mpich_dir")
+            fi
+        done
+    fi
+    
     # Additional paths from environment variables
     local env_vars=("MPI_ROOT" "MPI_DIR" "MPI_HOME" "MPICH_ROOT" "OPENMPI_ROOT" "MVAPICH2_ROOT")
     for var in "${env_vars[@]}"; do
@@ -1149,34 +1202,53 @@ find_mpi_system() {
             local mpi_name=""
             local version=""
             
-            # Method 1: Try mpirun/mpiexec if available in this prefix
-            for cmd in "mpirun" "mpiexec"; do
-                if [[ -x "$prefix/bin/$cmd" ]]; then
-                    local version_output
-                    version_output=$("$prefix/bin/$cmd" --version 2>/dev/null || echo "")
-                    
-                    # Detect Open MPI
-                    if echo "$version_output" | grep -qi "open.*mpi"; then
-                        mpi_name="openmpi"
-                        version=$(echo "$version_output" | grep -oE "[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1 || echo "")
-                    # Detect MPICH
-                    elif echo "$version_output" | grep -qi "mpich"; then
-                        mpi_name="mpich"
-                        version=$(echo "$version_output" | grep -oE "[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1 || echo "")
-                    # Detect MVAPICH2
-                    elif echo "$version_output" | grep -qi "mvapich"; then
-                        mpi_name="mvapich2"
-                        version=$(echo "$version_output" | grep -oE "[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1 || echo "")
-                    # Generic MPI
-                    else
-                        version=$(echo "$version_output" | grep -oE "[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1 || echo "")
-                    fi
-                    
-                    if [[ -n "$version" ]]; then
-                        break
-                    fi
+            # Method 0: Check for Cray MPICH first (path-based detection)
+            # Cray MPICH uses package version in path, not MPICH_VERSION from header
+            if [[ "$prefix" == *"/cray/pe/mpich/"* || "$prefix" == *"cray-mpich"* ]]; then
+                mpi_name="cray-mpich"
+                # Extract version from Cray MPICH path: /opt/cray/pe/mpich/VERSION/...
+                # Only match proper semantic versions (all digits): X.Y.Z or X.Y
+                if [[ "$prefix" =~ /cray/pe/mpich/([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+                    version="${BASH_REMATCH[1]}"
+                elif [[ "$prefix" =~ /cray/pe/mpich/([0-9]+\.[0-9]+) ]]; then
+                    version="${BASH_REMATCH[1]}"
+                else
+                    # Skip directories with non-standard version formats (like 8.c.33)
+                    debug "Skipping Cray MPICH with non-standard version path: $prefix"
+                    continue
                 fi
-            done
+            fi
+            
+            # Method 1: Try mpirun/mpiexec if available in this prefix
+            if [[ -z "$mpi_name" ]]; then
+                for cmd in "mpirun" "mpiexec"; do
+                    if [[ -x "$prefix/bin/$cmd" ]]; then
+                        local version_output
+                        version_output=$("$prefix/bin/$cmd" --version 2>/dev/null || echo "")
+                        
+                        # Detect Open MPI
+                        if echo "$version_output" | grep -qi "open.*mpi"; then
+                            mpi_name="openmpi"
+                            version=$(echo "$version_output" | grep -oE "[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1 || echo "")
+                        # Detect MPICH
+                        elif echo "$version_output" | grep -qi "mpich"; then
+                            mpi_name="mpich"
+                            version=$(echo "$version_output" | grep -oE "[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1 || echo "")
+                        # Detect MVAPICH2
+                        elif echo "$version_output" | grep -qi "mvapich"; then
+                            mpi_name="mvapich2"
+                            version=$(echo "$version_output" | grep -oE "[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1 || echo "")
+                        # Generic MPI
+                        else
+                            version=$(echo "$version_output" | grep -oE "[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1 || echo "")
+                        fi
+                        
+                        if [[ -n "$version" ]]; then
+                            break
+                        fi
+                    fi
+                done
+            fi
             
             # Method 2: Try to determine from path patterns
             if [[ -z "$mpi_name" ]]; then
