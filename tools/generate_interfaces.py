@@ -936,8 +936,33 @@ for (
     type_defs = {}
 
     for i, header_file_path in enumerate(lib_header_file_paths):
-        macro_args = ["-DH5_DOXYGEN=1"] if brahma_name == "hdf5" else []
-        translation_unit = index.parse(header_file_path + "/" + lib_header_file_name, args=macro_args)
+        parse_args = []
+        if brahma_name == "hdf5":
+            parse_args.append("-DH5_DOXYGEN=1")
+            # Add system include paths so clang can find stddef.h, stdint.h, etc.
+            # This is necessary for proper type resolution (e.g., size_t)
+            import subprocess
+            try:
+                # Get system include paths from clang
+                result = subprocess.run(['clang', '-E', '-x', 'c', '-', '-v'],
+                                        capture_output=True, text=True, input='')
+                include_paths = []
+                in_include_section = False
+                for line in result.stderr.split('\n'):
+                    if '#include <...>' in line:
+                        in_include_section = True
+                        continue
+                    if in_include_section:
+                        if line.strip() == '':
+                            break
+                        path = line.strip()
+                        if path and not path.startswith('ignoring'):
+                            include_paths.append(f'-I{path}')
+                parse_args.extend(include_paths)
+            except Exception:
+                # Fallback to common paths if clang query fails
+                parse_args.extend(['-I/usr/lib/clang/20/include', '-I/usr/include'])
+        translation_unit = index.parse(header_file_path + "/" + lib_header_file_name, args=parse_args)
 
         for cursor in translation_unit.cursor.get_children():
             if cursor.kind == cix.CursorKind.TYPEDEF_DECL:
