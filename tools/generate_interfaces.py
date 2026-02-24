@@ -741,8 +741,8 @@ def create_coupled_mpi_condition(version_impl_pairs, version_macro_name, ignore_
 def optimize_version_condition(version_numbers, version_macro_name, max_version_limit=None):
     """
     Create a version condition based on minor version ranges.
-    For each version MajorMinorPatch, create range >= MajorMinorPatch && < Major(Minor+1)Patch
-    Then merge adjacent ranges.
+    For each unique (major, minor) pair, create range >= min_patch && < next_minor
+    Then merge overlapping AND adjacent ranges.
     
     Args:
         version_numbers: List of version numbers to include
@@ -752,32 +752,39 @@ def optimize_version_condition(version_numbers, version_macro_name, max_version_
     Examples:
     - [101203] -> >= 101203 && < 101300
     - [101203, 101300, 101400] -> >= 101203 && < 101500 (merged adjacent ranges)
+    - [800108, 800109, 800111] -> >= 800108 && < 800200 (consolidated same minor versions)
     """
     if not version_numbers:
         return None
     
     version_numbers = sorted(set(version_numbers))  # Remove duplicates and sort
     
-    # Create individual ranges for each version
-    ranges = []
+    # Group by (major, minor) and find minimum patch for each group
+    # This consolidates versions like 800108, 800109, 800111 -> 800108
+    minor_groups = {}
     for version in version_numbers:
-        # Calculate the next minor version
-        # Version format: MajorMinorPatch where Major*100000 + Minor*100 + Patch
         major = version // 100000
         minor = (version % 100000) // 100
-        next_minor_version = major * 100000 + (minor + 1) * 100
-        ranges.append((version, next_minor_version))
+        key = (major, minor)
+        if key not in minor_groups or version < minor_groups[key]:
+            minor_groups[key] = version
     
-    # Merge adjacent ranges
+    # Create ranges for each minor version group
+    ranges = []
+    for (major, minor), min_version in sorted(minor_groups.items()):
+        next_minor_version = major * 100000 + (minor + 1) * 100
+        ranges.append((min_version, next_minor_version))
+    
+    # Merge overlapping AND adjacent ranges
     merged_ranges = []
     for start, end in ranges:
         if not merged_ranges:
             merged_ranges.append((start, end))
         else:
             last_start, last_end = merged_ranges[-1]
-            # If this range starts where the last one ended, merge them
-            if start == last_end:
-                merged_ranges[-1] = (last_start, end)
+            # Merge if overlapping (start < last_end) or adjacent (start == last_end)
+            if start <= last_end:
+                merged_ranges[-1] = (last_start, max(last_end, end))
             else:
                 merged_ranges.append((start, end))
     
@@ -801,6 +808,9 @@ def test_version_optimization():
         ([101203, 101406], "Non-adjacent versions -> separate ranges"),
         ([100823], "Version 1.8.23 -> up to 1.9.0"),
         ([110000, 110100, 110200], "Adjacent versions -> merged range 1.10.0 to 1.13.0"),
+        ([800108, 800109, 800111, 800112, 800124], "Same minor versions -> consolidated to 8.0.8"),
+        ([900001], "Version 9.0.1 -> up to 9.1.0"),
+        ([800108, 800109, 900001, 900102], "Mixed minors -> consolidated separately"),
     ]
     
     if cli_args.verbose:
@@ -926,8 +936,33 @@ for (
     type_defs = {}
 
     for i, header_file_path in enumerate(lib_header_file_paths):
-        macro_args = ["-DH5_DOXYGEN=1"] if brahma_name == "hdf5" else []
-        translation_unit = index.parse(header_file_path + "/" + lib_header_file_name, args=macro_args)
+        parse_args = []
+        if brahma_name == "hdf5":
+            parse_args.append("-DH5_DOXYGEN=1")
+            # Add system include paths so clang can find stddef.h, stdint.h, etc.
+            # This is necessary for proper type resolution (e.g., size_t)
+            import subprocess
+            try:
+                # Get system include paths from clang
+                result = subprocess.run(['clang', '-E', '-x', 'c', '-', '-v'],
+                                        capture_output=True, text=True, input='')
+                include_paths = []
+                in_include_section = False
+                for line in result.stderr.split('\n'):
+                    if '#include <...>' in line:
+                        in_include_section = True
+                        continue
+                    if in_include_section:
+                        if line.strip() == '':
+                            break
+                        path = line.strip()
+                        if path and not path.startswith('ignoring'):
+                            include_paths.append(f'-I{path}')
+                parse_args.extend(include_paths)
+            except Exception:
+                # Fallback to common paths if clang query fails
+                parse_args.extend(['-I/usr/lib/clang/20/include', '-I/usr/include'])
+        translation_unit = index.parse(header_file_path + "/" + lib_header_file_name, args=parse_args)
 
         for cursor in translation_unit.cursor.get_children():
             if cursor.kind == cix.CursorKind.TYPEDEF_DECL:
