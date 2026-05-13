@@ -16,7 +16,7 @@ set(BRAHMA_PACKAGE_STRING "${BRAHMA_PACKAGE_NAME} ${BRAHMA_PACKAGE_VERSION}")
 set(BRAHMA_PACKAGE_TARNAME "${BRAHMA_PACKAGE}")
 set(BRAHMA_LIBTOOL_VERSION "${BRAHMA_PACKAGE_VERSION}")
 
-set(BRAHMA_VERSION "(1, 0, 2)")
+set(BRAHMA_VERSION "(1, 0, 3)")
 
 project(brahma LANGUAGES C CXX)
 
@@ -56,21 +56,20 @@ endif ()
 # Internal Paths for cmake libraries and Setup install and output Directories
 #------------------------------------------------------------------------------
 # This sets where to look for dependent libraries
-set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_BINARY_DIR} ${CMAKE_INSTALL_PREFIX})
 # This sets where to look for dependent library's cmake files
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/${BRAHMA_LIBDIR}/cmake)
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/share/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR}/${BRAHMA_LIBDIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR}/share/cmake)
 
 include(brahma-utils)
 
 #------------------------------------------------------------------------------
 if (NOT BRAHMA_EXTERNALLY_CONFIGURED)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE PATH "Single Directory for all Executables.")
-    set(CMAKE_INCLUDE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/include CACHE PATH "Store the headers.")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin CACHE PATH "Single Directory for all Executables.")
+    set(CMAKE_INCLUDE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include CACHE PATH "Store the headers.")
     set(EXECUTABLE_OUTPUT_PATH ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${BRAHMA_LIBDIR} CACHE PATH "Single Directory for all Libraries")
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${BRAHMA_LIBDIR} CACHE PATH "Single Directory for all static libraries.")
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${BRAHMA_LIBDIR} CACHE PATH "Single Directory for all Libraries")
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${BRAHMA_LIBDIR} CACHE PATH "Single Directory for all static libraries.")
 endif ()
 
 #-----------------------------------------------------------------------------
@@ -265,9 +264,9 @@ else()
 # Source for BRAHMA
 #-----------------------------------------------------------------------------
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-include_directories(${CMAKE_SOURCE_DIR}/include)  # public header
-include_directories(${CMAKE_SOURCE_DIR}/src)  # private header
-include_directories(${CMAKE_BINARY_DIR}/include)  # build header
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)  # public header
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)  # private header
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)  # build header
 
 set(BRAHMA_HDF5_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/hdf5.cpp)
 set(BRAHMA_HDF5_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/hdf5.h)
@@ -319,7 +318,7 @@ brahma_install_headers("${BRAHMA_PUBLIC_HEADER};${BRAHMA_SRC_PRIVATE}" ${CMAKE_C
 # =============================================================================
 set(DEPENDENCY_LIB )
 # find Gotcha
-find_package(gotcha 2.1.2 REQUIRED)
+find_package(Gotcha REQUIRED)
 if (${gotcha_FOUND})
     message(STATUS "[${PROJECT_NAME}] found gotcha at ${gotcha_INCLUDE_DIRS}")
     include_directories(${gotcha_INCLUDE_DIRS})
@@ -476,13 +475,8 @@ if(BRAHMA_BUILD_WITH_MPI)
 endif()
 
 if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
-    find_package(cpp-logger 1.0.0 REQUIRED
-                 HINTS ${CPP_LOGGER_DIR} ${cpp-logger_DIR}
-                       ${CPP_LOGGER_PATH} ${cpp-logger_PATH}
-                       $ENV{CPP_LOGGER_DIR} $ENV{cpp-logger_DIR}
-                       $ENV{CPP_LOGGER_PATH} $ENV{cpp-logger_PATH})
+    find_package(CppLogger REQUIRED)
     if (${cpp-logger_FOUND})
-        message(STATUS "[${PROJECT_NAME}] found cpp-logger at ${CPP_LOGGER_INCLUDE_DIRS}")
         include_directories(SYSTEM ${CPP_LOGGER_INCLUDE_DIRS})
         set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${CPP_LOGGER_LIBRARIES})
     else ()
@@ -499,6 +493,29 @@ install(
         ARCHIVE DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
         RUNTIME DESTINATION ${BRAHMA_INSTALL_BIN_DIR}
 )
+
+if (gotcha_POPULATED)
+    get_target_property(_gotcha_imported gotcha IMPORTED)
+    if (NOT _gotcha_imported)
+        install(TARGETS gotcha
+                EXPORT ${BRAHMA_EXPORTED_TARGETS}
+                LIBRARY DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
+                ARCHIVE DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
+        )
+    endif()
+endif()
+
+if (cpp-logger_POPULATED)
+    get_target_property(_cpp_logger_imported cpp-logger IMPORTED)
+    if (NOT _cpp_logger_imported)
+        install(TARGETS cpp-logger
+                EXPORT ${BRAHMA_EXPORTED_TARGETS}
+                LIBRARY DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
+                ARCHIVE DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
+        )
+    endif()
+endif()
+
 #-----------------------------------------------------------------------------
 # Testing
 #-----------------------------------------------------------------------------
@@ -517,16 +534,16 @@ endif()
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/configure_files/${PROJECT_NAME}-config.cmake.build.in
-        "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
         INSTALL_DESTINATION  ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/${PROJECT_NAME}-config.cmake 
-        PATH_VARS CMAKE_BINARY_DIR
+        PATH_VARS CMAKE_CURRENT_BINARY_DIR
 )
 
 configure_package_config_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/configure_files/${PROJECT_NAME}-config.cmake.install.in
-        "${CMAKE_BINARY_DIR}/install/${PROJECT_NAME}-config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/install/${PROJECT_NAME}-config.cmake"
         INSTALL_DESTINATION  ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/install/${PROJECT_NAME}-config.cmake
-        PATH_VARS CMAKE_BINARY_DIR
+        PATH_VARS CMAKE_CURRENT_BINARY_DIR
 )
 
 # configure_file(
@@ -535,7 +552,7 @@ configure_package_config_file(
 # )
 install(
         FILES
-        "${CMAKE_BINARY_DIR}/install/${PROJECT_NAME}-config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/install/${PROJECT_NAME}-config.cmake"
         DESTINATION
         ${BRAHMA_LIBDIR}/cmake/${PROJECT_NAME}
 )
@@ -558,7 +575,7 @@ export(EXPORT ${BRAHMA_EXPORTED_TARGETS}
         FILE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/${PROJECT_NAME}Targets.cmake")
 
 # Write the configure file
-configure_file("${CMAKE_SOURCE_DIR}/cmake/configure_files/brahma_config.hpp.in"
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/configure_files/brahma_config.hpp.in"
                "${CMAKE_INCLUDE_OUTPUT_DIRECTORY}/brahma/brahma_config.hpp" @ONLY)
 
 
@@ -578,14 +595,6 @@ install(FILES
         "${CMAKE_INCLUDE_OUTPUT_DIRECTORY}/brahma/brahma_config.hpp"
         DESTINATION
         ${BRAHMA_INSTALL_INCLUDE_DIR}/brahma)
-
-install(EXPORT
-        ${BRAHMA_EXPORTED_TARGETS}
-        DESTINATION
-        ${BRAHMA_LIBDIR}/cmake/${PROJECT_NAME}
-        FILE
-        ${BRAHMA_EXPORTED_TARGETS}.cmake
-        )
 
 # Install export
 install(EXPORT ${BRAHMA_EXPORTED_TARGETS}
@@ -706,11 +715,11 @@ if (NOT (BRAHMA_MODULEFILE_NAME MATCHES ".+\.lua"))
 endif ()
 
 configure_file(
-  "${CMAKE_SOURCE_DIR}/cmake/configure_files/brahma_module.lua.in"
-  "${CMAKE_BINARY_DIR}/brahma_module.lua.install"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/configure_files/brahma_module.lua.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/brahma_module.lua.install"
   @ONLY)
 
-install(FILES "${CMAKE_BINARY_DIR}/brahma_module.lua.install"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/brahma_module.lua.install"
   RENAME "${BRAHMA_MODULEFILE_NAME}"
   DESTINATION
   "${BRAHMA_INSTALL_SYSCONFDIR}")
