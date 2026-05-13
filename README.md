@@ -1,4 +1,4 @@
-# Brahma v1.0.2
+# Brahma v1.0.3
 
 A C++ style interception library for application calls.
 This library uses [GOTCHA](https://github.com/LLNL/GOTCHA) to intercept POSIX, STDIO, MPI-IO, and HDF5 calls.
@@ -6,8 +6,8 @@ The interception of MPI-IO and HDF5 calls are optional and the library can be co
 
 ## Dependencies
 
-1. GOTCHA v1.0.7
-2. CPP Logger v0.0.4
+1. GOTCHA v1.0.8
+2. CPP Logger v0.0.6
 
 ## Build Brahma with cmake
 
@@ -45,7 +45,7 @@ cmake --build $PWD/build --target all -j 50
 ## Including brahma in your CMake Project.
 
 ```cmake
-find_package(brahma 2.0.0 REQUIRED)
+find_package(brahma 1.0.3 REQUIRED)
 ```
 
 Exported variables for this package are `brahma_FOUND`, `BRAHMA_INCLUDE_DIRS`, and `BRAHMA_LIBRARIES`.
