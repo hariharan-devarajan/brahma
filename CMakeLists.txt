@@ -599,8 +599,8 @@ install(FILES
 # Install export
 install(EXPORT ${BRAHMA_EXPORTED_TARGETS}
         NAMESPACE brahma::
-        FILE BrahmaTargets.cmake
-        DESTINATION "${BRAHMA_LIBDIR}/cmake/brahma")
+        DESTINATION ${BRAHMA_LIBDIR}/cmake/${PROJECT_NAME}
+        FILE ${BRAHMA_EXPORTED_TARGETS}.cmake)
 
 # Install license and readme
 install(FILES
