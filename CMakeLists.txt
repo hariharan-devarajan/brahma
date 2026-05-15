@@ -610,6 +610,12 @@ install(FILES
         DESTINATION
         ${BRAHMA_INSTALL_DOCDIR})
 
+install(FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/FindGotcha.cmake
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/FindCppLogger.cmake
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/cpp-logger-fix-export.patch
+        DESTINATION ${BRAHMA_LIBDIR}/cmake/brahma/modules)
+
 ###############################################################################
 #                      Print out configuration summary
 ###############################################################################
