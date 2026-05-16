@@ -258,9 +258,10 @@ endfunction()
 # =============================================================================
 if(BRAHMA_BUILD_DEPENDENCIES)
   add_subdirectory(dependency)
-elseif(BRAHMA_GENERATE_INTERFACES)
-  add_subdirectory(tools)
 else()
+  if(BRAHMA_GENERATE_INTERFACES)
+    add_subdirectory(tools)
+  endif()
 #-----------------------------------------------------------------------------
 # Source for BRAHMA
 #-----------------------------------------------------------------------------
