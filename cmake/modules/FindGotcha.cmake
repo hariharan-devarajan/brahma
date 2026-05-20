@@ -32,15 +32,26 @@ set(gotcha_FOUND FALSE)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.14")
   message(STATUS "Gotcha: fetching if not found") 
   include(FetchContent)
-  FetchContent_Declare(
-    gotcha
-    GIT_REPOSITORY https://github.com/llnl/GOTCHA.git
-    GIT_TAG        1.0.8
-    PATCH_COMMAND  sed -i "s/CMAKE_SOURCE_DIR/CMAKE_CURRENT_SOURCE_DIR/g" CMakeLists.txt &&
-                   sed -i "s|PATH_VARS gotcha_INSTALL_INCLUDE_DIR PATH_VARS gotcha_INSTALL_LIBRARY_DIR|PATH_VARS gotcha_INSTALL_INCLUDE_DIR gotcha_INSTALL_LIBRARY_DIR|g" CMakeLists.txt &&
-                   sed -i "s|add_subdirectory(example)||g" src/CMakeLists.txt
-    FIND_PACKAGE_ARGS NAMES gotcha GOTCHA
-  )
+  if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24")
+    FetchContent_Declare(
+      gotcha
+      GIT_REPOSITORY https://github.com/llnl/GOTCHA.git
+      GIT_TAG        1.0.8
+      PATCH_COMMAND  sed -i "s/CMAKE_SOURCE_DIR/CMAKE_CURRENT_SOURCE_DIR/g" CMakeLists.txt &&
+                     sed -i "s|PATH_VARS gotcha_INSTALL_INCLUDE_DIR PATH_VARS gotcha_INSTALL_LIBRARY_DIR|PATH_VARS gotcha_INSTALL_INCLUDE_DIR gotcha_INSTALL_LIBRARY_DIR|g" CMakeLists.txt &&
+                     sed -i "s|add_subdirectory(example)||g" src/CMakeLists.txt
+      FIND_PACKAGE_ARGS ${Gotcha_FIND_VERSION} NAMES gotcha GOTCHA
+    )
+  else ()
+    FetchContent_Declare(
+      gotcha
+      GIT_REPOSITORY https://github.com/llnl/GOTCHA.git
+      GIT_TAG        1.0.8
+      PATCH_COMMAND  sed -i "s/CMAKE_SOURCE_DIR/CMAKE_CURRENT_SOURCE_DIR/g" CMakeLists.txt &&
+                     sed -i "s|PATH_VARS gotcha_INSTALL_INCLUDE_DIR PATH_VARS gotcha_INSTALL_LIBRARY_DIR|PATH_VARS gotcha_INSTALL_INCLUDE_DIR gotcha_INSTALL_LIBRARY_DIR|g" CMakeLists.txt &&
+                     sed -i "s|add_subdirectory(example)||g" src/CMakeLists.txt
+    )
+  endif ()
   set(GOTCHA_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
   set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(gotcha)
@@ -62,6 +73,7 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.14")
 else ()
   message(STATUS "Gotcha: finding only (CMake < 3.14)")
   find_package(gotcha 
+               ${Gotcha_FIND_VERSION}
                NAMES gotcha GOTCHA
                REQUIRED
   )

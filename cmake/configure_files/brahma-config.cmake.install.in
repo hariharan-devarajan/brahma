@@ -56,7 +56,7 @@ if (NOT TARGET brahma::brahma)
 endif ()
 
 
-find_package(Gotcha REQUIRED)
+find_package(Gotcha 2.1.2 REQUIRED)
 if (gotcha_FOUND)
     message(STATUS "[Brahma] found gotcha at ${gotcha_INCLUDE_DIRS}")
     set_property(TARGET brahma::brahma APPEND PROPERTY
@@ -83,7 +83,7 @@ endif()
 
 set(BRAHMA_LOGGER @BRAHMA_LOGGER@)
 if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
-    find_package(CppLogger REQUIRED)
+    find_package(CppLogger 0.0.7 REQUIRED)
     if (cpp-logger_FOUND)
         message(STATUS "[Brahma] found cpp-logger at ${CPP_LOGGER_INCLUDE_DIRS}")
         set_property(TARGET brahma::brahma APPEND PROPERTY

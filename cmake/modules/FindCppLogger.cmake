@@ -29,6 +29,7 @@ endforeach ()
 
 
 find_package(cpp-logger 
+             ${CppLogger_FIND_VERSION}
              NAMES cpp-logger CPP-LOGGER Cpp_logger
              QUIET
 )
@@ -36,11 +37,20 @@ find_package(cpp-logger
 if (NOT cpp-logger_FOUND AND CMAKE_VERSION VERSION_GREATER_EQUAL "3.14")
   message(STATUS "cpp-logger not found, fetching ...") 
   include(FetchContent)
-  FetchContent_Declare(
-    cpp-logger
-    GIT_REPOSITORY https://github.com/hariharan-devarajan/cpp-logger.git
-    GIT_TAG        v0.0.7
-  )
+  if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24")
+    FetchContent_Declare(
+      cpp-logger
+      GIT_REPOSITORY https://github.com/hariharan-devarajan/cpp-logger.git
+      GIT_TAG        v${CppLogger_FIND_VERSION}
+      FIND_PACKAGE_ARGS ${CppLogger_FIND_VERSION} NAMES cpp-logger CPP-LOGGER Cpp_logger
+    )
+  else ()
+    FetchContent_Declare(
+      cpp-logger
+      GIT_REPOSITORY https://github.com/hariharan-devarajan/cpp-logger.git
+      GIT_TAG        v${CppLogger_FIND_VERSION}
+    )
+  endif ()
 
   set(CPP_LOGGER_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
   set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)

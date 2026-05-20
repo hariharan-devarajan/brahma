@@ -318,7 +318,7 @@ brahma_install_headers("${BRAHMA_PUBLIC_HEADER};${BRAHMA_SRC_PRIVATE}" ${CMAKE_C
 # =============================================================================
 set(DEPENDENCY_LIB )
 # find Gotcha
-find_package(Gotcha REQUIRED)
+find_package(Gotcha 2.1.2 REQUIRED)
 if (${gotcha_FOUND})
     message(STATUS "[${PROJECT_NAME}] found gotcha at ${gotcha_INCLUDE_DIRS}")
     include_directories(${gotcha_INCLUDE_DIRS})
@@ -475,7 +475,7 @@ if(BRAHMA_BUILD_WITH_MPI)
 endif()
 
 if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
-    find_package(CppLogger REQUIRED)
+    find_package(CppLogger 0.0.7 REQUIRED)
     if (${cpp-logger_FOUND})
         include_directories(SYSTEM ${CPP_LOGGER_INCLUDE_DIRS})
         set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${CPP_LOGGER_LIBRARIES})
@@ -613,7 +613,6 @@ install(FILES
 install(FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/FindGotcha.cmake
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/FindCppLogger.cmake
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/cpp-logger-fix-export.patch
         DESTINATION ${BRAHMA_LIBDIR}/cmake/brahma/modules)
 
 ###############################################################################
