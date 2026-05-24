@@ -33,7 +33,7 @@ option (BRAHMA_LIBDIR_AS_LIB OFF)
 if (NOT BRAHMA_LIBDIR_AS_LIB)
     include(GNUInstallDirs)
 endif ()
-#
+
 if (CMAKE_INSTALL_LIBDIR)
    message(STATUS "CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR}")
    set(BRAHMA_LIBDIR ${CMAKE_INSTALL_LIBDIR})
@@ -255,11 +255,11 @@ endfunction()
 
 # Install Dependencies
 # =============================================================================
-if(BRAHMA_BUILD_DEPENDENCIES)
-  add_subdirectory(dependency)
-elseif(BRAHMA_GENERATE_INTERFACES)
+#if(BRAHMA_BUILD_DEPENDENCIES)
+if(BRAHMA_GENERATE_INTERFACES)
   add_subdirectory(tools)
 else()
+  add_subdirectory(dependency)
 #-----------------------------------------------------------------------------
 # Source for BRAHMA
 #-----------------------------------------------------------------------------
@@ -317,15 +317,8 @@ brahma_install_headers("${BRAHMA_PUBLIC_HEADER};${BRAHMA_SRC_PRIVATE}" ${CMAKE_C
 # Required Dependencies
 # =============================================================================
 set(DEPENDENCY_LIB )
-# find Gotcha
-find_package(Gotcha 2.1.2 REQUIRED)
-if (${gotcha_FOUND})
-    message(STATUS "[${PROJECT_NAME}] found gotcha at ${gotcha_INCLUDE_DIRS}")
-    include_directories(${gotcha_INCLUDE_DIRS})
-    set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${gotcha_LIBRARIES})
-else ()
-    message(FATAL_ERROR "-- [${PROJECT_NAME}] gotcha is needed for ${PROJECT_NAME} build")
-endif ()
+include_directories(${gotcha_INCLUDE_DIRS})
+set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${gotcha_LIBRARIES})
 
 # Optional Dependencies
 # =============================================================================
@@ -475,46 +468,43 @@ if(BRAHMA_BUILD_WITH_MPI)
 endif()
 
 if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
-    find_package(CppLogger 0.0.7 REQUIRED)
-    if (${cpp-logger_FOUND})
-        include_directories(SYSTEM ${CPP_LOGGER_INCLUDE_DIRS})
-        set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${CPP_LOGGER_LIBRARIES})
-    else ()
-        message(FATAL_ERROR "-- [${PROJECT_NAME}] cpp-logger is not found but selected in cmake options for ${PROJECT_NAME} build")
-    endif ()
+    include_directories(SYSTEM ${cpp-logger_INCLUDE_DIRS})
+    set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${cpp-logger_LIBRARIES})
 endif()
 
-target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB})
 
-install(
-        TARGETS ${PROJECT_NAME}
-        EXPORT ${BRAHMA_EXPORTED_TARGETS}
-        LIBRARY DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
-        ARCHIVE DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
-        RUNTIME DESTINATION ${BRAHMA_INSTALL_BIN_DIR}
-)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${DEPENDENCY_LIB})
 
 if (gotcha_POPULATED)
     get_target_property(_gotcha_imported gotcha IMPORTED)
-    if (NOT _gotcha_imported)
+    if (NOT _gotcha_imported OR _gotcha_imported MATCHES "NOTFOUND")
         install(TARGETS gotcha
                 EXPORT ${BRAHMA_EXPORTED_TARGETS}
-                LIBRARY DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
-                ARCHIVE DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
+                LIBRARY DESTINATION ${BRAHMA_LIBDIR}
+                ARCHIVE DESTINATION ${BRAHMA_LIBDIR}
         )
     endif()
 endif()
 
 if (cpp-logger_POPULATED)
     get_target_property(_cpp_logger_imported cpp-logger IMPORTED)
-    if (NOT _cpp_logger_imported)
+    if (NOT _cpp_logger_imported OR _cpp_logger_imported MATCHES "NOTFOUND")
         install(TARGETS cpp-logger
                 EXPORT ${BRAHMA_EXPORTED_TARGETS}
-                LIBRARY DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
-                ARCHIVE DESTINATION ${BRAHMA_INSTALL_LIB_DIR}
+                LIBRARY DESTINATION ${BRAHMA_LIBDIR}
+                ARCHIVE DESTINATION ${BRAHMA_LIBDIR}
         )
     endif()
 endif()
+
+install(
+        TARGETS ${PROJECT_NAME}
+        EXPORT ${BRAHMA_EXPORTED_TARGETS}
+        LIBRARY DESTINATION ${BRAHMA_LIBDIR}
+        ARCHIVE DESTINATION ${BRAHMA_LIBDIR}
+        RUNTIME DESTINATION bin
+        PUBLIC_HEADER DESTINATION include
+)
 
 #-----------------------------------------------------------------------------
 # Testing
@@ -610,10 +600,6 @@ install(FILES
         DESTINATION
         ${BRAHMA_INSTALL_DOCDIR})
 
-install(FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/FindGotcha.cmake
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/FindCppLogger.cmake
-        DESTINATION ${BRAHMA_LIBDIR}/cmake/brahma/modules)
 
 ###############################################################################
 #                      Print out configuration summary

@@ -45,24 +45,51 @@ foreach (_DIR ${_TMP_INCLUDE_DIRS})
   list(APPEND BRAHMA_INCLUDE_DIRS "${_INCLUDE_DIR}")
 endforeach (_DIR "${_TMP_INCLUDE_DIRS}")
 
-set(_TMP_LIBRARY_DIRS "@BRAHMA_INSTALL_LIB_DIR@")
+set(_TMP_LIBRARY_DIRS "@CMAKE_INSTALL_PREFIX@/@BRAHMA_LIBDIR@")
 foreach (_DIR ${_TMP_LIBRARY_DIRS})
   set_and_check(_LIBRARY_DIR "${_DIR}")
   list(APPEND BRAHMA_LIBRARY_DIRS "${_LIBRARY_DIR}")
 endforeach (_DIR ${_TMP_LIBRARY_DIRS})
 
-if (NOT TARGET brahma::brahma)
-  include(${CMAKE_CURRENT_LIST_DIR}/brahma-targets.cmake)
+set(_brahma_target "")
+if (TARGET brahma::brahma)
+    set(_brahma_target "brahma::brahma")
+elseif (TARGET brahma)
+    set(_brahma_target "brahma")
+else ()
+    include(${CMAKE_CURRENT_LIST_DIR}/brahma-targets.cmake)
+    if (TARGET brahma::brahma)
+        set(_brahma_target "brahma::brahma")
+    elseif (TARGET brahma)
+        set(_brahma_target "brahma")
+    endif ()
 endif ()
 
+if (NOT _brahma_target STREQUAL "")
+    if (BRAHMA_INCLUDE_DIRS)
+        set_property(TARGET ${_brahma_target} APPEND PROPERTY
+            INTERFACE_INCLUDE_DIRECTORIES "${BRAHMA_INCLUDE_DIRS}"
+        )
+    endif ()
+    if (BRAHMA_LIBRARY_DIRS)
+        set_property(TARGET ${_brahma_target} APPEND PROPERTY
+            INTERFACE_LINK_DIRECTORIES "${BRAHMA_LIBRARY_DIRS}"
+        )
+    endif ()
+endif ()
 
-find_package(Gotcha 2.1.2 REQUIRED)
+set(BRAHMA_LIBRARIES ${_brahma_target})
+
+
+find_package(gotcha 2.4.2 REQUIRED)
 if (gotcha_FOUND)
     message(STATUS "[Brahma] found gotcha at ${gotcha_INCLUDE_DIRS}")
-    set_property(TARGET brahma::brahma APPEND PROPERTY
+    set_property(TARGET ${_brahma_target} APPEND PROPERTY
                  INTERFACE_INCLUDE_DIRECTORIES "${gotcha_INCLUDE_DIRS}")
-    set_property(TARGET brahma::brahma APPEND PROPERTY
+    set_property(TARGET ${_brahma_target} APPEND PROPERTY
                  INTERFACE_LINK_LIBRARIES "${gotcha_LIBRARIES}")
+    set_property(TARGET ${_brahma_target} APPEND PROPERTY
+        INTERFACE_LINK_DIRECTORIES "${gotcha_LIBRARY_PATH}")
 else ()
     message(FATAL_ERROR "-- [Brahma] gotcha is needed for brahma build")
 endif ()
@@ -72,9 +99,9 @@ if (BRAHMA_INCLUDE_MPI)
   find_package(MPI COMPONENTS CXX REQUIRED)
   if (MPI_FOUND)
         message(STATUS "[Brahma] found mpi.h at ${MPI_CXX_INCLUDE_DIRS}")
-        set_property(TARGET brahma::brahma APPEND PROPERTY
+        set_property(TARGET ${_brahma_target} APPEND PROPERTY
                      INTERFACE_INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_DIRS}")
-        set_property(TARGET brahma::brahma APPEND PROPERTY
+        set_property(TARGET ${_brahma_target} APPEND PROPERTY
                      INTERFACE_LINK_LIBRARIES "${MPI_CXX_LIBRARIES}")
     else ()
         message(FATAL_ERROR "-- [Brahma] mpi is needed for brahma build")
@@ -82,19 +109,20 @@ if (BRAHMA_INCLUDE_MPI)
 endif()
 
 set(BRAHMA_LOGGER @BRAHMA_LOGGER@)
-if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
-    find_package(CppLogger 0.0.7 REQUIRED)
+if (BRAHMA_LOGGER STREQUAL "cpp-logger")
+    find_package(CppLogger 1.1.1 REQUIRED)
     if (cpp-logger_FOUND)
         message(STATUS "[Brahma] found cpp-logger at ${CPP_LOGGER_INCLUDE_DIRS}")
-        set_property(TARGET brahma::brahma APPEND PROPERTY
+        set_property(TARGET ${_brahma_target} APPEND PROPERTY
                      INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CPP_LOGGER_INCLUDE_DIRS}")
-        set_property(TARGET brahma::brahma APPEND PROPERTY
+        set_property(TARGET ${_brahma_target} APPEND PROPERTY
                      INTERFACE_LINK_LIBRARIES "${CPP_LOGGER_LIBRARIES}")
+        set_property(TARGET ${_brahma_target} APPEND PROPERTY
+                     INTERFACE_LINK_DIRECTORIES "${CPP_LOGGER_LIBRARY_DIRS}")
     else ()
         message(FATAL_ERROR "-- [Brahma] cpp-logger is not found but selected in cmake options for Brahma build")
     endif ()
 endif()
 
+unset(_brahma_target)
 check_required_components(brahma)
-
-set(BRAHMA_LIBRARIES brahma::brahma)
