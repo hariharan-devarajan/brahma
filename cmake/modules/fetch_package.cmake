@@ -4,18 +4,36 @@
 #
 # Usage:
 #   fetch_package(
-#       NAME    <name1> [name2 ...]   # candidate package names (first is primary)
-#       VERSION <version>            # (optional) required version
-#       GIT     <url>                # git repository URL (mutually exclusive with URL)
-#       TAG     <tag>                # git tag/branch/commit (used with GIT)
-#       URL     <url>                # archive URL (mutually exclusive with GIT)
-#       URL_HASH <hash>              # (optional) hash for URL archive, e.g. SHA256=abc...
-#       VARS     key val type ...    # force set cmake variable cache
-#       [REQUIRED]                   # fatal error if not found or fetched
-#       [QUIET]                      # suppress status messages
-#       [EXACT]                      # require exact version match
-#       [SHALLOW]                    # git shallow clone
-#       [DIAG]                       # enable diagnostic messages
+#       NAME     <name1> [name2 ...]      # required: candidate package names (first is primary)
+#                                         # multiple names handle different casing conventions
+#                                         # e.g. NAME gotcha GOTCHA Gotcha
+#       GIT      <url>                    # required (mutually exclusive with URL):
+#                                         # git repository URL
+#         or
+#       URL      <url>                    # required (mutually exclusive with GIT):
+#                                         # archive download URL
+#       [TAG     <tag>]                   # recommended with GIT: tag, branch, or commit hash
+#       [URL_HASH <hash>]                 # recommended with URL: integrity hash e.g. SHA256=abc...
+#       [VERSION  <version>]              # optional: CMake package version for find_package
+#                                         # must match installed package's reported version
+#                                         # e.g. VERSION 2.4.2 (not the git tag)
+#       [SUBMODULES <path> [path2 ...]]   # optional, GIT only: git submodules to initialize
+#                                         #   omitted  -> disable all submodules (default)
+#                                         #   ""       -> explicitly disable all submodules
+#                                         #   path ... -> initialize only listed submodules
+#                                         #               with GIT_SUBMODULES_RECURSE ON
+#       [PATCH_COMMAND <cmd> [args ...]]  # optional: command to patch source after clone
+#       [VARS <name> <value> <type> ...]  # optional: set cache variables before FetchContent
+#                                         # only applied when fetching, not when importing
+#                                         # type required: BOOL STRING PATH FILEPATH INTERNAL
+#                                         # e.g. "CPP_LOGGER_LIBDIR_AS_LIB ON BOOL"
+#                                         #      "CMAKE_INSTALL_LIBDIR lib PATH"
+#       [REQUIRED]                        # optional flag: fatal error if not found or fetched
+#       [QUIET]                           # optional flag: suppress status and warning messages
+#                                         # cmake configuration continues on failure regardless
+#       [EXACT]                           # optional flag: require exact version match
+#       [SHALLOW]                         # optional flag: perform a shallow git clone
+#       [DIAG]                            # optional flag: enable diagnostic messages
 #   )
 #
 # Output variables (in caller scope):
