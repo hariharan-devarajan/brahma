@@ -255,12 +255,11 @@ endfunction()
 
 # Install Dependencies
 # =============================================================================
-if(BRAHMA_BUILD_DEPENDENCIES)
-  add_subdirectory(dependency)
-endif()
 if(BRAHMA_GENERATE_INTERFACES)
   add_subdirectory(tools)
 endif()
+if(BRAHMA_BUILD_DEPENDENCIES)
+  add_subdirectory(dependency)
 #-----------------------------------------------------------------------------
 # Source for BRAHMA
 #-----------------------------------------------------------------------------
