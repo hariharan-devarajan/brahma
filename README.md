@@ -6,8 +6,8 @@ The interception of MPI-IO and HDF5 calls are optional and the library can be co
 
 ## Dependencies
 
-1. GOTCHA v1.0.7
-2. CPP Logger v0.0.4
+1. GOTCHA v1.0.8
+2. CPP Logger v0.0.7
 
 ## Build Brahma with cmake
 
