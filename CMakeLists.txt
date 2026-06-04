@@ -260,6 +260,7 @@ if(BRAHMA_GENERATE_INTERFACES)
 endif()
 if(BRAHMA_BUILD_DEPENDENCIES)
   add_subdirectory(dependency)
+endif()
 #-----------------------------------------------------------------------------
 # Source for BRAHMA
 #-----------------------------------------------------------------------------
@@ -714,4 +715,3 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/brahma_module.lua.install"
   RENAME "${BRAHMA_MODULEFILE_NAME}"
   DESTINATION
   "${BRAHMA_INSTALL_SYSCONFDIR}")
-endif()
