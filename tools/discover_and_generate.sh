@@ -1267,11 +1267,14 @@ find_mpi_system() {
             
             # Method 3: Parse version from mpi.h if available
             if [[ -z "$version" && -f "$header_path/mpi.h" ]]; then
-                # Try to extract version from MPI_VERSION defines
-                version=$(grep -E "MPI_VERSION|OMPI_MAJOR_VERSION|MPICH_VERSION" "$header_path/mpi.h" 2>/dev/null | \
-                         head -3 | awk '
-                         /OMPI_MAJOR_VERSION/ {major=$3} 
-                         /OMPI_MINOR_VERSION/ {minor=$3} 
+                # Try to extract version from MPI_VERSION defines.
+                # Match only `#define` lines so comment lines such as
+                #   /* MPICH_VERSION is the version string. ... */
+                # are not picked up as the version (which would yield "is").
+                version=$(grep -E "^[[:space:]]*#[[:space:]]*define[[:space:]]+(OMPI_MAJOR_VERSION|OMPI_MINOR_VERSION|OMPI_RELEASE_VERSION|MPICH_VERSION)[[:space:]]" "$header_path/mpi.h" 2>/dev/null | \
+                         awk '
+                         /OMPI_MAJOR_VERSION/ {major=$3}
+                         /OMPI_MINOR_VERSION/ {minor=$3}
                          /OMPI_RELEASE_VERSION/ {release=$3}
                          /MPICH_VERSION/ {print $3; exit}
                          END {if(major!="" && minor!="" && release!="") print major"."minor"."release}' | \
@@ -1799,8 +1802,26 @@ except importlib.metadata.PackageNotFoundError:
 # Function to find libclang (internal, returns only the path)
 _find_libclang_path() {
     local libclang_path=""
-    
-    # First, try to find libclang based on the currently loaded clang
+
+    # 0. Explicit override. Spack/module systems (and CI) can set this to
+    # avoid relying on filesystem layout heuristics.
+    if [[ -n "${LIBCLANG_PATH:-}" && -f "${LIBCLANG_PATH}" ]]; then
+        echo "${LIBCLANG_PATH}"
+        return
+    fi
+
+    # 1. Ask clang itself. `clang -print-file-name=libclang.so` returns the
+    # libclang shipped with the active clang toolchain.
+    if command -v clang &> /dev/null; then
+        local printed
+        printed=$(clang -print-file-name=libclang.so 2>/dev/null || true)
+        if [[ -n "$printed" && "$printed" != "libclang.so" && -f "$printed" ]]; then
+            echo "$printed"
+            return
+        fi
+    fi
+
+    # 2. Try to find libclang based on the currently loaded clang
     if command -v clang &> /dev/null; then
         local clang_path
         clang_path=$(which clang)
@@ -1808,14 +1829,14 @@ _find_libclang_path() {
         clang_dir=$(dirname "$clang_path")
         local clang_root
         clang_root=$(dirname "$clang_dir")
-        
+
         # Check if libclang.so is in the same installation
         local potential_paths=(
             "$clang_root/lib/libclang.so"
             "$clang_root/lib64/libclang.so"
             "$clang_root/lib/x86_64-linux-gnu/libclang.so"
         )
-        
+
         for path in "${potential_paths[@]}"; do
             if [[ -f "$path" ]]; then
                 libclang_path="$path"
