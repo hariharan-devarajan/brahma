@@ -19,7 +19,7 @@ endif()
 fetch_package(NAME gotcha GOTCHA Gotcha
               VERSION 2.4.3
               GIT https://github.com/LLNL/GOTCHA.git
-              TAG 1.0.9
+              TAG v1.0.9
               REQUIRED
               #DIAG
               VARS "GOTCHA_ENABLE_TESTING OFF BOOL"
