@@ -197,7 +197,7 @@ GOTCHA_MACRO_TYPEDEF(fsetpos64, int, (FILE * stream, const fpos64_t * pos),
 GOTCHA_MACRO_TYPEDEF(ftrylockfile, int, (FILE * stream), (stream), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(funlockfile, void, (FILE * stream), (stream), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(getc, int, (FILE * stream), (stream), brahma::STDIO)
-GOTCHA_MACRO_TYPEDEF(getc_unlocked, int, (FILE * stream), (stream), brahma::STDIO)
+GOTCHA_MACRO_TYPEDEF_NOWEAK(getc_unlocked, int, (FILE * stream), (stream), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(getw, int, (FILE * stream), (stream), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(pclose, int, (FILE * stream), (stream), brahma::STDIO)
 GOTCHA_MACRO_TYPEDEF(putw, int, (int w, FILE * stream), (w, stream), brahma::STDIO)
