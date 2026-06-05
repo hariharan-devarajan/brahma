@@ -39,7 +39,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-      - name: Install Dependency
+      - name: Build
         shell: bash
         run: |
           source .github/workflows/scripts/load_env.sh ${{ matrix.hdf5 }} ${{ matrix.mpi }}
@@ -54,24 +54,6 @@ jobs:
             "-DMPI_ROOT=$MPI_DIR"
           )
           cmake -Bbuild "${CMAKE_ARGS[@]}" -DBRAHMA_BUILD_DEPENDENCIES=ON
-          make -C build -j
-      - name: Build
-        shell: bash
-        run: |
-          source .github/workflows/scripts/load_env.sh ${{ matrix.hdf5 }} ${{ matrix.mpi }}
-          mkdir -p build
-
-          CMAKE_ARGS=(
-            "-DCMAKE_BUILD_TYPE=Debug"
-            "-DBRAHMA_ENABLE_TESTING=ON"
-            "-DBRAHMA_GENERATE_INTERFACES=OFF"
-            "-DBRAHMA_BUILD_WITH_HDF5=ON"
-            "-DBRAHMA_BUILD_WITH_MPI=ON"
-            "-DHDF5_ROOT=$HDF5_DIR"
-            "-DMPI_ROOT=$MPI_DIR"
-          )
-
-          cmake -Bbuild "${CMAKE_ARGS[@]}" -DBRAHMA_BUILD_DEPENDENCIES=OFF
           make -C build -j
       - name: Test
         shell: bash
