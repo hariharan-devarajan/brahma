@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 set(BRAHMA_VERSION_MAJOR "4")
 set(BRAHMA_VERSION_MINOR "0")
-set(BRAHMA_VERSION_PATCH "1")
+set(BRAHMA_VERSION_PATCH "2")
 set(BRAHMA_PACKAGE ${PROJECT_NAME})
 set(BRAHMA_PACKAGE_NAME ${PROJECT_NAME})
 set(BRAHMA_PACKAGE_VERSION "${BRAHMA_VERSION_MAJOR}.${BRAHMA_VERSION_MINOR}.${BRAHMA_VERSION_PATCH}")
@@ -16,7 +16,7 @@ set(BRAHMA_PACKAGE_STRING "${BRAHMA_PACKAGE_NAME} ${BRAHMA_PACKAGE_VERSION}")
 set(BRAHMA_PACKAGE_TARNAME "${BRAHMA_PACKAGE}")
 set(BRAHMA_LIBTOOL_VERSION "${BRAHMA_PACKAGE_VERSION}")
 
-set(BRAHMA_VERSION "(1, 0, 3)")
+set(BRAHMA_VERSION "(1, 0, 4)")
 
 project(brahma LANGUAGES C CXX)
 
@@ -110,7 +110,14 @@ if(BRAHMA_BUILD_WITH_HDF5)
 endif()
 
 if(BRAHMA_BUILD_WITH_MPI)
+  # MPI is optional; if it is requested but unavailable, disable MPI build.
+  find_package(MPI QUIET COMPONENTS C)
+  if(MPI_FOUND OR TARGET MPI::MPI_C)
     set(BRAHMA_ENABLE_MPI 1)
+  else()
+    message(WARNING "[${PROJECT_NAME}] BRAHMA_BUILD_WITH_MPI=ON but MPI was not found. Disabling MPI support.")
+    set(BRAHMA_BUILD_WITH_MPI OFF CACHE BOOL "Build with mpi and mpiio interception libraries." FORCE)
+  endif()
 endif()
 
 # Profiling and logging
@@ -341,7 +348,7 @@ endif()
 
 if(BRAHMA_BUILD_WITH_MPI)
     # find MPI
-    find_package(MPI COMPONENTS C REQUIRED)
+  find_package(MPI QUIET COMPONENTS C)
     if (MPI_FOUND)
       # Try to get package version from MPI compiler instead of library version
       set(MPI_PACKAGE_VERSION "")
@@ -468,7 +475,7 @@ if(BRAHMA_BUILD_WITH_MPI)
         target_link_libraries(${PROJECT_NAME} PUBLIC ${MPI_C_LIBRARIES})
       endif ()
     else ()
-        message(FATAL_ERROR "-- [${PROJECT_NAME}] mpi is needed for ${PROJECT_NAME} build")
+        message(WARNING "-- [${PROJECT_NAME}] MPI not found; building without MPI support")
     endif ()
 endif()
 
