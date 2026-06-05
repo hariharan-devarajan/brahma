@@ -1,7 +1,7 @@
 include(brahma-utils)
 if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
     fetch_package(NAME cpp-logger cpp_logger CPP_LOGGER Cpp_logger
-                  VERSION 1.1.1
+                  VERSION 1.1.2
                   GIT https://github.com/JaeseungYeom/cpp-logger.git
                   TAG cmake_fix
                   #GIT https://github.com/hariharan-devarajan/cpp-logger.git
@@ -19,9 +19,9 @@ if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
 endif()
 
 fetch_package(NAME gotcha GOTCHA Gotcha
-              VERSION 2.4.2
+              VERSION 2.4.3
               GIT https://github.com/JaeseungYeom/GOTCHA.git
-              TAG rm_empty_dir
+              TAG v1.0.9
               #GIT https://github.com/LLNL/GOTCHA.git
               #TAG 56def6fd26e436f01fb7831f784d0f9b1347904b
               REQUIRED
