@@ -35,10 +35,19 @@ set(gotcha_FOUND        "${gotcha_FOUND}"        PARENT_SCOPE)
 
 get_target_property(_gotcha_imported gotcha IMPORTED)
 if (NOT _gotcha_imported OR _gotcha_imported MATCHES "NOTFOUND")
+    # fetch_package() is a CMake function, so FetchContent_GetProperties()
+    # called inside it sets gotcha_SOURCE_DIR / gotcha_BINARY_DIR only in
+    # the function's local scope.  Re-fetch the properties here so the
+    # variables are available when we call target_include_directories below.
+    if (gotcha_POPULATED)
+        include(FetchContent)
+        FetchContent_GetProperties(gotcha)
+    endif()
     # GOTCHA uses GNU-specific extensions. So it needs to be
     # compiled with -std=gnu11 instead of -std=c11.
     set_target_properties(gotcha PROPERTIES C_EXTENSIONS ON)
-    # Setting gotcha include dirs
+    # Setting gotcha include dirs – must include the binary dir because
+    # gotcha_config.h is generated there (not present in the source tree).
     target_include_directories(gotcha PUBLIC
         $<BUILD_INTERFACE:${gotcha_BINARY_DIR}/include>
         $<BUILD_INTERFACE:${gotcha_SOURCE_DIR}/include>
