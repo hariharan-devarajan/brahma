@@ -2,10 +2,8 @@ include(brahma-utils)
 if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
     fetch_package(NAME cpp-logger cpp_logger CPP_LOGGER Cpp_logger
                   VERSION 1.1.2
-                  GIT https://github.com/JaeseungYeom/cpp-logger.git
-                  TAG cmake_fix
-                  #GIT https://github.com/hariharan-devarajan/cpp-logger.git
-                  #TAG b18d21b1ce67da49196a195d0cb496bd083cca38
+                  GIT https://github.com/LLNL/cpp-logger.git
+                  TAG develop
                   #SHALLOW
                   #DIAG
                   VARS "CPP_LOGGER_ENABLE_TESTING OFF BOOL"
@@ -20,10 +18,8 @@ endif()
 
 fetch_package(NAME gotcha GOTCHA Gotcha
               VERSION 2.4.3
-              GIT https://github.com/JaeseungYeom/GOTCHA.git
-              TAG v1.0.9
-              #GIT https://github.com/LLNL/GOTCHA.git
-              #TAG 56def6fd26e436f01fb7831f784d0f9b1347904b
+              GIT https://github.com/LLNL/GOTCHA.git
+              TAG 1.0.9
               REQUIRED
               #DIAG
               VARS "GOTCHA_ENABLE_TESTING OFF BOOL"
