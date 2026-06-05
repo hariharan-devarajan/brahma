@@ -475,6 +475,13 @@ endif()
 
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${DEPENDENCY_LIB})
+# gotcha headers (including the generated gotcha_config.h) must be visible to
+# consumers of brahma (e.g. test targets) because brahma's public headers
+# transitively include gotcha/gotcha.h.  The PRIVATE link above gives brahma
+# itself the include dirs; this PUBLIC entry propagates them downstream.
+if (TARGET gotcha)
+    target_link_libraries(${PROJECT_NAME} PUBLIC gotcha)
+endif ()
 
 if (gotcha_POPULATED)
     get_target_property(_gotcha_imported gotcha IMPORTED)

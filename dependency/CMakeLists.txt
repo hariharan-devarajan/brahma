@@ -3,7 +3,7 @@ if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
     fetch_package(NAME cpp-logger cpp_logger CPP_LOGGER Cpp_logger
                   VERSION 1.1.2
                   GIT https://github.com/LLNL/cpp-logger.git
-                  TAG develop
+                  TAG v0.0.8
                   #SHALLOW
                   #DIAG
                   VARS "CPP_LOGGER_ENABLE_TESTING OFF BOOL"
