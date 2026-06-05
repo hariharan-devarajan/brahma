@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 set(BRAHMA_VERSION_MAJOR "4")
 set(BRAHMA_VERSION_MINOR "0")
-set(BRAHMA_VERSION_PATCH "0")
+set(BRAHMA_VERSION_PATCH "1")
 set(BRAHMA_PACKAGE ${PROJECT_NAME})
 set(BRAHMA_PACKAGE_NAME ${PROJECT_NAME})
 set(BRAHMA_PACKAGE_VERSION "${BRAHMA_VERSION_MAJOR}.${BRAHMA_VERSION_MINOR}.${BRAHMA_VERSION_PATCH}")
@@ -16,7 +16,7 @@ set(BRAHMA_PACKAGE_STRING "${BRAHMA_PACKAGE_NAME} ${BRAHMA_PACKAGE_VERSION}")
 set(BRAHMA_PACKAGE_TARNAME "${BRAHMA_PACKAGE}")
 set(BRAHMA_LIBTOOL_VERSION "${BRAHMA_PACKAGE_VERSION}")
 
-set(BRAHMA_VERSION "(1, 0, 2)")
+set(BRAHMA_VERSION "(1, 0, 3)")
 
 project(brahma LANGUAGES C CXX)
 
@@ -255,11 +255,11 @@ endfunction()
 
 # Install Dependencies
 # =============================================================================
-if(BRAHMA_BUILD_DEPENDENCIES)
-  add_subdirectory(dependency)
-endif()
 if(BRAHMA_GENERATE_INTERFACES)
   add_subdirectory(tools)
+endif()
+if(BRAHMA_BUILD_DEPENDENCIES)
+  add_subdirectory(dependency)
 endif()
 #-----------------------------------------------------------------------------
 # Source for BRAHMA
@@ -475,6 +475,19 @@ endif()
 
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${DEPENDENCY_LIB})
+# gotcha headers (including the generated gotcha_config.h) must be visible to
+# consumers of brahma (e.g. test targets) because brahma's public headers
+# transitively include gotcha/gotcha.h.  The PRIVATE link above gives brahma
+# itself the include dirs; this PUBLIC entry propagates them downstream.
+if (TARGET gotcha)
+    target_link_libraries(${PROJECT_NAME} PUBLIC gotcha)
+endif ()
+# brahma/brahma.h unconditionally includes brahma/interface/hdf5.h which
+# includes <hdf5.h>, so any consumer of brahma needs HDF5 headers on its
+# include path even if it does not use HDF5 directly.
+if (BRAHMA_BUILD_WITH_HDF5 AND TARGET HDF5::HDF5)
+    target_link_libraries(${PROJECT_NAME} PUBLIC HDF5::HDF5)
+endif ()
 
 if (gotcha_POPULATED)
     get_target_property(_gotcha_imported gotcha IMPORTED)
@@ -715,4 +728,3 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/brahma_module.lua.install"
   RENAME "${BRAHMA_MODULEFILE_NAME}"
   DESTINATION
   "${BRAHMA_INSTALL_SYSCONFDIR}")
-endif()

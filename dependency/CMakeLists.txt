@@ -1,11 +1,9 @@
 include(brahma-utils)
 if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
     fetch_package(NAME cpp-logger cpp_logger CPP_LOGGER Cpp_logger
-                  VERSION 1.1.1
-                  GIT https://github.com/JaeseungYeom/cpp-logger.git
-                  TAG cmake_fix
-                  #GIT https://github.com/hariharan-devarajan/cpp-logger.git
-                  #TAG b18d21b1ce67da49196a195d0cb496bd083cca38
+                  VERSION 1.1.2
+                  GIT https://github.com/LLNL/cpp-logger.git
+                  TAG v0.0.8
                   #SHALLOW
                   #DIAG
                   VARS "CPP_LOGGER_ENABLE_TESTING OFF BOOL"
@@ -19,11 +17,9 @@ if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
 endif()
 
 fetch_package(NAME gotcha GOTCHA Gotcha
-              VERSION 2.4.2
-              GIT https://github.com/JaeseungYeom/GOTCHA.git
-              TAG rm_empty_dir
-              #GIT https://github.com/LLNL/GOTCHA.git
-              #TAG 56def6fd26e436f01fb7831f784d0f9b1347904b
+              VERSION 2.4.3
+              GIT https://github.com/LLNL/GOTCHA.git
+              TAG v1.0.9
               REQUIRED
               #DIAG
               VARS "GOTCHA_ENABLE_TESTING OFF BOOL"
@@ -39,10 +35,19 @@ set(gotcha_FOUND        "${gotcha_FOUND}"        PARENT_SCOPE)
 
 get_target_property(_gotcha_imported gotcha IMPORTED)
 if (NOT _gotcha_imported OR _gotcha_imported MATCHES "NOTFOUND")
+    # fetch_package() is a CMake function, so FetchContent_GetProperties()
+    # called inside it sets gotcha_SOURCE_DIR / gotcha_BINARY_DIR only in
+    # the function's local scope.  Re-fetch the properties here so the
+    # variables are available when we call target_include_directories below.
+    if (gotcha_POPULATED)
+        include(FetchContent)
+        FetchContent_GetProperties(gotcha)
+    endif()
     # GOTCHA uses GNU-specific extensions. So it needs to be
     # compiled with -std=gnu11 instead of -std=c11.
     set_target_properties(gotcha PROPERTIES C_EXTENSIONS ON)
-    # Setting gotcha include dirs
+    # Setting gotcha include dirs – must include the binary dir because
+    # gotcha_config.h is generated there (not present in the source tree).
     target_include_directories(gotcha PUBLIC
         $<BUILD_INTERFACE:${gotcha_BINARY_DIR}/include>
         $<BUILD_INTERFACE:${gotcha_SOURCE_DIR}/include>

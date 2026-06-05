@@ -41,6 +41,18 @@
     }                                                                                                 \
     return instance->macroname macro2args_val;                                                        \
   }                                                                         
+
+#define GOTCHA_MACRO_TYPEDEF_NOWEAK(macroname, macroret, macroargs, macro2args_val, macroclass_name)  \
+  typedef macroret(*macroname##_fptr) macroargs;                                                      \
+  macroret macroname macroargs;                                                                        \
+  inline macroret macroname##_wrapper macroargs {                                                      \
+    auto instance = macroclass_name::get_instance();                                                   \
+    if (instance == nullptr) {                                                                         \
+      macroname##_fptr fn = &::macroname;                                                              \
+      return fn macro2args_val;                                                                        \
+    }                                                                                                  \
+    return instance->macroname macro2args_val;                                                         \
+  }
   
 #define GOTCHA_MACRO_TYPEDEF_OPEN(name, ret, args, args_val, start, \
                                   class_name)                       \
