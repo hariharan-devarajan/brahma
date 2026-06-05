@@ -482,6 +482,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${DEPENDENCY_LIB})
 if (TARGET gotcha)
     target_link_libraries(${PROJECT_NAME} PUBLIC gotcha)
 endif ()
+# brahma/brahma.h unconditionally includes brahma/interface/hdf5.h which
+# includes <hdf5.h>, so any consumer of brahma needs HDF5 headers on its
+# include path even if it does not use HDF5 directly.
+if (BRAHMA_BUILD_WITH_HDF5 AND TARGET HDF5::HDF5)
+    target_link_libraries(${PROJECT_NAME} PUBLIC HDF5::HDF5)
+endif ()
 
 if (gotcha_POPULATED)
     get_target_property(_gotcha_imported gotcha IMPORTED)
