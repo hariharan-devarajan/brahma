@@ -17,9 +17,9 @@ if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
 endif()
 
 fetch_package(NAME gotcha GOTCHA Gotcha
-              VERSION 2.4.3
+              VERSION 2.4.4
               GIT https://github.com/LLNL/GOTCHA.git
-              TAG v1.0.9
+              TAG v1.0.10
               REQUIRED
               #DIAG
               VARS "GOTCHA_ENABLE_TESTING OFF BOOL"
