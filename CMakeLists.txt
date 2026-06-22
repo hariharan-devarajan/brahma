@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION 3.10.2)
 
 
 set(BRAHMA_VERSION_MAJOR "4")
-set(BRAHMA_VERSION_MINOR "0")
-set(BRAHMA_VERSION_PATCH "4")
+set(BRAHMA_VERSION_MINOR "1")
+set(BRAHMA_VERSION_PATCH "0")
 set(BRAHMA_PACKAGE ${PROJECT_NAME})
 set(BRAHMA_PACKAGE_NAME ${PROJECT_NAME})
 set(BRAHMA_PACKAGE_VERSION "${BRAHMA_VERSION_MAJOR}.${BRAHMA_VERSION_MINOR}.${BRAHMA_VERSION_PATCH}")
@@ -16,7 +16,7 @@ set(BRAHMA_PACKAGE_STRING "${BRAHMA_PACKAGE_NAME} ${BRAHMA_PACKAGE_VERSION}")
 set(BRAHMA_PACKAGE_TARNAME "${BRAHMA_PACKAGE}")
 set(BRAHMA_LIBTOOL_VERSION "${BRAHMA_PACKAGE_VERSION}")
 
-set(BRAHMA_VERSION "(1, 0, 6)")
+set(BRAHMA_VERSION "(1, 0, 7)")
 
 project(brahma LANGUAGES C CXX)
 
@@ -104,6 +104,10 @@ option(BRAHMA_BUILD_WITH_MPI "Build with mpi and mpiio interception libraries." 
 option(BRAHMA_BUILD_DEPENDENCIES "Build Dependencies for Brahma" OFF)
 option(BRAHMA_GENERATE_INTERFACES "Generate interfaces for Brahma" OFF)
 option(BRAHMA_INSTALL_DEPENDENCIES "Install dependencies for Brahma" OFF)
+
+set(BRAHMA_MPI_IMPL "" CACHE STRING
+    "Override detected MPI implementation (OPENMPI, MPICH, CRAYMPICH, MVAPICH, INTELMPI). Empty = auto-detect via C probe.")
+set_property(CACHE BRAHMA_MPI_IMPL PROPERTY STRINGS "" OPENMPI MPICH CRAYMPICH MVAPICH INTELMPI UNKNOWN)
 
 if(BRAHMA_BUILD_WITH_HDF5)
     set(BRAHMA_ENABLE_HDF5 1)
@@ -347,136 +351,107 @@ if(BRAHMA_BUILD_WITH_HDF5)
 endif()
 
 if(BRAHMA_BUILD_WITH_MPI)
-    # find MPI
   find_package(MPI QUIET COMPONENTS C)
-    if (MPI_FOUND)
-      # Try to get package version from MPI compiler instead of library version
-      set(MPI_PACKAGE_VERSION "")
-      if (MPI_C_COMPILER)
-        message(STATUS "[${PROJECT_NAME}] MPI C compiler: ${MPI_C_COMPILER}")
-        
-        # Try -v first (works for MPICH - shows "mpicc for MPICH version X.Y.Z")
-        execute_process(
-          COMMAND ${MPI_C_COMPILER} -v
-          OUTPUT_VARIABLE MPI_COMPILER_VERSION_OUTPUT
-          ERROR_VARIABLE MPI_COMPILER_VERSION_ERROR
-          OUTPUT_STRIP_TRAILING_WHITESPACE
-          ERROR_STRIP_TRAILING_WHITESPACE
-        )
-        
-        set(MPI_VERSION_INFO "${MPI_COMPILER_VERSION_OUTPUT} ${MPI_COMPILER_VERSION_ERROR}")
-        
-        # Extract package version from compiler output
-        if (MPI_VERSION_INFO MATCHES "MPICH version ([0-9]+\\.[0-9]+\\.[0-9]+)")
-          # MPICH -v output: "mpicc for MPICH version 4.2.3"
+  if(MPI_FOUND)
+    message(STATUS "[${PROJECT_NAME}] found mpi.h at ${MPI_C_INCLUDE_DIRS} ${MPI_C_LIBRARIES}")
+
+    # ---- MPI implementation and version detection ----
+    set(MPI_IMPLEMENTATION "UNKNOWN")
+    set(MPI_PACKAGE_VERSION "")
+
+    if(BRAHMA_MPI_IMPL)
+      # User-supplied override via -DBRAHMA_MPI_IMPL=<impl>
+      set(MPI_IMPLEMENTATION "${BRAHMA_MPI_IMPL}")
+      message(STATUS "[${PROJECT_NAME}] MPI implementation overridden: ${MPI_IMPLEMENTATION}")
+    else()
+      # Auto-detect by compiling and running a small C probe that reads
+      # preprocessor macros defined in <mpi.h> (more reliable than parsing
+      # compiler --version output, which varies across wrappers).
+      try_run(
+        _brahma_mpi_run_result
+        _brahma_mpi_compile_result
+        "${CMAKE_BINARY_DIR}/brahma_mpi_detect"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/tests/mpi_detect.c"
+        CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${MPI_C_INCLUDE_DIRS}"
+        LINK_LIBRARIES ${MPI_C_LIBRARIES}
+        COMPILE_OUTPUT_VARIABLE _brahma_mpi_compile_out
+        RUN_OUTPUT_VARIABLE _brahma_mpi_detect_out
+      )
+
+      if(_brahma_mpi_compile_result AND
+         NOT "${_brahma_mpi_run_result}" STREQUAL "FAILED_TO_RUN")
+        if(_brahma_mpi_detect_out MATCHES "IMPL=([A-Z]+)")
+          set(MPI_IMPLEMENTATION "${CMAKE_MATCH_1}")
+        endif()
+        if(_brahma_mpi_detect_out MATCHES "VERSION=([0-9]+\\.[0-9]+\\.[0-9]+)")
           set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
-        elseif (MPI_VERSION_INFO MATCHES "Open MPI")
-          # OpenMPI: Extract version like "mpicc (Open MPI) 4.1.6"
-          if (MPI_VERSION_INFO MATCHES "Open MPI\\) ([0-9]+\\.[0-9]+\\.[0-9]+)")
-            set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
-          endif()
-        elseif (MPI_VERSION_INFO MATCHES "MVAPICH")
-          # MVAPICH: Extract version 
-          if (MPI_VERSION_INFO MATCHES "MVAPICH[^0-9]*([0-9]+\\.[0-9]+\\.[0-9]+)")
-            set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
-          endif()
-        else()
-          # Fallback to --version if -v didn't give version
+        endif()
+        message(STATUS "[${PROJECT_NAME}] MPI C probe: impl=${MPI_IMPLEMENTATION} version=${MPI_PACKAGE_VERSION}")
+      else()
+        # Fallback: parse mpicc compiler output (e.g. cross-compilation where
+        # the probe binary cannot be executed on the build host)
+        message(WARNING "[${PROJECT_NAME}] MPI C probe did not run (compile=${_brahma_mpi_compile_result} run=${_brahma_mpi_run_result}); falling back to compiler output parsing")
+        if(MPI_C_COMPILER)
           execute_process(
-            COMMAND ${MPI_C_COMPILER} --version
-            OUTPUT_VARIABLE MPI_COMPILER_VERSION_OUTPUT2
-            ERROR_VARIABLE MPI_COMPILER_VERSION_ERROR2
+            COMMAND ${MPI_C_COMPILER} -v
+            OUTPUT_VARIABLE _brahma_mpi_fb_out
+            ERROR_VARIABLE  _brahma_mpi_fb_err
             OUTPUT_STRIP_TRAILING_WHITESPACE
-            ERROR_STRIP_TRAILING_WHITESPACE
-          )
-          set(MPI_VERSION_INFO "${MPI_COMPILER_VERSION_OUTPUT2} ${MPI_COMPILER_VERSION_ERROR2}")
-          
-          if (MPI_VERSION_INFO MATCHES "Open MPI")
-            # OpenMPI: Extract version like "mpicc (Open MPI) 4.1.6"
-            if (MPI_VERSION_INFO MATCHES "Open MPI\\) ([0-9]+\\.[0-9]+\\.[0-9]+)")
+            ERROR_STRIP_TRAILING_WHITESPACE)
+          set(_brahma_mpi_fb_info "${_brahma_mpi_fb_out} ${_brahma_mpi_fb_err}")
+          if(_brahma_mpi_fb_info MATCHES "Open MPI")
+            set(MPI_IMPLEMENTATION "OPENMPI")
+            if(_brahma_mpi_fb_info MATCHES "Open MPI\\) ([0-9]+\\.[0-9]+\\.[0-9]+)")
               set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
             endif()
-          elseif (MPI_VERSION_INFO MATCHES "mpich[^0-9]*([0-9]+\\.[0-9]+\\.[0-9]+)")
+          elseif(_brahma_mpi_fb_info MATCHES "Cray" OR _brahma_mpi_fb_info MATCHES "cray")
+            set(MPI_IMPLEMENTATION "CRAYMPICH")
+            if(_brahma_mpi_fb_info MATCHES "MPICH version ([0-9]+\\.[0-9]+\\.[0-9]+)")
+              set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
+            endif()
+          elseif(_brahma_mpi_fb_info MATCHES "MVAPICH")
+            set(MPI_IMPLEMENTATION "MVAPICH")
+            if(_brahma_mpi_fb_info MATCHES "MVAPICH[^0-9]*([0-9]+\\.[0-9]+\\.[0-9]+)")
+              set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
+            endif()
+          elseif(_brahma_mpi_fb_info MATCHES "Intel.*MPI")
+            set(MPI_IMPLEMENTATION "INTELMPI")
+          elseif(_brahma_mpi_fb_info MATCHES "MPICH version ([0-9]+\\.[0-9]+\\.[0-9]+)")
+            set(MPI_IMPLEMENTATION "MPICH")
             set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
-          elseif (MPI_VERSION_INFO MATCHES "version[^0-9]*([0-9]+\\.[0-9]+\\.[0-9]+)")
-            set(MPI_PACKAGE_VERSION "${CMAKE_MATCH_1}")
+          else()
+            message(WARNING "[${PROJECT_NAME}] Could not detect MPI implementation from compiler output")
           endif()
         endif()
       endif()
-      
-      # Use package version if found, otherwise fall back to library version
-      if (MPI_PACKAGE_VERSION)
-        convert_version_to_number("${MPI_PACKAGE_VERSION}" BRAHMA_MPI_VERSION)
-        message(STATUS "[${PROJECT_NAME}] MPI package version: ${MPI_PACKAGE_VERSION} (${BRAHMA_MPI_VERSION})")
-      else()
-        convert_version_to_number("${MPI_C_VERSION}" BRAHMA_MPI_VERSION)
-        message(STATUS "[${PROJECT_NAME}] MPI library version (fallback): ${MPI_C_VERSION} (${BRAHMA_MPI_VERSION})")
-      endif()
-      
-      message(STATUS "[${PROJECT_NAME}] found mpi.h at ${MPI_C_INCLUDE_DIRS} ${MPI_C_LIBRARIES}")
-      
-      # Detect MPI implementation based on the same version info
-      set(MPI_IMPLEMENTATION "UNKNOWN")
-      if (MPI_VERSION_INFO)
-        # Detect implementation based on version output
-        if (MPI_VERSION_INFO MATCHES "Open MPI")
-          set(MPI_IMPLEMENTATION "OPENMPI")
-          message(STATUS "[${PROJECT_NAME}] Detected MPI implementation: OpenMPI")
-        elseif (MPI_VERSION_INFO MATCHES "MPICH" OR MPI_VERSION_INFO MATCHES "mpich")
-          # Further check for Cray MPICH or MVAPICH
-          if (MPI_VERSION_INFO MATCHES "Cray" OR MPI_VERSION_INFO MATCHES "cray")
-            set(MPI_IMPLEMENTATION "CRAYMPICH")
-            message(STATUS "[${PROJECT_NAME}] Detected MPI implementation: Cray-MPICH")
-          elseif (MPI_VERSION_INFO MATCHES "MVAPICH")
-            set(MPI_IMPLEMENTATION "MVAPICH")
-            message(STATUS "[${PROJECT_NAME}] Detected MPI implementation: MVAPICH")
-          else()
-            set(MPI_IMPLEMENTATION "MPICH")
-            message(STATUS "[${PROJECT_NAME}] Detected MPI implementation: MPICH")
-          endif()
-        elseif (MPI_VERSION_INFO MATCHES "MVAPICH")
-          set(MPI_IMPLEMENTATION "MVAPICH")
-          message(STATUS "[${PROJECT_NAME}] Detected MPI implementation: MVAPICH")
-        elseif (MPI_VERSION_INFO MATCHES "Intel.*MPI")
-          set(MPI_IMPLEMENTATION "MPICH")
-          message(STATUS "[${PROJECT_NAME}] Detected MPI implementation: Intel MPI (MPICH-based)")
-        else()
-          # Try to detect from compiler path or library names
-          if (MPI_C_COMPILER MATCHES "openmpi" OR MPI_C_LIBRARIES MATCHES "libmpi_cxx")
-            set(MPI_IMPLEMENTATION "OPENMPI")
-            message(STATUS "[${PROJECT_NAME}] Detected MPI implementation from path: OpenMPI")
-          elseif (MPI_C_COMPILER MATCHES "cray.*mpich" OR MPI_C_COMPILER MATCHES "craympich")
-            set(MPI_IMPLEMENTATION "CRAYMPICH")
-            message(STATUS "[${PROJECT_NAME}] Detected MPI implementation from path: Cray-MPICH")
-          elseif (MPI_C_COMPILER MATCHES "mvapich")
-            set(MPI_IMPLEMENTATION "MVAPICH")
-            message(STATUS "[${PROJECT_NAME}] Detected MPI implementation from path: MVAPICH")
-          elseif (MPI_C_COMPILER MATCHES "mpich")
-            set(MPI_IMPLEMENTATION "MPICH")
-            message(STATUS "[${PROJECT_NAME}] Detected MPI implementation from path: MPICH")
-          else()
-            message(WARNING "[${PROJECT_NAME}] Could not detect MPI implementation. MPI version info: ${MPI_VERSION_INFO}")
-          endif()
-        endif()
-      else()
-        message(WARNING "[${PROJECT_NAME}] MPI_C_COMPILER not set, cannot detect MPI implementation")
-      endif()
-      
-      # Set compile definition based on detected implementation
-      if (NOT MPI_IMPLEMENTATION STREQUAL "UNKNOWN")
-        target_compile_definitions(${PROJECT_NAME} PUBLIC BRAHMA_MPI_IMPL_${MPI_IMPLEMENTATION})
-        message(STATUS "[${PROJECT_NAME}] Added compile definition: BRAHMA_MPI_IMPL_${MPI_IMPLEMENTATION}")
-      endif()
-      
-      include_directories(${MPI_C_INCLUDE_DIRS})
-      if (TARGET MPI::MPI_C)
-        target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_C)
-      else ()
-        target_link_libraries(${PROJECT_NAME} PUBLIC ${MPI_C_LIBRARIES})
-      endif ()
-    else ()
-        message(WARNING "-- [${PROJECT_NAME}] MPI not found; building without MPI support")
-    endif ()
+    endif()
+
+    # Compute numeric version
+    if(MPI_PACKAGE_VERSION)
+      convert_version_to_number("${MPI_PACKAGE_VERSION}" BRAHMA_MPI_VERSION)
+      message(STATUS "[${PROJECT_NAME}] MPI version: ${MPI_PACKAGE_VERSION} (${BRAHMA_MPI_VERSION})")
+    else()
+      convert_version_to_number("${MPI_C_VERSION}" BRAHMA_MPI_VERSION)
+      message(STATUS "[${PROJECT_NAME}] MPI standard version (fallback): ${MPI_C_VERSION} (${BRAHMA_MPI_VERSION})")
+    endif()
+
+    message(STATUS "[${PROJECT_NAME}] MPI implementation: ${MPI_IMPLEMENTATION}")
+    set(BRAHMA_MPI_IMPL_NAME "${MPI_IMPLEMENTATION}")
+
+    if(NOT MPI_IMPLEMENTATION STREQUAL "UNKNOWN")
+      target_compile_definitions(${PROJECT_NAME} PUBLIC BRAHMA_MPI_IMPL_${MPI_IMPLEMENTATION})
+      message(STATUS "[${PROJECT_NAME}] Added compile definition: BRAHMA_MPI_IMPL_${MPI_IMPLEMENTATION}")
+    endif()
+
+    include_directories(${MPI_C_INCLUDE_DIRS})
+    if(TARGET MPI::MPI_C)
+      target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_C)
+    else()
+      target_link_libraries(${PROJECT_NAME} PUBLIC ${MPI_C_LIBRARIES})
+    endif()
+  else()
+    message(WARNING "-- [${PROJECT_NAME}] MPI not found; building without MPI support")
+  endif()
 endif()
 
 if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
