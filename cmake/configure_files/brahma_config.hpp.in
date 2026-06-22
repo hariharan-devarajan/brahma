@@ -49,6 +49,8 @@
 // versions
 #cmakedefine BRAHMA_HDF5_VERSION @BRAHMA_HDF5_VERSION@
 #cmakedefine BRAHMA_MPI_VERSION @BRAHMA_MPI_VERSION@
+// MPI implementation name string (OPENMPI, MPICH, CRAYMPICH, MVAPICH, INTELMPI, UNKNOWN)
+#cmakedefine BRAHMA_MPI_IMPL_NAME "@BRAHMA_MPI_IMPL_NAME@"
 
 
 //==========================
