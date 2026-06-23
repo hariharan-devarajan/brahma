@@ -8391,7 +8391,7 @@ hid_t HDF5::H5Iregister_future(H5I_type_t type, const void *object,
 #endif
 
 #if (BRAHMA_HDF5_VERSION >= 101405 && BRAHMA_HDF5_VERSION < 101500)
-herr_t HDF5::H5TSmutex_acquire(unsigned int lock_count, _Bool *acquired) {
+herr_t HDF5::H5TSmutex_acquire(unsigned int lock_count, bool *acquired) {
   BRAHMA_UNWRAPPED_FUNC(H5TSmutex_acquire, herr_t, (lock_count, acquired));
   return result;
 }

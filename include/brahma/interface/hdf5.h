@@ -5669,7 +5669,7 @@ class HDF5 : public Interface {
 #endif
 
 #if (BRAHMA_HDF5_VERSION >= 101405 && BRAHMA_HDF5_VERSION < 101500)
-  virtual herr_t H5TSmutex_acquire(unsigned int lock_count, _Bool *acquired);
+  virtual herr_t H5TSmutex_acquire(unsigned int lock_count, bool *acquired);
 #endif
 
 #if (BRAHMA_HDF5_VERSION >= 101405 && BRAHMA_HDF5_VERSION < 101500)
@@ -17539,7 +17539,7 @@ GOTCHA_MACRO_TYPEDEF(H5Iregister_future, hid_t,
 
 #if (BRAHMA_HDF5_VERSION >= 101405 && BRAHMA_HDF5_VERSION < 101500)
 GOTCHA_MACRO_TYPEDEF(H5TSmutex_acquire, herr_t,
-                     (unsigned int lock_count, _Bool *acquired),
+                     (unsigned int lock_count, bool *acquired),
                      (lock_count, acquired), brahma::HDF5);
 #endif
 
