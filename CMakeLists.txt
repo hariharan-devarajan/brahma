@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 set(BRAHMA_VERSION_MAJOR "4")
 set(BRAHMA_VERSION_MINOR "1")
-set(BRAHMA_VERSION_PATCH "0")
+set(BRAHMA_VERSION_PATCH "1")
 set(BRAHMA_PACKAGE ${PROJECT_NAME})
 set(BRAHMA_PACKAGE_NAME ${PROJECT_NAME})
 set(BRAHMA_PACKAGE_VERSION "${BRAHMA_VERSION_MAJOR}.${BRAHMA_VERSION_MINOR}.${BRAHMA_VERSION_PATCH}")
@@ -16,7 +16,7 @@ set(BRAHMA_PACKAGE_STRING "${BRAHMA_PACKAGE_NAME} ${BRAHMA_PACKAGE_VERSION}")
 set(BRAHMA_PACKAGE_TARNAME "${BRAHMA_PACKAGE}")
 set(BRAHMA_LIBTOOL_VERSION "${BRAHMA_PACKAGE_VERSION}")
 
-set(BRAHMA_VERSION "(1, 0, 8)")
+set(BRAHMA_VERSION "(1, 0, 9)")
 
 project(brahma LANGUAGES C CXX)
 
@@ -115,7 +115,12 @@ endif()
 
 if(BRAHMA_BUILD_WITH_MPI)
   # MPI is optional; if it is requested but unavailable, disable MPI build.
-  find_package(MPI QUIET COMPONENTS C)
+  # When the caller supplies explicit paths, bypass find_package here too.
+  if(BRAHMA_MPI_C_INCLUDE_DIRS AND BRAHMA_MPI_C_LIBRARIES)
+    set(MPI_FOUND TRUE)
+  else()
+    find_package(MPI QUIET COMPONENTS C)
+  endif()
   if(MPI_FOUND OR TARGET MPI::MPI_C)
     set(BRAHMA_ENABLE_MPI 1)
   else()
@@ -335,12 +340,31 @@ set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${gotcha_LIBRARIES})
 # Optional Dependencies
 # =============================================================================
 if(BRAHMA_BUILD_WITH_HDF5)
-    # find HDF5
-    find_package(HDF5 REQUIRED)
+    # When the caller supplies HDF5 paths directly (e.g. via BRAHMA_HDF5_INCLUDE_DIRS /
+    # BRAHMA_HDF5_LIBRARIES), bypass find_package entirely so that no re-detection can
+    # pick up a different HDF5 installation.  The caller must also create HDF5::HDF5.
+    if(BRAHMA_HDF5_INCLUDE_DIRS AND BRAHMA_HDF5_LIBRARIES)
+      set(HDF5_FOUND TRUE)
+      set(HDF5_INCLUDE_DIRS "${BRAHMA_HDF5_INCLUDE_DIRS}")
+      set(HDF5_LIBRARIES    "${BRAHMA_HDF5_LIBRARIES}")
+      if(BRAHMA_HDF5_VERSION_STRING)
+        set(HDF5_VERSION "${BRAHMA_HDF5_VERSION_STRING}")
+      endif()
+      if(NOT TARGET HDF5::HDF5)
+        add_library(HDF5::HDF5 INTERFACE IMPORTED)
+        target_include_directories(HDF5::HDF5 INTERFACE ${BRAHMA_HDF5_INCLUDE_DIRS})
+        target_link_libraries(HDF5::HDF5 INTERFACE ${BRAHMA_HDF5_LIBRARIES})
+      endif()
+      message(STATUS "[${PROJECT_NAME}] Using caller-provided HDF5: ${BRAHMA_HDF5_INCLUDE_DIRS}")
+    else()
+      find_package(HDF5 REQUIRED)
+    endif()
     if (HDF5_FOUND)
         add_definitions(-DH5_DOXYGEN=1 -DH5O_MODULE=1 -DH5A_MODULE=1 -DH5T_MODULE=1 -DH5D_MODULE=1 -DH5F_MODULE=1)
         add_definitions(-DH5L_MODULE=1 -DH5G_MODULE=1  -DH5R_MODULE=1 -DH5VL_MODULE=1 -DH5P_MODULE=1)
-        convert_version_to_number("${HDF5_VERSION}" BRAHMA_HDF5_VERSION)
+        if(NOT BRAHMA_HDF5_VERSION GREATER 0)
+          convert_version_to_number("${HDF5_VERSION}" BRAHMA_HDF5_VERSION)
+        endif()
         message(STATUS "[${PROJECT_NAME}] found hdf5.h at ${HDF5_INCLUDE_DIRS}")
         message(STATUS "[${PROJECT_NAME}] HDF5 version: ${HDF5_VERSION} (${BRAHMA_HDF5_VERSION})")
         # include_directories(${HDF5_INCLUDE_DIRS})
@@ -351,22 +375,34 @@ if(BRAHMA_BUILD_WITH_HDF5)
 endif()
 
 if(BRAHMA_BUILD_WITH_MPI)
-  find_package(MPI QUIET COMPONENTS C)
+  # When the caller supplies MPI paths directly (e.g. via BRAHMA_MPI_C_INCLUDE_DIRS /
+  # BRAHMA_MPI_C_LIBRARIES), bypass find_package entirely.
+  if(BRAHMA_MPI_C_INCLUDE_DIRS AND BRAHMA_MPI_C_LIBRARIES)
+    set(MPI_FOUND TRUE)
+    set(MPI_C_INCLUDE_DIRS "${BRAHMA_MPI_C_INCLUDE_DIRS}")
+    set(MPI_C_LIBRARIES    "${BRAHMA_MPI_C_LIBRARIES}")
+    message(STATUS "[${PROJECT_NAME}] Using caller-provided MPI: ${BRAHMA_MPI_C_INCLUDE_DIRS}")
+  else()
+    find_package(MPI QUIET COMPONENTS C)
+  endif()
   if(MPI_FOUND)
     message(STATUS "[${PROJECT_NAME}] found mpi.h at ${MPI_C_INCLUDE_DIRS} ${MPI_C_LIBRARIES}")
 
     # ---- MPI implementation and version detection ----
+    # Detection is skipped when both BRAHMA_MPI_IMPL and BRAHMA_MPI_VERSION are
+    # supplied by the caller (e.g. dftracer forwards them after its own probe).
+    # If either is missing, run the C probe to fill in what's absent so that
+    # the library version from mpi.h macros (e.g. OMPI_MAJOR_VERSION → 4.1.6)
+    # is used rather than the MPI standard version (MPI_C_VERSION → 3.1).
     set(MPI_IMPLEMENTATION "UNKNOWN")
     set(MPI_PACKAGE_VERSION "")
 
-    if(BRAHMA_MPI_IMPL)
-      # User-supplied override via -DBRAHMA_MPI_IMPL=<impl>
+    if(BRAHMA_MPI_IMPL AND BRAHMA_MPI_VERSION GREATER 0)
+      # Both pre-supplied — use them directly, no detection needed.
       set(MPI_IMPLEMENTATION "${BRAHMA_MPI_IMPL}")
-      message(STATUS "[${PROJECT_NAME}] MPI implementation overridden: ${MPI_IMPLEMENTATION}")
+      message(STATUS "[${PROJECT_NAME}] MPI impl and version pre-supplied: impl=${MPI_IMPLEMENTATION} version=${BRAHMA_MPI_VERSION}")
     else()
-      # Auto-detect by compiling and running a small C probe that reads
-      # preprocessor macros defined in <mpi.h> (more reliable than parsing
-      # compiler --version output, which varies across wrappers).
+      # Run the C probe to detect impl and/or library version from mpi.h macros.
       try_run(
         _brahma_mpi_run_result
         _brahma_mpi_compile_result
@@ -388,8 +424,7 @@ if(BRAHMA_BUILD_WITH_MPI)
         endif()
         message(STATUS "[${PROJECT_NAME}] MPI C probe: impl=${MPI_IMPLEMENTATION} version=${MPI_PACKAGE_VERSION}")
       else()
-        # Fallback: parse mpicc compiler output (e.g. cross-compilation where
-        # the probe binary cannot be executed on the build host)
+        # Fallback: parse mpicc compiler output (cross-compilation / no exec)
         message(WARNING "[${PROJECT_NAME}] MPI C probe did not run (compile=${_brahma_mpi_compile_result} run=${_brahma_mpi_run_result}); falling back to compiler output parsing")
         if(MPI_C_COMPILER)
           execute_process(
@@ -424,15 +459,23 @@ if(BRAHMA_BUILD_WITH_MPI)
           endif()
         endif()
       endif()
-    endif()
 
-    # Compute numeric version
-    if(MPI_PACKAGE_VERSION)
-      convert_version_to_number("${MPI_PACKAGE_VERSION}" BRAHMA_MPI_VERSION)
-      message(STATUS "[${PROJECT_NAME}] MPI version: ${MPI_PACKAGE_VERSION} (${BRAHMA_MPI_VERSION})")
-    else()
-      convert_version_to_number("${MPI_C_VERSION}" BRAHMA_MPI_VERSION)
-      message(STATUS "[${PROJECT_NAME}] MPI standard version (fallback): ${MPI_C_VERSION} (${BRAHMA_MPI_VERSION})")
+      # Apply impl override if only the version was pre-supplied.
+      if(BRAHMA_MPI_IMPL)
+        set(MPI_IMPLEMENTATION "${BRAHMA_MPI_IMPL}")
+        message(STATUS "[${PROJECT_NAME}] MPI implementation overridden: ${MPI_IMPLEMENTATION}")
+      endif()
+
+      # Compute numeric version from probe; honour pre-supplied value if present.
+      if(BRAHMA_MPI_VERSION GREATER 0)
+        message(STATUS "[${PROJECT_NAME}] MPI version pre-set: version=${BRAHMA_MPI_VERSION}")
+      elseif(MPI_PACKAGE_VERSION)
+        convert_version_to_number("${MPI_PACKAGE_VERSION}" BRAHMA_MPI_VERSION)
+        message(STATUS "[${PROJECT_NAME}] MPI version: ${MPI_PACKAGE_VERSION} (${BRAHMA_MPI_VERSION})")
+      else()
+        convert_version_to_number("${MPI_C_VERSION}" BRAHMA_MPI_VERSION)
+        message(STATUS "[${PROJECT_NAME}] MPI standard version (fallback): ${MPI_C_VERSION} (${BRAHMA_MPI_VERSION})")
+      endif()
     endif()
 
     message(STATUS "[${PROJECT_NAME}] MPI implementation: ${MPI_IMPLEMENTATION}")
