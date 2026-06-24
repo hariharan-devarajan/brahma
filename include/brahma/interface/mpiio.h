@@ -32,28 +32,6 @@ class MPIIO : public Interface {
 
   size_t unbind();
 
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  virtual MPI_Fint MPI_File_c2f(MPI_File file);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  virtual int MPI_File_c2f(MPI_File file);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  virtual MPI_File MPI_File_f2c(MPI_Fint file);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  virtual MPI_File MPI_File_f2c(int file);
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -1071,28 +1049,6 @@ class MPIIO : public Interface {
                                          MPI_Count *extent);
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  GOTCHA_MACRO_VAR(MPI_File_c2f)
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  GOTCHA_MACRO_VAR(MPI_File_c2f)
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  GOTCHA_MACRO_VAR(MPI_File_f2c)
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  GOTCHA_MACRO_VAR(MPI_File_f2c)
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -2005,30 +1961,6 @@ class MPIIO : public Interface {
 #endif
 };
 }  // namespace brahma
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-GOTCHA_MACRO_TYPEDEF(MPI_File_c2f, MPI_Fint, (MPI_File file), (file),
-                     brahma::MPIIO);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-GOTCHA_MACRO_TYPEDEF(MPI_File_c2f, int, (MPI_File file), (file), brahma::MPIIO);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-GOTCHA_MACRO_TYPEDEF(MPI_File_f2c, MPI_File, (MPI_Fint file), (file),
-                     brahma::MPIIO);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-GOTCHA_MACRO_TYPEDEF(MPI_File_f2c, MPI_File, (int file), (file), brahma::MPIIO);
-#endif
 
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
@@ -3181,28 +3113,6 @@ GOTCHA_MACRO_TYPEDEF(MPI_File_get_type_extent_c, int,
 
 template <typename C>
 size_t brahma::MPIIO::bind(const char *name, uint16_t priority) {
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  GOTCHA_BINDING_MACRO(MPI_File_c2f, brahma::MPIIO);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  GOTCHA_BINDING_MACRO(MPI_File_c2f, brahma::MPIIO);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  GOTCHA_BINDING_MACRO(MPI_File_f2c, brahma::MPIIO);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  GOTCHA_BINDING_MACRO(MPI_File_f2c, brahma::MPIIO);
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \

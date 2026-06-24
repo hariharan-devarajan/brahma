@@ -729,28 +729,6 @@ class MPITest : public MPI {
   }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  int MPI_Comm_c2f(MPI_Comm comm) override {
-    printf("40 Captured MPI_Comm_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Fint MPI_Comm_c2f(MPI_Comm comm) override {
-    printf("41 Captured MPI_Comm_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -957,28 +935,6 @@ class MPITest : public MPI {
   int MPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info,
                              MPI_Comm *newcomm) override {
     printf("53 Captured MPI_Comm_dup_with_info call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Comm MPI_Comm_f2c(int comm) override {
-    printf("54 Captured MPI_Comm_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Comm MPI_Comm_f2c(MPI_Fint comm) override {
-    printf("55 Captured MPI_Comm_f2c call\n");
     fflush(stdout);
     api_count++;
     return 0;
@@ -1485,50 +1441,6 @@ class MPITest : public MPI {
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   int MPI_Dims_create(int nnodes, int ndims, int dims[]) override {
     printf("83 Captured MPI_Dims_create call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  int MPI_Errhandler_c2f(MPI_Errhandler errhandler) override {
-    printf("84 Captured MPI_Errhandler_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler) override {
-    printf("85 Captured MPI_Errhandler_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Errhandler MPI_Errhandler_f2c(int errhandler) override {
-    printf("86 Captured MPI_Errhandler_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler) override {
-    printf("87 Captured MPI_Errhandler_f2c call\n");
     fflush(stdout);
     api_count++;
     return 0;
@@ -2088,28 +2000,6 @@ class MPITest : public MPI {
   }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  int MPI_Group_c2f(MPI_Group group) override {
-    printf("119 Captured MPI_Group_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Fint MPI_Group_c2f(MPI_Group group) override {
-    printf("120 Captured MPI_Group_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -2158,28 +2048,6 @@ class MPITest : public MPI {
   int MPI_Group_excl(MPI_Group group, int n, const int ranks[],
                      MPI_Group *newgroup) override {
     printf("123 Captured MPI_Group_excl call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Group MPI_Group_f2c(int group) override {
-    printf("124 Captured MPI_Group_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Group MPI_Group_f2c(MPI_Fint group) override {
-    printf("125 Captured MPI_Group_f2c call\n");
     fflush(stdout);
     api_count++;
     return 0;
@@ -2399,28 +2267,6 @@ class MPITest : public MPI {
   }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  int MPI_Info_c2f(MPI_Info info) override {
-    printf("138 Captured MPI_Info_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Fint MPI_Info_c2f(MPI_Info info) override {
-    printf("139 Captured MPI_Info_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -2466,28 +2312,6 @@ class MPITest : public MPI {
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) override {
     printf("142 Captured MPI_Info_dup call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Info MPI_Info_f2c(int info) override {
-    printf("143 Captured MPI_Info_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Info MPI_Info_f2c(MPI_Fint info) override {
-    printf("144 Captured MPI_Info_f2c call\n");
     fflush(stdout);
     api_count++;
     return 0;
@@ -2812,50 +2636,6 @@ class MPITest : public MPI {
   }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  int MPI_Message_c2f(MPI_Message message) override {
-    printf("163 Captured MPI_Message_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Fint MPI_Message_c2f(MPI_Message message) override {
-    printf("164 Captured MPI_Message_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Message MPI_Message_f2c(int message) override {
-    printf("165 Captured MPI_Message_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Message MPI_Message_f2c(MPI_Fint message) override {
-    printf("166 Captured MPI_Message_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -3098,28 +2878,6 @@ class MPITest : public MPI {
   }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  int MPI_Op_c2f(MPI_Op op) override {
-    printf("179 Captured MPI_Op_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Fint MPI_Op_c2f(MPI_Op op) override {
-    printf("180 Captured MPI_Op_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -3166,28 +2924,6 @@ class MPITest : public MPI {
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   int MPI_Open_port(MPI_Info info, char *port_name) override {
     printf("183 Captured MPI_Open_port call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Op MPI_Op_f2c(int op) override {
-    printf("184 Captured MPI_Op_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Op MPI_Op_f2c(MPI_Fint op) override {
-    printf("185 Captured MPI_Op_f2c call\n");
     fflush(stdout);
     api_count++;
     return 0;
@@ -3578,50 +3314,6 @@ class MPITest : public MPI {
                            MPI_Datarep_extent_function *dtype_file_extent_fn,
                            void *extra_state) override {
     printf("207 Captured MPI_Register_datarep call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  int MPI_Request_c2f(MPI_Request request) override {
-    printf("208 Captured MPI_Request_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Fint MPI_Request_c2f(MPI_Request request) override {
-    printf("209 Captured MPI_Request_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Request MPI_Request_f2c(int request) override {
-    printf("210 Captured MPI_Request_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Request MPI_Request_f2c(MPI_Fint request) override {
-    printf("211 Captured MPI_Request_f2c call\n");
     fflush(stdout);
     api_count++;
     return 0;
@@ -4037,48 +3729,6 @@ class MPITest : public MPI {
   }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  int MPI_Status_c2f(const MPI_Status *c_status, MPI_Fint *f_status) override {
-    printf("234 Captured MPI_Status_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  int MPI_Status_c2f(const MPI_Status *c_status, int *f_status) override {
-    printf("235 Captured MPI_Status_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  int MPI_Status_f2c(const MPI_Fint *f_status, MPI_Status *c_status) override {
-    printf("236 Captured MPI_Status_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  int MPI_Status_f2c(const int *f_status, MPI_Status *c_status) override {
-    printf("237 Captured MPI_Status_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -4247,28 +3897,6 @@ class MPITest : public MPI {
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   int MPI_Topo_test(MPI_Comm comm, int *status) override {
     printf("248 Captured MPI_Topo_test call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  int MPI_Type_c2f(MPI_Datatype datatype) override {
-    printf("249 Captured MPI_Type_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Fint MPI_Type_c2f(MPI_Datatype datatype) override {
-    printf("250 Captured MPI_Type_c2f call\n");
     fflush(stdout);
     api_count++;
     return 0;
@@ -4602,28 +4230,6 @@ class MPITest : public MPI {
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   int MPI_Type_free_keyval(int *type_keyval) override {
     printf("268 Captured MPI_Type_free_keyval call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Datatype MPI_Type_f2c(int datatype) override {
-    printf("269 Captured MPI_Type_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Datatype MPI_Type_f2c(MPI_Fint datatype) override {
-    printf("270 Captured MPI_Type_f2c call\n");
     fflush(stdout);
     api_count++;
     return 0;
@@ -5110,28 +4716,6 @@ class MPITest : public MPI {
   }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  int MPI_Win_c2f(MPI_Win win) override {
-    printf("299 Captured MPI_Win_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Fint MPI_Win_c2f(MPI_Win win) override {
-    printf("300 Captured MPI_Win_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -5267,28 +4851,6 @@ class MPITest : public MPI {
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   int MPI_Win_detach(MPI_Win win, const void *base) override {
     printf("308 Captured MPI_Win_detach call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Win MPI_Win_f2c(int win) override {
-    printf("309 Captured MPI_Win_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Win MPI_Win_f2c(MPI_Fint win) override {
-    printf("310 Captured MPI_Win_f2c call\n");
     fflush(stdout);
     api_count++;
     return 0;
@@ -6650,26 +6212,6 @@ class MPITest : public MPI {
                         int root, MPI_Comm comm, MPI_Info info,
                         MPI_Request *request) override {
     printf("392 Captured MPI_Scatterv_init call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300))
-  MPI_Session MPI_Session_f2c(MPI_Fint session) override {
-    printf("393 Captured MPI_Session_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))
-  MPI_Session MPI_Session_f2c(int session) override {
-    printf("394 Captured MPI_Session_f2c call\n");
     fflush(stdout);
     api_count++;
     return 0;
@@ -9362,18 +8904,6 @@ int main(int argc, char *argv[]) {
                   (MPI_Comm *)NULL);
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Comm_c2f((MPI_Comm)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Comm_c2f((MPI_Comm)0);
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -9520,18 +9050,6 @@ int main(int argc, char *argv[]) {
       ((BRAHMA_MPI_VERSION >= 800108 && BRAHMA_MPI_VERSION < 800200) ||   \
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   MPI_Comm_dup_with_info((MPI_Comm)0, (MPI_Info)0, (MPI_Comm *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Comm_f2c((int)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Comm_f2c((int)0);
 #endif
 
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
@@ -9880,30 +9398,6 @@ int main(int argc, char *argv[]) {
       ((BRAHMA_MPI_VERSION >= 800108 && BRAHMA_MPI_VERSION < 800200) ||   \
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   MPI_Dims_create((int)0, (int)0, (int *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Errhandler_c2f((MPI_Errhandler)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Errhandler_c2f((MPI_Errhandler)0);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Errhandler_f2c((int)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Errhandler_f2c((int)0);
 #endif
 
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
@@ -10288,18 +9782,6 @@ int main(int argc, char *argv[]) {
       (MPI_Grequest_cancel_function *)NULL, (void *)NULL, (MPI_Request *)NULL);
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Group_c2f((MPI_Group)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Group_c2f((MPI_Group)0);
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -10334,18 +9816,6 @@ int main(int argc, char *argv[]) {
       ((BRAHMA_MPI_VERSION >= 800108 && BRAHMA_MPI_VERSION < 800200) ||   \
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   MPI_Group_excl((MPI_Group)0, (int)0, (const int *)NULL, (MPI_Group *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Group_f2c((int)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Group_f2c((int)0);
 #endif
 
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
@@ -10496,18 +9966,6 @@ int main(int argc, char *argv[]) {
              (MPI_Request *)NULL);
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Info_c2f((MPI_Info)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Info_c2f((MPI_Info)0);
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -10542,18 +10000,6 @@ int main(int argc, char *argv[]) {
       ((BRAHMA_MPI_VERSION >= 800108 && BRAHMA_MPI_VERSION < 800200) ||   \
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   MPI_Info_dup((MPI_Info)0, (MPI_Info *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Info_f2c((int)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Info_f2c((int)0);
 #endif
 
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
@@ -10779,30 +10225,6 @@ int main(int argc, char *argv[]) {
   MPI_Lookup_name((const char *)NULL, (MPI_Info)0, (char *)NULL);
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Message_c2f((MPI_Message)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Message_c2f((MPI_Message)0);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Message_f2c((int)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Message_f2c((int)0);
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -10972,18 +10394,6 @@ int main(int argc, char *argv[]) {
                           (MPI_Comm)0, (MPI_Request *)NULL);
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Op_c2f((MPI_Op)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Op_c2f((MPI_Op)0);
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -11018,18 +10428,6 @@ int main(int argc, char *argv[]) {
       ((BRAHMA_MPI_VERSION >= 800108 && BRAHMA_MPI_VERSION < 800200) ||   \
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   MPI_Open_port((MPI_Info)0, (char *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Op_f2c((int)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Op_f2c((int)0);
 #endif
 
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
@@ -11294,30 +10692,6 @@ int main(int argc, char *argv[]) {
                        (MPI_Datarep_conversion_function *)NULL,
                        (MPI_Datarep_conversion_function *)NULL,
                        (MPI_Datarep_extent_function *)NULL, (void *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Request_c2f((MPI_Request)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Request_c2f((MPI_Request)0);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Request_f2c((int)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Request_f2c((int)0);
 #endif
 
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
@@ -11600,28 +10974,6 @@ int main(int argc, char *argv[]) {
   MPI_Startall((int)0, (MPI_Request *)NULL);
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  MPI_Status_c2f((const MPI_Status *)NULL, (MPI_Fint *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  MPI_Status_c2f((const MPI_Status *)NULL, (int *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  MPI_Status_f2c((const MPI_Fint *)NULL, (MPI_Status *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  MPI_Status_f2c((const int *)NULL, (MPI_Status *)NULL);
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -11733,18 +11085,6 @@ int main(int argc, char *argv[]) {
       ((BRAHMA_MPI_VERSION >= 800108 && BRAHMA_MPI_VERSION < 800200) ||   \
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   MPI_Topo_test((MPI_Comm)0, (int *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Type_c2f((MPI_Datatype)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Type_c2f((MPI_Datatype)0);
 #endif
 
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
@@ -11974,18 +11314,6 @@ int main(int argc, char *argv[]) {
       ((BRAHMA_MPI_VERSION >= 800108 && BRAHMA_MPI_VERSION < 800200) ||   \
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   MPI_Type_free_keyval((int *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Type_f2c((int)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Type_f2c((int)0);
 #endif
 
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
@@ -12307,18 +11635,6 @@ int main(int argc, char *argv[]) {
   MPI_Win_attach((MPI_Win)0, (void *)NULL, (long)0);
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Win_c2f((MPI_Win)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Win_c2f((MPI_Win)0);
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -12417,18 +11733,6 @@ int main(int argc, char *argv[]) {
       ((BRAHMA_MPI_VERSION >= 800108 && BRAHMA_MPI_VERSION < 800200) ||   \
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
   MPI_Win_detach((MPI_Win)0, (const void *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-  MPI_Win_f2c((int)0);
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-  MPI_Win_f2c((int)0);
 #endif
 
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
@@ -13331,16 +12635,6 @@ int main(int argc, char *argv[]) {
   MPI_Scatterv_init((const void *)NULL, (const int *)NULL, (const int *)NULL,
                     (MPI_Datatype)0, (void *)NULL, (int)0, (MPI_Datatype)0,
                     (int)0, (MPI_Comm)0, (MPI_Info)0, (MPI_Request *)NULL);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300))
-  MPI_Session_f2c((int)0);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))
-  MPI_Session_f2c((int)0);
 #endif
 
 #if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                   \

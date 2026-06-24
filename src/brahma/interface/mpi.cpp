@@ -704,24 +704,6 @@ int MPI::MPI_Comm_accept(const char *port_name, MPI_Info info, int root,
 }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-int MPI::MPI_Comm_c2f(MPI_Comm comm) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Comm_c2f, int, (comm));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Fint MPI::MPI_Comm_c2f(MPI_Comm comm) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Comm_c2f, MPI_Fint, (comm));
-  return result;
-}
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -910,24 +892,6 @@ int MPI::MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request) {
 int MPI::MPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info,
                                 MPI_Comm *newcomm) {
   BRAHMA_UNWRAPPED_FUNC(MPI_Comm_dup_with_info, int, (comm, info, newcomm));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-MPI_Comm MPI::MPI_Comm_f2c(int comm) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Comm_f2c, MPI_Comm, (comm));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Comm MPI::MPI_Comm_f2c(MPI_Fint comm) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Comm_f2c, MPI_Comm, (comm));
   return result;
 }
 #endif
@@ -1391,42 +1355,6 @@ int MPI::MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
 int MPI::MPI_Dims_create(int nnodes, int ndims, int dims[]) {
   BRAHMA_UNWRAPPED_FUNC(MPI_Dims_create, int, (nnodes, ndims, dims));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-int MPI::MPI_Errhandler_c2f(MPI_Errhandler errhandler) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Errhandler_c2f, int, (errhandler));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Fint MPI::MPI_Errhandler_c2f(MPI_Errhandler errhandler) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Errhandler_c2f, MPI_Fint, (errhandler));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-MPI_Errhandler MPI::MPI_Errhandler_f2c(int errhandler) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Errhandler_f2c, MPI_Errhandler, (errhandler));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Errhandler MPI::MPI_Errhandler_f2c(MPI_Fint errhandler) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Errhandler_f2c, MPI_Errhandler, (errhandler));
   return result;
 }
 #endif
@@ -1949,24 +1877,6 @@ int MPI::MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
 }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-int MPI::MPI_Group_c2f(MPI_Group group) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Group_c2f, int, (group));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Fint MPI::MPI_Group_c2f(MPI_Group group) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Group_c2f, MPI_Fint, (group));
-  return result;
-}
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -2010,24 +1920,6 @@ int MPI::MPI_Group_difference(MPI_Group group1, MPI_Group group2,
 int MPI::MPI_Group_excl(MPI_Group group, int n, const int ranks[],
                         MPI_Group *newgroup) {
   BRAHMA_UNWRAPPED_FUNC(MPI_Group_excl, int, (group, n, ranks, newgroup));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-MPI_Group MPI::MPI_Group_f2c(int group) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Group_f2c, MPI_Group, (group));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Group MPI::MPI_Group_f2c(MPI_Fint group) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Group_f2c, MPI_Group, (group));
   return result;
 }
 #endif
@@ -2227,24 +2119,6 @@ int MPI::MPI_Imrecv(void *buf, int count, MPI_Datatype type,
 }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-int MPI::MPI_Info_c2f(MPI_Info info) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Info_c2f, int, (info));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Fint MPI::MPI_Info_c2f(MPI_Info info) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Info_c2f, MPI_Fint, (info));
-  return result;
-}
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -2286,24 +2160,6 @@ int MPI::MPI_Info_delete(MPI_Info info, const char *key) {
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
 int MPI::MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
   BRAHMA_UNWRAPPED_FUNC(MPI_Info_dup, int, (info, newinfo));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-MPI_Info MPI::MPI_Info_f2c(int info) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Info_f2c, MPI_Info, (info));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Info MPI::MPI_Info_f2c(MPI_Fint info) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Info_f2c, MPI_Info, (info));
   return result;
 }
 #endif
@@ -2597,42 +2453,6 @@ int MPI::MPI_Lookup_name(const char *service_name, MPI_Info info,
 }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-int MPI::MPI_Message_c2f(MPI_Message message) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Message_c2f, int, (message));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Fint MPI::MPI_Message_c2f(MPI_Message message) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Message_c2f, MPI_Fint, (message));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-MPI_Message MPI::MPI_Message_f2c(int message) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Message_f2c, MPI_Message, (message));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Message MPI::MPI_Message_f2c(MPI_Fint message) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Message_f2c, MPI_Message, (message));
-  return result;
-}
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -2873,24 +2693,6 @@ int MPI::MPI_Ineighbor_alltoallw(const void *sendbuf, const int sendcounts[],
 }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-int MPI::MPI_Op_c2f(MPI_Op op) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Op_c2f, int, (op));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Fint MPI::MPI_Op_c2f(MPI_Op op) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Op_c2f, MPI_Fint, (op));
-  return result;
-}
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -2932,24 +2734,6 @@ int MPI::MPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op) {
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
 int MPI::MPI_Open_port(MPI_Info info, char *port_name) {
   BRAHMA_UNWRAPPED_FUNC(MPI_Open_port, int, (info, port_name));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-MPI_Op MPI::MPI_Op_f2c(int op) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Op_f2c, MPI_Op, (op));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Op MPI::MPI_Op_f2c(MPI_Fint op) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Op_f2c, MPI_Op, (op));
   return result;
 }
 #endif
@@ -3320,42 +3104,6 @@ int MPI::MPI_Register_datarep(
   BRAHMA_UNWRAPPED_FUNC(MPI_Register_datarep, int,
                         (datarep, read_conversion_fn, write_conversion_fn,
                          dtype_file_extent_fn, extra_state));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-int MPI::MPI_Request_c2f(MPI_Request request) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Request_c2f, int, (request));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Fint MPI::MPI_Request_c2f(MPI_Request request) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Request_c2f, MPI_Fint, (request));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-MPI_Request MPI::MPI_Request_f2c(int request) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Request_f2c, MPI_Request, (request));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Request MPI::MPI_Request_f2c(MPI_Fint request) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Request_f2c, MPI_Request, (request));
   return result;
 }
 #endif
@@ -3755,40 +3503,6 @@ int MPI::MPI_Startall(int count, MPI_Request array_of_requests[]) {
 }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-int MPI::MPI_Status_c2f(const MPI_Status *c_status, MPI_Fint *f_status) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Status_c2f, int, (c_status, f_status));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-int MPI::MPI_Status_c2f(const MPI_Status *c_status, int *f_status) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Status_c2f, int, (c_status, f_status));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-int MPI::MPI_Status_f2c(const MPI_Fint *f_status, MPI_Status *c_status) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Status_f2c, int, (f_status, c_status));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-int MPI::MPI_Status_f2c(const int *f_status, MPI_Status *c_status) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Status_f2c, int, (f_status, c_status));
-  return result;
-}
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -3946,24 +3660,6 @@ int MPI::MPI_Testsome(int incount, MPI_Request array_of_requests[],
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
 int MPI::MPI_Topo_test(MPI_Comm comm, int *status) {
   BRAHMA_UNWRAPPED_FUNC(MPI_Topo_test, int, (comm, status));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-int MPI::MPI_Type_c2f(MPI_Datatype datatype) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Type_c2f, int, (datatype));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Fint MPI::MPI_Type_c2f(MPI_Datatype datatype) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Type_c2f, MPI_Fint, (datatype));
   return result;
 }
 #endif
@@ -4275,24 +3971,6 @@ int MPI::MPI_Type_free(MPI_Datatype *type) {
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
 int MPI::MPI_Type_free_keyval(int *type_keyval) {
   BRAHMA_UNWRAPPED_FUNC(MPI_Type_free_keyval, int, (type_keyval));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-MPI_Datatype MPI::MPI_Type_f2c(int datatype) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Type_f2c, MPI_Datatype, (datatype));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Datatype MPI::MPI_Type_f2c(MPI_Fint datatype) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Type_f2c, MPI_Datatype, (datatype));
   return result;
 }
 #endif
@@ -4744,24 +4422,6 @@ int MPI::MPI_Win_attach(MPI_Win win, void *base, MPI_Aint size) {
 }
 #endif
 
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-int MPI::MPI_Win_c2f(MPI_Win win) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Win_c2f, int, (win));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Fint MPI::MPI_Win_c2f(MPI_Win win) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Win_c2f, MPI_Fint, (win));
-  return result;
-}
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -4885,24 +4545,6 @@ int MPI::MPI_Win_delete_attr(MPI_Win win, int win_keyval) {
        (BRAHMA_MPI_VERSION >= 900001 && BRAHMA_MPI_VERSION < 900200))))
 int MPI::MPI_Win_detach(MPI_Win win, const void *base) {
   BRAHMA_UNWRAPPED_FUNC(MPI_Win_detach, int, (win, base));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200))
-MPI_Win MPI::MPI_Win_f2c(int win) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Win_f2c, MPI_Win, (win));
-  return result;
-}
-#endif
-
-#if ((defined(BRAHMA_MPI_IMPL_MPICH) &&                                 \
-      (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300)) || \
-     (defined(BRAHMA_MPI_IMPL_CRAYMPICH) &&                             \
-      (BRAHMA_MPI_VERSION >= 900100 && BRAHMA_MPI_VERSION < 900200)))
-MPI_Win MPI::MPI_Win_f2c(MPI_Fint win) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Win_f2c, MPI_Win, (win));
   return result;
 }
 #endif
@@ -6168,22 +5810,6 @@ int MPI::MPI_Scatterv_init(const void *sendbuf, const int sendcounts[],
   BRAHMA_UNWRAPPED_FUNC(MPI_Scatterv_init, int,
                         (sendbuf, sendcounts, displs, sendtype, recvbuf,
                          recvcount, recvtype, root, comm, info, request));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 400203 && BRAHMA_MPI_VERSION < 400300))
-MPI_Session MPI::MPI_Session_f2c(MPI_Fint session) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Session_f2c, MPI_Session, (session));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) && \
-     (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))
-MPI_Session MPI::MPI_Session_f2c(int session) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_Session_f2c, MPI_Session, (session));
   return result;
 }
 #endif

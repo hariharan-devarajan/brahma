@@ -32,48 +32,6 @@ class MPIIOTest : public MPIIO {
 
   size_t api_count;
 
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  MPI_Fint MPI_File_c2f(MPI_File file) override {
-    printf("1 Captured MPI_File_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  int MPI_File_c2f(MPI_File file) override {
-    printf("2 Captured MPI_File_c2f call\n");
-    fflush(stdout);
-    api_count++;
-    return 0;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  MPI_File MPI_File_f2c(MPI_Fint file) override {
-    printf("3 Captured MPI_File_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return NULL;
-  }
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  MPI_File MPI_File_f2c(int file) override {
-    printf("4 Captured MPI_File_f2c call\n");
-    fflush(stdout);
-    api_count++;
-    return NULL;
-  }
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \
@@ -1569,28 +1527,6 @@ int main(int argc, char *argv[]) {
   signal(SIGSEGV, print_stacktrace);
   signal(SIGABRT, print_stacktrace);
 #ifdef BRAHMA_ENABLE_MPI
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  MPI_File_c2f((MPI_File)0);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  MPI_File_c2f((MPI_File)0);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-  MPI_File_f2c((int)0);
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-  MPI_File_f2c((int)0);
-#endif
 
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \

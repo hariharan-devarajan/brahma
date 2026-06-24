@@ -43,40 +43,6 @@ size_t MPIIO::unbind() {
   return num_bindings;
 }
 
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-MPI_Fint MPIIO::MPI_File_c2f(MPI_File file) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_File_c2f, MPI_Fint, (file));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-int MPIIO::MPI_File_c2f(MPI_File file) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_File_c2f, int, (file));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_MPICH) && \
-     (BRAHMA_MPI_VERSION >= 300403 && BRAHMA_MPI_VERSION < 300500))
-MPI_File MPIIO::MPI_File_f2c(MPI_Fint file) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_File_f2c, MPI_File, (file));
-  return result;
-}
-#endif
-
-#if (defined(BRAHMA_MPI_IMPL_OPENMPI) &&                               \
-     ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) || \
-      (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100)))
-MPI_File MPIIO::MPI_File_f2c(int file) {
-  BRAHMA_UNWRAPPED_FUNC(MPI_File_f2c, MPI_File, (file));
-  return result;
-}
-#endif
-
 #if ((defined(BRAHMA_MPI_IMPL_OPENMPI) &&                                 \
       ((BRAHMA_MPI_VERSION >= 400106 && BRAHMA_MPI_VERSION < 400200) ||   \
        (BRAHMA_MPI_VERSION >= 500006 && BRAHMA_MPI_VERSION < 500100))) || \

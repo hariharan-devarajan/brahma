@@ -1008,9 +1008,9 @@ for (
             if brahma_name == "mpi" and (cursor.spelling.startswith("MPI_File_") or cursor.spelling.startswith("MPI_T_")):
                 continue
             
-            # # TODO: Check this and fix these APIs
-            # if "f2c" in cursor.spelling or "c2f" in cursor.spelling:
-            #     continue
+            # Fortran handle conversion APIs are intentionally unsupported.
+            if cursor.spelling.endswith(("_f2c", "_c2f")):
+                continue
             
             # TODO: Check this and fix these APIs
             if brahma_name == "hdf5" and (cursor.spelling in ["H5Tget_size", "H5Tget_ebias","H5Tget_precision","H5Tget_member_offset",
