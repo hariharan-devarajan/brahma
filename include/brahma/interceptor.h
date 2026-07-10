@@ -40,7 +40,29 @@
       return fn macro2args_val;                                                                       \
     }                                                                                                 \
     return instance->macroname macro2args_val;                                                        \
-  }                                                                         
+  }
+
+// Same as GOTCHA_MACRO_TYPEDEF, but the weak declaration of the REAL
+// external function is wrapped in extern "C". Needed for functions whose
+// brahma-side signature was hand-corrected to a form that differs from
+// whatever HDF5's own header declared earlier in this translation unit
+// (e.g. HDF5's *_async functions under H5_DOXYGEN=1) -- without explicit
+// extern "C", such a redeclaration is treated as a NEW C++ overload (with a
+// mangled name) rather than unified with the real C-linkage exported
+// symbol, so the weak symbol never resolves and calls jump through a NULL
+// pointer at runtime. Use this variant for those functions specifically;
+// GOTCHA_MACRO_TYPEDEF is unaffected and still used everywhere else.
+#define GOTCHA_MACRO_TYPEDEF_C(macroname, macroret, macroargs, macro2args_val, macroclass_name)       \
+  typedef macroret(*macroname##_fptr) macroargs;                                                      \
+  extern "C" { macroret __attribute__((weak)) macroname macroargs; }                                  \
+  inline macroret macroname##_wrapper macroargs {                                                     \
+    auto instance = macroclass_name::get_instance();                                                  \
+    if (instance == nullptr) {                                                                        \
+      macroname##_fptr fn = &::macroname;                                                             \
+      return fn macro2args_val;                                                                       \
+    }                                                                                                 \
+    return instance->macroname macro2args_val;                                                        \
+  }
 
 #define GOTCHA_MACRO_TYPEDEF_NOWEAK(macroname, macroret, macroargs, macro2args_val, macroclass_name)  \
   typedef macroret(*macroname##_fptr) macroargs;                                                      \
