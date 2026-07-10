@@ -131,6 +131,15 @@ TEMPLATE_INTERFACE = Template("""
 #ifdef ${enable_macro_name}
 #include <brahma/interceptor.h>
 #include <brahma/interface/interface.h>
+// H5_DOXYGEN=1 simplifies parsing of macro-heavy HDF5 declarations in
+// general. The one place this matters (the "*_async" functions, whose real
+// linked ABI differs from the Doxygen-stub signature) is compensated for
+// explicitly in generate_interfaces.py's cursor-processing loop (search for
+// "cursor.spelling.endswith(\"_async\")"), which force-prepends the real
+// app_file/app_func/app_line prefix regardless of which #if branch clang
+// parsed. Do not remove this #define without also removing that compensating
+// fix, or every *_async function will silently regress to the wrong
+// (Doxygen-stub) signature again.
 #define H5_DOXYGEN 1
 #include <${lib_header_file_name}>
 
@@ -1145,6 +1154,47 @@ for (
                         else:
                             args.append(f"{type_spelling} {param_name}")
                 arg_names.append(param_name)
+
+            # HDF5 "*_async" functions: the REAL linked ABI (any normal build,
+            # i.e. everything compiled with H5_DOXYGEN undefined) always
+            # prepends 3 tracking parameters via HDF5's public-header macro,
+            # e.g. (from H5Fpublic.h):
+            #   #ifndef H5_DOXYGEN
+            #   H5_DLL hid_t H5Fcreate_async(const char *app_file, const char *app_func,
+            #                                unsigned app_line, const char *filename, ...);
+            #   #define H5Fcreate_async(...) H5Fcreate_async(__FILE__, __func__, __LINE__, __VA_ARGS__)
+            #   #else
+            #   H5_DLL hid_t H5Fcreate_async(const char *filename, ...);  // Doxygen-only stub
+            #   #endif
+            # We parse HDF5 headers with -DH5_DOXYGEN=1 above so clang can
+            # resolve simpler macro-heavy declarations elsewhere in the
+            # header set; the side effect is that clang sees the #else
+            # (short) Doxygen-only stub for every *_async function instead of
+            # the real linked symbol's signature. GOTCHA intercepts by symbol
+            # NAME only, so at runtime brahma's wrapper is invoked with the
+            # arguments the macro-expanded call
+            # H5Fcreate_async(__FILE__, __func__, __LINE__, ...) actually
+            # produces. If brahma's wrapper were declared with the short
+            # (Doxygen) signature, every argument after the prefix would be
+            # read from the wrong register/stack slot, corrupting hid_t
+            # handles. Force the real 3-arg prefix onto every *_async
+            # function's signature here, independent of which #if branch
+            # clang happened to parse.
+            #
+            # Version note: this prefix only applies to the HDF5 Async VOL
+            # connector API, which HDF5 introduced in the 1.13/1.14 series.
+            # It does not exist at all in the 1.8.x/1.10.x/1.12.x public
+            # headers brahma's CI matrix also targets, so no *_async cursors
+            # are ever produced when parsing those older headers -- this
+            # block is a no-op for them and no additional version gating is
+            # required.
+            if (
+                brahma_name == "hdf5"
+                and cursor.spelling.endswith("_async")
+                and (len(arg_names) == 0 or arg_names[0] != "app_file")
+            ):
+                args = ["const char *app_file", "const char *app_func", "unsigned app_line"] + args
+                arg_names = ["app_file", "app_func", "app_line"] + arg_names
 
             if len(args) == 0:
                 args.append("void")

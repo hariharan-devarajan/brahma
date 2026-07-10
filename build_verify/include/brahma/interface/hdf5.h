@@ -10,18 +10,17 @@
 #ifdef BRAHMA_ENABLE_HDF5
 #include <brahma/interceptor.h>
 #include <brahma/interface/interface.h>
-// H5_DOXYGEN MUST stay defined here. HDF5's real header defines *_async as
-// FUNCTION-LIKE MACROS when H5_DOXYGEN is undefined (e.g.
-// "#define H5Oopen_async(...) H5Oopen_async(__FILE__, __func__, __LINE__,
-// __VA_ARGS__)"). A function-like macro expands on ANY bare occurrence of
-// the identifier followed by '(' -- including our OWN declarations,
-// definitions, and GOTCHA_MACRO_TYPEDEF invocations below, not just call
-// sites. Removing H5_DOXYGEN (tried 2026-07-10) let that macro corrupt
-// every *_async declaration/definition in this file, causing a segfault on
-// the very first *_async call (test #707 in test_hdf5, immediately after
-// the last non-async test #706 -- a hard crash, not per-function binding
-// loss). Keep H5_DOXYGEN defined; all *_async signatures below are already
-// hand-corrected to the real 3-arg-prefixed ABI independent of this define.
+// H5_DOXYGEN is intentionally NOT defined here (removed 2026-07-10). All
+// *_async function declarations below have already been hand-corrected to
+// the REAL linked ABI (app_file/app_func/app_line prefix). Leaving
+// H5_DOXYGEN=1 defined while also declaring the correct signatures caused
+// this header's own #include <hdf5.h> to pull in HDF5's simplified
+// Doxygen-stub declarations for the same *_async symbols, producing
+// conflicting/duplicate declarations that broke GOTCHA's weak-symbol
+// binding for every *_async function (confirmed: gotcha registered the
+// bindings but the wrapper never dispatched to them --
+// num_bindings=767 vs api_count=663 in test_hdf5, difference == exactly
+// the *_async functions). Do not re-add this #define.
 #include <hdf5.h>
 
 namespace brahma {
