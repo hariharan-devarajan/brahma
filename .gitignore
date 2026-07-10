@@ -42,4 +42,4 @@ install
 .vscode
 
 # VENV
-venv*
+venv*build_verify/

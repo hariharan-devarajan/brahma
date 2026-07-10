@@ -4,10 +4,10 @@ cmake_minimum_required(VERSION 3.10.2)
 #------------------------------------------------------------------------------
 
 
-set(BRAHMA_VERSION_MAJOR "4")
-set(BRAHMA_VERSION_MINOR "1")
+set(BRAHMA_VERSION_MAJOR "5")
+set(BRAHMA_VERSION_MINOR "0")
 
-set(BRAHMA_VERSION_PATCH "2")
+set(BRAHMA_VERSION_PATCH "0")
 set(BRAHMA_PACKAGE ${PROJECT_NAME})
 set(BRAHMA_PACKAGE_NAME ${PROJECT_NAME})
 set(BRAHMA_PACKAGE_VERSION "${BRAHMA_VERSION_MAJOR}.${BRAHMA_VERSION_MINOR}.${BRAHMA_VERSION_PATCH}")
@@ -17,7 +17,7 @@ set(BRAHMA_PACKAGE_STRING "${BRAHMA_PACKAGE_NAME} ${BRAHMA_PACKAGE_VERSION}")
 set(BRAHMA_PACKAGE_TARNAME "${BRAHMA_PACKAGE}")
 set(BRAHMA_LIBTOOL_VERSION "${BRAHMA_PACKAGE_VERSION}")
 
-set(BRAHMA_VERSION "(1, 0, 10)")
+set(BRAHMA_VERSION "(1, 0, 11)")
 
 project(brahma LANGUAGES C CXX)
 
@@ -361,6 +361,18 @@ if(BRAHMA_BUILD_WITH_HDF5)
       find_package(HDF5 REQUIRED)
     endif()
     if (HDF5_FOUND)
+        # RESTORED (2026-07-10): tried removing this blanket add_definitions
+        # (see git history) on the theory that project-wide *_MODULE macros
+        # were an unwanted side effect -- that made compilation WORSE (40
+        # parse errors on the *_async declarations), proving these MODULE
+        # macros are load-bearing here, not incidental. Hypothesis: defining
+        # H5*_MODULE makes HDF5's public headers behave as if compiling
+        # HDF5's OWN internal sources (which call the real function directly,
+        # bypassing the public macro-rename trick), which is a DIFFERENT and
+        # possibly more correct way to avoid the same H5_DOXYGEN macro-
+        # expansion hazard documented in hdf5.h. Keep this together with the
+        # scoped #define H5_DOXYGEN 1 in hdf5.h -- do not remove either
+        # without rebuilding and confirming test_hdf5 still compiles clean.
         add_definitions(-DH5_DOXYGEN=1 -DH5O_MODULE=1 -DH5A_MODULE=1 -DH5T_MODULE=1 -DH5D_MODULE=1 -DH5F_MODULE=1)
         add_definitions(-DH5L_MODULE=1 -DH5G_MODULE=1  -DH5R_MODULE=1 -DH5VL_MODULE=1 -DH5P_MODULE=1)
         if(NOT BRAHMA_HDF5_VERSION GREATER 0)
