@@ -16,8 +16,15 @@
 #include <utime.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
+#include <sys/statvfs.h>
+#include <sys/wait.h>
+#include <sys/sendfile.h>
+#include <sys/file.h>
+#include <features.h>
 
 #include <cstdlib>
+#include <cstring>
 #include <stdexcept>
 
 namespace brahma {
@@ -199,6 +206,112 @@ class POSIX : public Interface {
 
   virtual void _fini(void);
 
+#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 32)
+  // Before glibc 2.32, stat/lstat/fstat were not real exported dynamic
+  // symbols -- calls were multiplexed through internal versioned aliases
+  // (__xstat/__lxstat/__fxstat, already wrapped above), so gotcha could
+  // never bind the plain symbol names. 2.32 removed that indirection.
+  virtual int stat(const char *path, struct stat *buf);
+
+  virtual int lstat(const char *path, struct stat *buf);
+
+  virtual int fstat(int fd, struct stat *buf);
+
+  virtual int fstatat(int dirfd, const char *path, struct stat *buf,
+                      int flags);
+
+  // On platforms where glibc's _FILE_OFFSET_BITS=64 __REDIRECT makes
+  // stat/lstat/fstat/fstatat the same underlying symbol as their "64"
+  // counterpart (renamed at the linker level), calls in application code
+  // resolve directly to these instead -- both names must be bound to
+  // guarantee interception either way (see GOTCHA_BINDING_MACRO_LFS64).
+  virtual int stat64(const char *path, struct stat64 *buf);
+
+  virtual int lstat64(const char *path, struct stat64 *buf);
+
+  virtual int fstat64(int fd, struct stat64 *buf);
+
+  virtual int fstatat64(int dirfd, const char *path, struct stat64 *buf,
+                        int flags);
+#endif
+
+  virtual int posix_fadvise(int fd, off_t offset, off_t len, int advice);
+
+  virtual int posix_fadvise64(int fd, off64_t offset, off64_t len, int advice);
+
+  virtual int posix_fallocate(int fd, off_t offset, off_t len);
+
+  virtual int posix_fallocate64(int fd, off64_t offset, off64_t len);
+
+  virtual int flock(int fd, int operation);
+
+  virtual ssize_t readv(int fd, const struct iovec *iov, int iovcnt);
+
+  virtual ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
+
+  virtual ssize_t preadv(int fd, const struct iovec *iov, int iovcnt,
+                         off_t offset);
+
+  virtual ssize_t preadv64(int fd, const struct iovec *iov, int iovcnt,
+                           off64_t offset);
+
+  virtual ssize_t pwritev(int fd, const struct iovec *iov, int iovcnt,
+                          off_t offset);
+
+  virtual ssize_t pwritev64(int fd, const struct iovec *iov, int iovcnt,
+                            off64_t offset);
+
+  virtual int renameat(int olddirfd, const char *oldpath, int newdirfd,
+                       const char *newpath);
+
+  virtual int mkdirat(int dirfd, const char *pathname, mode_t mode);
+
+  virtual int unlinkat(int dirfd, const char *pathname, int flags);
+
+  virtual int fchmodat(int dirfd, const char *pathname, mode_t mode,
+                       int flags);
+
+  virtual int fchownat(int dirfd, const char *pathname, uid_t owner,
+                       gid_t group, int flags);
+
+  virtual int fchmod(int fd, mode_t mode);
+
+  virtual int fchown(int fd, uid_t owner, gid_t group);
+
+  virtual int execve(const char *pathname, char *const argv[],
+                     char *const envp[]);
+
+  virtual pid_t waitpid(pid_t pid, int *wstatus, int options);
+
+  virtual pid_t wait(int *wstatus);
+
+  virtual char *realpath(const char *path, char *resolved_path);
+
+  virtual int dirfd(DIR *dir);
+
+#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 32)
+  // See stat/lstat/fstat/fstatat above: same pre-2.32 __xmknod indirection.
+  virtual int mknod(const char *pathname, mode_t mode, dev_t dev);
+#endif
+
+  virtual ssize_t sendfile(int out_fd, int in_fd, off_t *offset,
+                           size_t count);
+
+  virtual ssize_t sendfile64(int out_fd, int in_fd, off64_t *offset,
+                             size_t count);
+
+  virtual ssize_t copy_file_range(int fd_in, off64_t *off_in, int fd_out,
+                                  off64_t *off_out, size_t len,
+                                  unsigned int flags);
+
+  virtual int statvfs(const char *path, struct statvfs *buf);
+
+  virtual int statvfs64(const char *path, struct statvfs64 *buf);
+
+  virtual int fstatvfs(int fd, struct statvfs *buf);
+
+  virtual int fstatvfs64(int fd, struct statvfs64 *buf);
+
   /* Handler Definitions */
   GOTCHA_MACRO_VAR(open)
   GOTCHA_MACRO_VAR(creat64)
@@ -277,6 +390,49 @@ class POSIX : public Interface {
   GOTCHA_MACRO_VAR(mlockall)
   GOTCHA_MACRO_VAR(munlockall)
   GOTCHA_MACRO_VAR(_fini)
+#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 32)
+  GOTCHA_MACRO_VAR(stat)
+  GOTCHA_MACRO_VAR(lstat)
+  GOTCHA_MACRO_VAR(fstat)
+  GOTCHA_MACRO_VAR(fstatat)
+  GOTCHA_MACRO_VAR(stat64)
+  GOTCHA_MACRO_VAR(lstat64)
+  GOTCHA_MACRO_VAR(fstat64)
+  GOTCHA_MACRO_VAR(fstatat64)
+#endif
+  GOTCHA_MACRO_VAR(posix_fadvise)
+  GOTCHA_MACRO_VAR(posix_fadvise64)
+  GOTCHA_MACRO_VAR(posix_fallocate)
+  GOTCHA_MACRO_VAR(posix_fallocate64)
+  GOTCHA_MACRO_VAR(flock)
+  GOTCHA_MACRO_VAR(readv)
+  GOTCHA_MACRO_VAR(writev)
+  GOTCHA_MACRO_VAR(preadv)
+  GOTCHA_MACRO_VAR(preadv64)
+  GOTCHA_MACRO_VAR(pwritev)
+  GOTCHA_MACRO_VAR(pwritev64)
+  GOTCHA_MACRO_VAR(renameat)
+  GOTCHA_MACRO_VAR(mkdirat)
+  GOTCHA_MACRO_VAR(unlinkat)
+  GOTCHA_MACRO_VAR(fchmodat)
+  GOTCHA_MACRO_VAR(fchownat)
+  GOTCHA_MACRO_VAR(fchmod)
+  GOTCHA_MACRO_VAR(fchown)
+  GOTCHA_MACRO_VAR(execve)
+  GOTCHA_MACRO_VAR(waitpid)
+  GOTCHA_MACRO_VAR(wait)
+  GOTCHA_MACRO_VAR(realpath)
+  GOTCHA_MACRO_VAR(dirfd)
+#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 32)
+  GOTCHA_MACRO_VAR(mknod)
+#endif
+  GOTCHA_MACRO_VAR(sendfile)
+  GOTCHA_MACRO_VAR(sendfile64)
+  GOTCHA_MACRO_VAR(copy_file_range)
+  GOTCHA_MACRO_VAR(statvfs)
+  GOTCHA_MACRO_VAR(statvfs64)
+  GOTCHA_MACRO_VAR(fstatvfs)
+  GOTCHA_MACRO_VAR(fstatvfs64)
 };
 
 }  // namespace brahma
@@ -506,6 +662,123 @@ GOTCHA_MACRO_TYPEDEF(mlockall, int,
                      (flags), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(munlockall, int, (), (), brahma::POSIX)
 GOTCHA_MACRO_TYPEDEF(_fini, void, (void), (), brahma::POSIX)
+#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 32)
+GOTCHA_MACRO_TYPEDEF(stat, int, (const char *path, struct stat *buf),
+                     (path, buf), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(lstat, int, (const char *path, struct stat *buf),
+                     (path, buf), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(fstat, int, (int fd, struct stat *buf), (fd, buf),
+                     brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(fstatat, int,
+                     (int dirfd, const char *path, struct stat *buf,
+                      int flags),
+                     (dirfd, path, buf, flags), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(stat64, int, (const char *path, struct stat64 *buf),
+                     (path, buf), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(lstat64, int, (const char *path, struct stat64 *buf),
+                     (path, buf), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(fstat64, int, (int fd, struct stat64 *buf), (fd, buf),
+                     brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(fstatat64, int,
+                     (int dirfd, const char *path, struct stat64 *buf,
+                      int flags),
+                     (dirfd, path, buf, flags), brahma::POSIX)
+#endif
+GOTCHA_MACRO_TYPEDEF(posix_fadvise, int,
+                     (int fd, off_t offset, off_t len, int advice),
+                     (fd, offset, len, advice), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(posix_fadvise64, int,
+                     (int fd, off64_t offset, off64_t len, int advice),
+                     (fd, offset, len, advice), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(posix_fallocate, int,
+                     (int fd, off_t offset, off_t len),
+                     (fd, offset, len), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(posix_fallocate64, int,
+                     (int fd, off64_t offset, off64_t len),
+                     (fd, offset, len), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(flock, int, (int fd, int operation), (fd, operation),
+                     brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(readv, ssize_t,
+                     (int fd, const struct iovec *iov, int iovcnt),
+                     (fd, iov, iovcnt), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(writev, ssize_t,
+                     (int fd, const struct iovec *iov, int iovcnt),
+                     (fd, iov, iovcnt), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(preadv, ssize_t,
+                     (int fd, const struct iovec *iov, int iovcnt,
+                      off_t offset),
+                     (fd, iov, iovcnt, offset), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(preadv64, ssize_t,
+                     (int fd, const struct iovec *iov, int iovcnt,
+                      off64_t offset),
+                     (fd, iov, iovcnt, offset), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(pwritev, ssize_t,
+                     (int fd, const struct iovec *iov, int iovcnt,
+                      off_t offset),
+                     (fd, iov, iovcnt, offset), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(pwritev64, ssize_t,
+                     (int fd, const struct iovec *iov, int iovcnt,
+                      off64_t offset),
+                     (fd, iov, iovcnt, offset), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(renameat, int,
+                     (int olddirfd, const char *oldpath, int newdirfd,
+                      const char *newpath),
+                     (olddirfd, oldpath, newdirfd, newpath), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(mkdirat, int,
+                     (int dirfd, const char *pathname, mode_t mode),
+                     (dirfd, pathname, mode), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(unlinkat, int,
+                     (int dirfd, const char *pathname, int flags),
+                     (dirfd, pathname, flags), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(fchmodat, int,
+                     (int dirfd, const char *pathname, mode_t mode,
+                      int flags),
+                     (dirfd, pathname, mode, flags), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(fchownat, int,
+                     (int dirfd, const char *pathname, uid_t owner,
+                      gid_t group, int flags),
+                     (dirfd, pathname, owner, group, flags), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(fchmod, int, (int fd, mode_t mode), (fd, mode),
+                     brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(fchown, int, (int fd, uid_t owner, gid_t group),
+                     (fd, owner, group), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(execve, int,
+                     (const char *pathname, char *const argv[],
+                      char *const envp[]),
+                     (pathname, argv, envp), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(waitpid, pid_t,
+                     (pid_t pid, int *wstatus, int options),
+                     (pid, wstatus, options), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(wait, pid_t, (int *wstatus), (wstatus), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(realpath, char *,
+                     (const char *path, char *resolved_path),
+                     (path, resolved_path), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(dirfd, int, (DIR * dir), (dir), brahma::POSIX)
+#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 32)
+GOTCHA_MACRO_TYPEDEF(mknod, int,
+                     (const char *pathname, mode_t mode, dev_t dev),
+                     (pathname, mode, dev), brahma::POSIX)
+#endif
+GOTCHA_MACRO_TYPEDEF(sendfile, ssize_t,
+                     (int out_fd, int in_fd, off_t *offset, size_t count),
+                     (out_fd, in_fd, offset, count), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(sendfile64, ssize_t,
+                     (int out_fd, int in_fd, off64_t *offset, size_t count),
+                     (out_fd, in_fd, offset, count), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(copy_file_range, ssize_t,
+                     (int fd_in, off64_t *off_in, int fd_out,
+                      off64_t *off_out, size_t len, unsigned int flags),
+                     (fd_in, off_in, fd_out, off_out, len, flags),
+                     brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(statvfs, int, (const char *path, struct statvfs *buf),
+                     (path, buf), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(statvfs64, int,
+                     (const char *path, struct statvfs64 *buf),
+                     (path, buf), brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(fstatvfs, int, (int fd, struct statvfs *buf), (fd, buf),
+                     brahma::POSIX)
+GOTCHA_MACRO_TYPEDEF(fstatvfs64, int, (int fd, struct statvfs64 *buf),
+                     (fd, buf), brahma::POSIX)
 
 template <typename C>
 size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
@@ -586,9 +859,57 @@ size_t brahma::POSIX::bind(const char *name, uint16_t priority) {
   GOTCHA_BINDING_MACRO(mlockall, POSIX);
   GOTCHA_BINDING_MACRO(munlockall, POSIX);
   GOTCHA_BINDING_MACRO(_fini, POSIX);
+#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 32)
+  GOTCHA_BINDING_MACRO(stat, POSIX);
+  GOTCHA_BINDING_MACRO(lstat, POSIX);
+  GOTCHA_BINDING_MACRO(fstat, POSIX);
+  GOTCHA_BINDING_MACRO(fstatat, POSIX);
+  GOTCHA_BINDING_MACRO(stat64, POSIX);
+  GOTCHA_BINDING_MACRO(lstat64, POSIX);
+  GOTCHA_BINDING_MACRO(fstat64, POSIX);
+  GOTCHA_BINDING_MACRO(fstatat64, POSIX);
+#endif
+  GOTCHA_BINDING_MACRO(posix_fadvise, POSIX);
+  GOTCHA_BINDING_MACRO(posix_fadvise64, POSIX);
+  GOTCHA_BINDING_MACRO(posix_fallocate, POSIX);
+  GOTCHA_BINDING_MACRO(posix_fallocate64, POSIX);
+  GOTCHA_BINDING_MACRO(flock, POSIX);
+  GOTCHA_BINDING_MACRO(readv, POSIX);
+  GOTCHA_BINDING_MACRO(writev, POSIX);
+  GOTCHA_BINDING_MACRO(preadv, POSIX);
+  GOTCHA_BINDING_MACRO(preadv64, POSIX);
+  GOTCHA_BINDING_MACRO(pwritev, POSIX);
+  GOTCHA_BINDING_MACRO(pwritev64, POSIX);
+  GOTCHA_BINDING_MACRO(renameat, POSIX);
+  GOTCHA_BINDING_MACRO(mkdirat, POSIX);
+  GOTCHA_BINDING_MACRO(unlinkat, POSIX);
+  GOTCHA_BINDING_MACRO(fchmodat, POSIX);
+  GOTCHA_BINDING_MACRO(fchownat, POSIX);
+  GOTCHA_BINDING_MACRO(fchmod, POSIX);
+  GOTCHA_BINDING_MACRO(fchown, POSIX);
+  GOTCHA_BINDING_MACRO(execve, POSIX);
+  GOTCHA_BINDING_MACRO(waitpid, POSIX);
+  GOTCHA_BINDING_MACRO(wait, POSIX);
+  GOTCHA_BINDING_MACRO(realpath, POSIX);
+  GOTCHA_BINDING_MACRO(dirfd, POSIX);
+#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 32)
+  GOTCHA_BINDING_MACRO(mknod, POSIX);
+#endif
+  GOTCHA_BINDING_MACRO(sendfile, POSIX);
+  GOTCHA_BINDING_MACRO(sendfile64, POSIX);
+  GOTCHA_BINDING_MACRO(copy_file_range, POSIX);
+  GOTCHA_BINDING_MACRO(statvfs, POSIX);
+  GOTCHA_BINDING_MACRO(statvfs64, POSIX);
+  GOTCHA_BINDING_MACRO(fstatvfs, POSIX);
+  GOTCHA_BINDING_MACRO(fstatvfs64, POSIX);
   num_bindings = bindings.size();
   if (num_bindings > 0) {
-    sprintf(tool_name, "%s_posix", name);
+    // sprintf/snprintf are themselves interceptable POSIX/STDIO functions;
+    // using them here would self-trigger whatever override is active for
+    // them. strcpy/strcat are never bound, so they're safe for this
+    // internal bookkeeping.
+    strcpy(tool_name, name);
+    strcat(tool_name, "_posix");
     gotcha_binding_t *raw_bindings = bindings.data();
     gotcha_wrap(raw_bindings, num_bindings, tool_name);
     bind_priority = priority;

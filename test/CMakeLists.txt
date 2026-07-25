@@ -2,6 +2,16 @@
 add_executable(test_posix test_posix.cpp)
 add_dependencies(test_posix ${PROJECT_NAME})
 target_link_libraries(test_posix ${PROJECT_NAME})
+# Compilers fold trivial calls in the printf family into each other as
+# builtin optimizations: printf("literal\n") -> puts("literal"),
+# fprintf(stdout, "format") -> printf("format"), snprintf(...) -> sprintf(...)
+# when they can prove it's equivalent (e.g. empty/constant format strings).
+# Since this test intercepts the entire printf/scanf family and logs via
+# printf()/puts() itself, those foldings would recurse back through (or
+# silently swap) the very interceptors under test. Disable all builtin
+# recognition for this translation unit so every call reaches the symbol
+# actually written in the source.
+target_compile_options(test_posix PRIVATE -fno-builtin)
 add_test(NAME test_posix COMMAND $<TARGET_FILE:test_posix>)
 
 if(BRAHMA_BUILD_WITH_MPI)
