@@ -23,7 +23,7 @@ inline std::string brahma_macro_get_time() {
   auto brahma_ts_t = std::time(0);
   auto now = std::localtime(&brahma_ts_t);
   char brahma_ts_time_str[256];
-  sprintf(brahma_ts_time_str, "%04d-%02d-%02d %02d:%02d:%02d.%ld",
+  ::sprintf(brahma_ts_time_str, "%04d-%02d-%02d %02d:%02d:%02d.%ld",
           now->tm_year + 1900, now->tm_mon + 1, now->tm_mday, now->tm_hour,
           now->tm_min, now->tm_sec, brahma_ts_millis);
   return brahma_ts_time_str;
@@ -35,8 +35,8 @@ inline std::string brahma_macro_get_time() {
 #ifdef BRAHMA_LOGGER_NO_LOG
 //=============================================================================
 #define BRAHMA_LOGGER_INIT() BRAHMA_NOOP_MACRO
-#define BRAHMA_LOG_PRINT(format, ...) fprintf(stdout, format, __VA_ARGS__);
-#define BRAHMA_LOG_ERROR(format, ...) fprintf(stderr, format, __VA_ARGS__);
+#define BRAHMA_LOG_PRINT(format, ...) ::fprintf(stdout, format, __VA_ARGS__);
+#define BRAHMA_LOG_ERROR(format, ...) ::fprintf(stderr, format, __VA_ARGS__);
 #define BRAHMA_LOG_WARN(format, ...) BRAHMA_NOOP_MACRO
 #define BRAHMA_LOG_INFO(format, ...) BRAHMA_NOOP_MACRO
 #define BRAHMA_LOG_DEBUG(format, ...) BRAHMA_NOOP_MACRO
@@ -137,8 +137,8 @@ inline std::string brahma_macro_get_time() {
 #endif
 #else
 #define BRAHMA_LOGGER_INIT() BRAHMA_NOOP_MACRO
-#define BRAHMA_LOG_PRINT(format, ...) fprintf(stdout, format, __VA_ARGS__);
-#define BRAHMA_LOG_ERROR(format, ...) fprintf(stderr, format, __VA_ARGS__);
+#define BRAHMA_LOG_PRINT(format, ...) ::fprintf(stdout, format, __VA_ARGS__);
+#define BRAHMA_LOG_ERROR(format, ...) ::fprintf(stderr, format, __VA_ARGS__);
 #define BRAHMA_LOG_WARN(format, ...) BRAHMA_NOOP_MACRO
 #define BRAHMA_LOG_INFO(format, ...) BRAHMA_NOOP_MACRO
 #define BRAHMA_LOG_DEBUG(format, ...) BRAHMA_NOOP_MACRO

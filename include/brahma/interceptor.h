@@ -30,6 +30,23 @@
       unbindings.push_back(unbinding);                                \
       }                                                               \
 }
+
+// For a "plain"/"64" function pair (e.g. stat/stat64, sendfile/sendfile64,
+// freopen/freopen64): on platforms where glibc's _FILE_OFFSET_BITS=64
+// __REDIRECT makes them the same underlying symbol renamed at the linker
+// level (no independent "plain" dynamic symbol exists at all), binding both
+// unconditionally would either fail the "plain" symbol's lookup outright or
+// silently double-count calls to the one real symbol. Detect the aliasing
+// at runtime via address comparison and only bind the "plain" name when
+// it's actually independent of the "64" one -- the "64" one is always
+// bound, since that's the name real calls resolve to either way.
+#define GOTCHA_BINDING_MACRO_LFS64(name32, name64, CLASS)             \
+  if ((void *)(name32##_fptr)&::name32 !=                             \
+      (void *)(name64##_fptr)&::name64) {                             \
+    GOTCHA_BINDING_MACRO(name32, CLASS);                               \
+  }                                                                    \
+  GOTCHA_BINDING_MACRO(name64, CLASS);
+
 #define GOTCHA_MACRO_TYPEDEF(macroname, macroret, macroargs, macro2args_val, macroclass_name)         \
   typedef macroret(*macroname##_fptr) macroargs;                                                      \
   macroret __attribute__((weak)) macroname macroargs;                                                 \
@@ -108,6 +125,58 @@
     }                                                                \
     return instance->name args_val;                                  \
   }                                                                  
+
+// For variadic printf/scanf-family functions (format-string + "..."). The
+// wrapper captures the varargs into a va_list and forwards to the matching
+// v-prefixed function (e.g. vfprintf) directly -- we cannot call the
+// original wrappee (a variadic function pointer) with a va_list, so instead
+// of routing through gotcha_get_wrappee, the passthrough goes straight to
+// the real v-function, exactly like glibc's own fprintf()->vfprintf().
+#define GOTCHA_MACRO_TYPEDEF_VARFMT(name, vname, ret, args, vargs, fmtarg, \
+                                    class_name)                        \
+  typedef ret(*name##_fptr) args;                                      \
+  ret __attribute__((weak)) name args;                                 \
+  inline ret name##_wrapper args {                                     \
+    va_list _args;                                                     \
+    va_start(_args, fmtarg);                                           \
+    auto instance = class_name::get_instance();                        \
+    ret _r;                                                            \
+    if (instance == nullptr) {                                         \
+      _r = vname vargs;                                                \
+    } else {                                                           \
+      _r = instance->name vargs;                                       \
+    }                                                                  \
+    va_end(_args);                                                     \
+    return _r;                                                         \
+  }
+
+// Same as GOTCHA_MACRO_TYPEDEF_VARFMT, but the weak declaration of the REAL
+// external function is wrapped in extern "C" -- see GOTCHA_MACRO_TYPEDEF_C
+// above for the full rationale. Needed for symbols like glibc's
+// __isoc23_fscanf/scanf/sscanf family: no public header declares them (they
+// are compiler-generated ISO-C23 redirect targets, glibc >= 2.38), so
+// without explicit extern "C" our own weak declaration is the only one in
+// the translation unit and gets C++ name-mangled, meaning application
+// calls (compiled against the real, unmangled, C-linkage exported symbol)
+// never reach it -- it stays an unresolved weak symbol (address 0), and
+// calling it segfaults.
+#define GOTCHA_MACRO_TYPEDEF_VARFMT_C(name, vname, ret, args, vargs,     \
+                                      fmtarg, class_name)                \
+  typedef ret(*name##_fptr) args;                                       \
+  extern "C" { ret __attribute__((weak)) name args; }                   \
+  inline ret name##_wrapper args {                                      \
+    va_list _args;                                                      \
+    va_start(_args, fmtarg);                                            \
+    auto instance = class_name::get_instance();                        \
+    ret _r;                                                            \
+    if (instance == nullptr) {                                         \
+      _r = vname vargs;                                                \
+    } else {                                                           \
+      _r = instance->name vargs;                                       \
+    }                                                                  \
+    va_end(_args);                                                     \
+    return _r;                                                         \
+  }
 
 #define GOTCHA_MACRO_VAR(name) gotcha_wrappee_handle_t name##_brahma_handle;
 

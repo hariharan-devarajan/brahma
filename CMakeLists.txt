@@ -297,6 +297,7 @@ set(BRAHMA_MPI_INCLUDE
 set(BRAHMA_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/brahma.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/posix.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/stdio.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/stdio_bypass.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interceptor.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/interface.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/brahma/interface/interface_utility.cpp)
@@ -309,7 +310,8 @@ set(BRAHMA_PUBLIC_HEADER        ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/loggi
                                 ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/enumeration.h
                                 ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/singleton.h
                                 ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/posix.h
-                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/stdio.h)
+                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/stdio.h
+                                ${CMAKE_CURRENT_SOURCE_DIR}/include/brahma/interface/stdio_bypass.h)
 set(BRAHMA_SRC_PRIVATE )
 
 if(BRAHMA_BUILD_WITH_HDF5)
@@ -337,6 +339,11 @@ brahma_install_headers("${BRAHMA_PUBLIC_HEADER};${BRAHMA_SRC_PRIVATE}" ${CMAKE_C
 set(DEPENDENCY_LIB )
 include_directories(${gotcha_INCLUDE_DIRS})
 set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${gotcha_LIBRARIES})
+# dlopen/dlsym, used by STDIOBypass (stdio_bypass.cpp) to resolve real libc
+# symbols outside of GOTCHA's PLT/GOT rewriting. On glibc < 2.34 these live
+# in libdl, not libc; CMAKE_DL_LIBS resolves to the right thing on any
+# platform (empty when dlopen is already part of libc).
+set(DEPENDENCY_LIB ${DEPENDENCY_LIB} ${CMAKE_DL_LIBS})
 
 # Optional Dependencies
 # =============================================================================
