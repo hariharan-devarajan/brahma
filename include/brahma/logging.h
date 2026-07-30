@@ -93,7 +93,7 @@ inline std::string brahma_macro_get_time() {
                         CPP_LOGGER_TRACE);
 #define BRAHMA_LOG_TRACE_FORMAT(format, ...)                                 \
   BRAHMA_INTERNAL_TRACE_FORMAT(__FILE__, __LINE__, __FUNCTION__,             \
-                               BRAHMA_LOGGER_NAME, CPP_LOGGER_TRACE, format, \
+                               BRAHMA_LOGGER_NAME, CPP_LOGGER_C_TRACE, format, \
                                __VA_ARGS__);
 #else
 #define BRAHMA_LOG_TRACE(...) BRAHMA_NOOP_MACRO
@@ -103,7 +103,7 @@ inline std::string brahma_macro_get_time() {
 #ifdef BRAHMA_LOGGER_LEVEL_DEBUG
 #define BRAHMA_LOG_DEBUG(format, ...)                                        \
   BRAHMA_INTERNAL_TRACE_FORMAT(__FILE__, __LINE__, __FUNCTION__,             \
-                               BRAHMA_LOGGER_NAME, CPP_LOGGER_DEBUG, format, \
+                               BRAHMA_LOGGER_NAME, CPP_LOGGER_C_DEBUG, format, \
                                __VA_ARGS__);
 #else
 #define BRAHMA_LOG_DEBUG(format, ...) BRAHMA_NOOP_MACRO
@@ -112,7 +112,7 @@ inline std::string brahma_macro_get_time() {
 #ifdef BRAHMA_LOGGER_LEVEL_INFO
 #define BRAHMA_LOG_INFO(format, ...)                                        \
   BRAHMA_INTERNAL_TRACE_FORMAT(__FILE__, __LINE__, __FUNCTION__,            \
-                               BRAHMA_LOGGER_NAME, CPP_LOGGER_INFO, format, \
+                               BRAHMA_LOGGER_NAME, CPP_LOGGER_C_INFO, format, \
                                ##__VA_ARGS__);
 #else
 #define BRAHMA_LOG_INFO(format, ...) BRAHMA_NOOP_MACRO
@@ -121,7 +121,7 @@ inline std::string brahma_macro_get_time() {
 #ifdef BRAHMA_LOGGER_LEVEL_WARN
 #define BRAHMA_LOG_WARN(format, ...)                                        \
   BRAHMA_INTERNAL_TRACE_FORMAT(__FILE__, __LINE__, __FUNCTION__,            \
-                               BRAHMA_LOGGER_NAME, CPP_LOGGER_WARN, format, \
+                               BRAHMA_LOGGER_NAME, CPP_LOGGER_C_WARN, format, \
                                __VA_ARGS__);
 #else
 #define BRAHMA_LOG_WARN(format, ...) BRAHMA_NOOP_MACRO
@@ -130,7 +130,7 @@ inline std::string brahma_macro_get_time() {
 #ifdef BRAHMA_LOGGER_LEVEL_ERROR
 #define BRAHMA_LOG_ERROR(format, ...)                                        \
   BRAHMA_INTERNAL_TRACE_FORMAT(__FILE__, __LINE__, __FUNCTION__,             \
-                               BRAHMA_LOGGER_NAME, CPP_LOGGER_ERROR, format, \
+                               BRAHMA_LOGGER_NAME, CPP_LOGGER_C_ERROR, format, \
                                __VA_ARGS__);
 #else
 #define BRAHMA_LOG_ERROR(format, ...) BRAHMA_NOOP_MACRO

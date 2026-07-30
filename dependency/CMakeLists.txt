@@ -2,7 +2,8 @@ include(brahma-utils)
 if (BRAHMA_LOGGER STREQUAL "CPP_LOGGER")
     fetch_package(NAME cpp-logger cpp_logger CPP_LOGGER Cpp_logger
                   VERSION 2.0.0
-                  GIT https://github.com/LLNL/cpp-logger.git
+                  # NOTE(gitlab-migration): was https://github.com/LLNL/cpp-logger.git — restore when moving back to GitHub (see .migration/REVERT.md)
+                  GIT ssh://git@czgitlab.llnl.gov:7999/dftracer/cpp-logger.git
                   TAG v0.0.8
                   #SHALLOW
                   #DIAG
