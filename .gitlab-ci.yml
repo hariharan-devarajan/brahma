@@ -1,0 +1,62 @@
+stages: [test, deploy]
+
+# LC corona batch runner (1 node) — mirrors the dftracer .corona-batch convention.
+.corona-batch:
+  id_tokens:
+    SITE_ID_TOKEN:
+      aud: https://lc.llnl.gov/gitlab
+  tags: [batch, corona]
+  variables:
+    PYTHON_MODULE: python/3.13.2
+    GCC_MODULE: gcc/11.2.1
+    MPI_MODULE: mvapich2/2.3.7
+    SMALL_QUEUE: pdebug
+    SMALL_QUEUE_WALLTIME: 60
+    SCHEDULER_PARAMETERS: "-N 1 -q $SMALL_QUEUE -t $SMALL_QUEUE_WALLTIME"
+
+# NOTE(gitlab-migration): the GitHub CI ran a 4-way hdf5×mpi spack matrix inside
+# the hdevarajan92/brahma-ci container. On the corona batch runner the toolchain
+# comes from LC modules, so the matrix is collapsed to the module-provided
+# mvapich2 + hdf5-parallel combination.
+build-test:
+  extends: .corona-batch
+  stage: test
+  rules:
+    # Mirror the GitHub Actions filter: skip push pipelines for PR merge commits.
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_MESSAGE !~ /Merge pull request/'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  before_script:
+    - module load $GCC_MODULE $PYTHON_MODULE $MPI_MODULE
+    - module load hdf5-parallel || true
+    - export CC=gcc CXX=g++
+    - if command -v h5pcc >/dev/null; then export HDF5_DIR=$(dirname $(dirname $(command -v h5pcc))); fi
+    - export MPI_DIR=$(dirname $(dirname $(command -v mpicc)))
+  script:
+    - mkdir -p build
+    - >
+      cmake -Bbuild
+      -DCMAKE_BUILD_TYPE=Debug
+      -DBRAHMA_ENABLE_TESTING=ON
+      -DBRAHMA_GENERATE_INTERFACES=OFF
+      -DBRAHMA_BUILD_WITH_HDF5=ON
+      -DBRAHMA_BUILD_WITH_MPI=ON
+      -DHDF5_ROOT=$HDF5_DIR
+      -DMPI_ROOT=$MPI_DIR
+      -DBRAHMA_BUILD_DEPENDENCIES=ON
+    - make -C build -j
+    - ctest --test-dir build -VV
+
+pages:
+  extends: .corona-batch
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "gitlab-migration"'  # temporary: remove after merge to develop
+  before_script:
+    - module load $PYTHON_MODULE
+    - python3 -m venv .venv-docs && source .venv-docs/bin/activate
+  script:
+    - pip install -r docs/requirements.txt
+    - sphinx-build -b html docs public
+  artifacts:
+    paths: [public]
