@@ -55,3 +55,4 @@ Selected: 2026-07-30. Source: `git@github.com:hariharan-devarajan/brahma.git` (d
 - 2026-07-30: CI switched to corona flux-allocation flow, single allocation per pipeline; MR opened
 - 2026-07-30: Flux allocation made global via allocate/.flux-jobid artifact/release-allocation jobs; wait-event timeout removed.
 - 2026-07-30: branch rebuilt onto merged develop (kept develop's logging.h fix); allocate switched to flux alloc --bg.
+- 2026-07-30: CI now runs inside podman containers (same images as GitHub CI) on the allocated node via flux run; validated pattern from cpp-logger.

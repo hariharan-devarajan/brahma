@@ -3,7 +3,9 @@ stages: [alloc, test, deploy, cleanup]
 # LC corona CI via a single shared Flux allocation:
 #  - `allocate` creates ONE 1-node allocation and saves its Flux job id to
 #    .flux-jobid (artifact) so ALL jobs in the pipeline share it globally.
-#  - every CI job reads the id and runs its steps via `flux proxy <jobid>`.
+#  - the test job reads the id and runs its steps ON the allocated node via
+#    `flux proxy <jobid> flux run -N 1 ...`, inside podman containers that use
+#    the same images as the GitHub Actions CI.
 #  - `release-allocation` cancels it at the end (runs even on failure).
 .corona-flux:
   id_tokens:
@@ -11,18 +13,14 @@ stages: [alloc, test, deploy, cleanup]
       aud: https://lc.llnl.gov/gitlab
   tags: [shell, corona]
   variables:
-    PYTHON_MODULE: python/3.13.2
-    COMPILER_MODULE: gcc/11.2.1
-    MPI_MODULE: mvapich2/2.3.7
-    SMALL_QUEUE: pdebug
+    SMALL_QUEUE: pbatch
     SMALL_QUEUE_WALLTIME: 60
 
 allocate:
   extends: .corona-flux
   stage: alloc
   rules:
-    # Mirror the GitHub Actions filter: skip push pipelines for PR merge commits.
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_MESSAGE !~ /Merge pull request/'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
     # flux alloc --bg submits the allocation and BLOCKS until it is granted
@@ -36,61 +34,23 @@ allocate:
   artifacts:
     paths: [.flux-jobid]
 
-# NOTE(gitlab-migration): the GitHub CI ran a 4-way hdf5×mpi spack matrix inside
-# the hdevarajan92/brahma-ci container. On corona the toolchain comes from LC
-# modules, so the matrix is collapsed to the module-provided
-# mvapich2 + hdf5-parallel combination.
+# Build/test run inside docker.io/hdevarajan92/brahma-ci:latest (the GitHub CI
+# image) with the spack load_env.sh environment; docs inside python:3.11.
 build-test-docs:
   extends: .corona-flux
   stage: test
   needs: [allocate]
   rules:
-    # Mirror the GitHub Actions filter: skip push pipelines for PR merge commits.
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_MESSAGE !~ /Merge pull request/'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
     - JOBID=$(cat .flux-jobid)
-    - echo "Using shared Flux allocation $JOBID"
-    # Each CI step runs on that allocation via flux proxy.
-    - >
-      flux proxy "$JOBID" bash -lc "
-      module load $COMPILER_MODULE $PYTHON_MODULE $MPI_MODULE &&
-      { module load hdf5-parallel || true; } &&
-      export CC=gcc CXX=g++ &&
-      if command -v h5pcc >/dev/null; then export HDF5_DIR=\$(dirname \$(dirname \$(command -v h5pcc))); fi &&
-      export MPI_DIR=\$(dirname \$(dirname \$(command -v mpicc))) &&
-      mkdir -p build &&
-      cmake -Bbuild
-      -DCMAKE_BUILD_TYPE=Debug
-      -DBRAHMA_ENABLE_TESTING=ON
-      -DBRAHMA_GENERATE_INTERFACES=OFF
-      -DBRAHMA_BUILD_WITH_HDF5=ON
-      -DBRAHMA_BUILD_WITH_MPI=ON
-      -DHDF5_ROOT=\$HDF5_DIR
-      -DMPI_ROOT=\$MPI_DIR
-      -DBRAHMA_BUILD_DEPENDENCIES=ON"
-    - >
-      flux proxy "$JOBID" bash -lc "
-      module load $COMPILER_MODULE $PYTHON_MODULE $MPI_MODULE &&
-      { module load hdf5-parallel || true; } &&
-      export CC=gcc CXX=g++ &&
-      make -C build -j"
-    - >
-      flux proxy "$JOBID" bash -lc "
-      module load $COMPILER_MODULE $PYTHON_MODULE $MPI_MODULE &&
-      { module load hdf5-parallel || true; } &&
-      ctest --test-dir build -VV"
-    # Sphinx docs build (published by the pages job below).
-    - >
-      flux proxy "$JOBID" bash -lc "
-      module load $PYTHON_MODULE &&
-      python3 -m venv .venv-docs && source .venv-docs/bin/activate &&
-      pip install -r docs/requirements.txt &&
-      sphinx-build -b html docs public"
+    # flux run -N 1 executes the script ON the allocated node.
+    - flux proxy "$JOBID" flux run -N 1 bash .gitlab/ci/build-test-docs.sh
   artifacts:
     paths: [public]
 
-# Publishes the artifact from build-test-docs — shell runner, no allocation.
+# Publishes the artifact from build-test-docs — no allocation, no flux.
 pages:
   extends: .corona-flux
   stage: deploy
@@ -106,9 +66,11 @@ pages:
 release-allocation:
   extends: .corona-flux
   stage: cleanup
-  needs: [allocate, build-test-docs]
+  # Runs last: alloc → build-test-docs → pages → deallocate. pages is optional
+  # since it only exists on develop/gitlab-migration pipelines.
+  needs: [allocate, build-test-docs, {job: pages, optional: true}]
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_MESSAGE !~ /Merge pull request/'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
       when: always
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: always
