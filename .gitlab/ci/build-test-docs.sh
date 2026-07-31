@@ -13,6 +13,12 @@ PODMAN_RUNROOT=/var/tmp/$USER/podman-run
 mkdir -p "$PODMAN_STORE" "$PODMAN_RUNROOT"
 PODMAN="podman --root $PODMAN_STORE --runroot $PODMAN_RUNROOT"
 
+# --user 0:0 is REQUIRED: images with a non-root USER (e.g. brahma-ci) map to a
+# subuid under rootless podman and cannot read the bind-mounted checkout
+# ("Permission denied" sourcing load_env.sh). Container root maps to the host
+# user, which owns the files.
+PODMAN_RUN_OPTS="--rm --user 0:0 -v $PWD:/ws -w /ws"
+
 # The GitHub CI ran a 4-way spack matrix inside this image:
 #   hdf5@1.8.23  / mpich@3.4.3
 #   hdf5@1.10.11 / openmpi@4.1.6
@@ -24,12 +30,10 @@ PODMAN="podman --root $PODMAN_STORE --runroot $PODMAN_RUNROOT"
 HDF5=${HDF5:-hdf5@1.14.5}
 MPI=${MPI:-openmpi@5.0.6}
 
-$PODMAN run --rm -v "$PWD:/ws" -w /ws \
+$PODMAN run $PODMAN_RUN_OPTS \
   -e HDF5="$HDF5" -e MPI="$MPI" \
   docker.io/hdevarajan92/brahma-ci:latest bash -ec '
-  # APT::Sandbox::User=root: rootless podman has no mapped _apt uid, so apts
-  # privilege drop fails with "setgroups (22: Invalid argument)".
-  # (kept here for any extra package needed by the build)
+  # Spack toolchain from the image, exactly as the GitHub CI did it.
   source .github/workflows/scripts/load_env.sh "$HDF5" "$MPI"
   mkdir -p build
   cmake -Bbuild \
@@ -46,7 +50,7 @@ $PODMAN run --rm -v "$PWD:/ws" -w /ws \
 '
 
 # Docs in the same image the pages job used.
-$PODMAN run --rm -v "$PWD:/ws" -w /ws docker.io/library/python:3.11 bash -ec '
+$PODMAN run $PODMAN_RUN_OPTS docker.io/library/python:3.11 bash -ec '
   pip install -r docs/requirements.txt
   sphinx-build -b html docs public
 '
