@@ -52,3 +52,8 @@ Selected: 2026-07-30. Source: `git@github.com:hariharan-devarajan/brahma.git` (d
 - 2026-07-30: Replaced BRAHMA_CPP_LOGGER_GIT_URL variable with in-place URL change to https://lc.llnl.gov/gitlab/dftracer/cpp-logger.git (user request); revert note added to REVERT.md and NOTE(gitlab-migration) comment in dependency/CMakeLists.txt.
 - 2026-07-30: Dependency URL switched from https (lc.llnl.gov) to ssh form ssh://git@czgitlab.llnl.gov:7999/dftracer/cpp-logger.git (user request); verified reachable (tag v0.0.8).
 - 2026-07-30: CI moved off the brahma-ci container onto LC corona batch runner (1 node) via inline .corona-batch template (tags [batch, corona], SCHEDULER_PARAMETERS -N 1 -q pdebug -t 60); 4-way hdf5×mpi spack matrix collapsed to module toolchain (gcc/11.2.1, mvapich2/2.3.7, hdf5-parallel) — noted in a comment; load_env.sh no longer used by GitLab CI (GitHub CI unchanged). Pages job on corona batch via python module + venv.
+- 2026-07-30: CI switched to corona flux-allocation flow, single allocation per pipeline; MR opened
+- 2026-07-30: Flux allocation made global via allocate/.flux-jobid artifact/release-allocation jobs; wait-event timeout removed.
+- 2026-07-30: branch rebuilt onto merged develop (kept develop's logging.h fix); allocate switched to flux alloc --bg.
+- 2026-07-30: CI now runs inside podman containers (same images as GitHub CI) on the allocated node via flux run; validated pattern from cpp-logger.
+- 2026-07-30: fixed allocation-id race — 'flux job last' is user-global and concurrent pipelines cancelled each other's allocations; now uses a unique per-job name (<proj>-$CI_PIPELINE_ID-$CI_JOB_ID) with 'flux jobs --name' lookup, and cleanup only cancels a non-empty .flux-jobid.
