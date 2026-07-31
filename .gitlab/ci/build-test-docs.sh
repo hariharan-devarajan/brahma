@@ -17,7 +17,16 @@ PODMAN="podman --root $PODMAN_STORE --runroot $PODMAN_RUNROOT"
 # subuid under rootless podman and cannot read the bind-mounted checkout
 # ("Permission denied" sourcing load_env.sh). Container root maps to the host
 # user, which owns the files.
-PODMAN_RUN_OPTS="--rm --user 0:0 -v $PWD:/ws -w /ws"
+# --user 0:0: container root maps to the host user under rootless podman, so
+# the bind-mounted checkout stays readable even for images with a non-root USER.
+# The cpp-logger CMake dependency is fetched from czgitlab over ssh, so the
+# container also needs the runner account's keys mounted read-only.
+PODMAN_RUN_OPTS=(
+  --rm --user 0:0
+  -v "$PWD:/ws" -w /ws
+  -v "$HOME/.ssh:/root/.ssh:ro"
+  -e GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+)
 
 # The GitHub CI ran a 4-way spack matrix inside this image:
 #   hdf5@1.8.23  / mpich@3.4.3
@@ -30,7 +39,7 @@ PODMAN_RUN_OPTS="--rm --user 0:0 -v $PWD:/ws -w /ws"
 HDF5=${HDF5:-hdf5@1.14.5}
 MPI=${MPI:-openmpi@5.0.6}
 
-$PODMAN run $PODMAN_RUN_OPTS \
+$PODMAN run "${PODMAN_RUN_OPTS[@]}" \
   -e HDF5="$HDF5" -e MPI="$MPI" \
   docker.io/hdevarajan92/brahma-ci:latest bash -ec '
   # Spack toolchain from the image, exactly as the GitHub CI did it.
@@ -50,7 +59,7 @@ $PODMAN run $PODMAN_RUN_OPTS \
 '
 
 # Docs in the same image the pages job used.
-$PODMAN run $PODMAN_RUN_OPTS docker.io/library/python:3.11 bash -ec '
+$PODMAN run "${PODMAN_RUN_OPTS[@]}" docker.io/library/python:3.11 bash -ec '
   pip install -r docs/requirements.txt
   sphinx-build -b html docs public
 '
