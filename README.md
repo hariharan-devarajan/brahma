@@ -162,3 +162,14 @@ The script generates two files for each interface:
 
 1. An interface header file (`<interface_name>.h`) in the `../include/brahma/interface/` directory
 2. An implementation file (`<interface_name>.cpp`) in the `../src/brahma/interface/` directory
+
+## License
+
+Brahma is distributed under the terms of the MIT license.
+All new contributions must be made under this license.
+
+See [LICENSE](LICENSE) and [NOTICE](NOTICE) for details.
+
+SPDX-License-Identifier: MIT
+
+LLNL-CODE-2024514 — Applied Storage Research (ASR)
